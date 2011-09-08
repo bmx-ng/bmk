@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.01 07/06/2009 - Fixed dependency compilation issue - or lack of it!
 '  BaH 26/05/2009 - Added multi-process (threading) support.
 '                   Improved custom variable overriding.
 '  BaH 18/05/2009 - Added Universal support (Mac) with -i parameter.
@@ -126,9 +127,23 @@ Function MakeModules( args$[] )
 
 	If args.length>1 CmdError "Expecting only 1 argument for makemods"
 	
-	If args.length SetModfilter args[0] Else opt_modfilter=""
+	Local mods:TList
 	
-	Local mods:TList=EnumModules()
+	If args.length Then
+		Local m:String = args[0]
+		If m.find(".") > 0 And m[m.length-1]<>"." Then
+			' full module name?
+			mods = New TList
+			mods.AddLast(m)
+			SetModfilter m
+		Else
+			SetModfilter m
+			mods = EnumModules()
+		End If
+	Else
+		opt_modfilter=""
+		mods = EnumModules()
+	End If
 	
 	BeginMake
 
