@@ -122,12 +122,26 @@ End Function
 
 'returns mod interface file
 Function MakeMod:TFile( mod_name$, isRequired:Int = False )
-'Print "MakeMod : " + mod_name
+
 	Local path$=ModulePath(mod_name)
 	Local id$=ModuleIdent(mod_name)
 	Local src_path$=path+"/"+id+".bmx"
 	Local arc_path$=path+"/"+id+opt_configmung+processor.CPU()+".a"
 	Local iface_path$=path+"/"+id+opt_configmung+processor.CPU()+".i"
+
+	Local skip:String = globals.Get("skip_mod")
+	If skip Then
+		skip :+ " "
+		Local name:String = mod_name + " "
+		If skip.tolower().find(name.tolower()) >= 0 Then
+			If opt_debug Then
+				Print "Skipping " + mod_name + " (d)"
+			Else
+				Print "Skipping " + mod_name + " (r)"
+			End If
+			Return
+		End If
+	End If
 
 	mod_opts = New TModOpt ' BaH
 

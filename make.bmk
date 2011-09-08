@@ -216,6 +216,28 @@
 	make.Make(arg1)
 @end
 
+@define skipmod
+	globals.Add("skip_mod", arg1)
+@end
+
+@define skipmodwin32
+	if bmk.Platform() == "win32" then
+		globals.Add("skip_mod", arg1)
+	end
+@end
+
+@define skipmodmac
+	if bmk.Platform() == "macos" then
+		globals.Add("skip_mod", arg1)
+	end
+@end
+
+@define skipmodlinux
+	if bmk.Platform() == "linux" then
+		globals.Add("skip_mod", arg1)
+	end
+@end
+
 # the default ccopts
 # used for compiling c-type files
 @define default_cc_opts

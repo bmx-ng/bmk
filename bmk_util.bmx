@@ -164,7 +164,7 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 			cmd:+" -arch i386 -read_only_relocs suppress"
 		EndIf
 		If macos_version>=$1050
-			cmd:+" -mmacosx-version-min=10.3"
+			cmd:+" -mmacosx-version-min=10.5"
 		EndIf
 	
 		cmd:+" -o "+CQuote( path )
