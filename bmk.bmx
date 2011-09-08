@@ -1,5 +1,7 @@
 '
 ' Change History :
+' 2.04 28/06/2009 - Tweaked thread error reporting.
+'                   Small speedup with threading.
 ' 2.03 28/06/2009 - Improved custom options support for Universal builds.
 '                   Fixed import ordering.
 ' 2.02 08/06/2009 - Fixed multiple defines problem.

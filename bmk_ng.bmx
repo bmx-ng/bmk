@@ -838,7 +838,7 @@ Type TProcessManager
 					threads.Remove(thread)
 				End If
 			Next
-			Delay 100
+			Delay 5
 		Wend
 	End Method
 	
@@ -849,7 +849,7 @@ Type TProcessManager
 					threads.Remove(thread)
 				End If
 			Next
-			Delay 100
+			Delay 5
 		Wend
 	End Method
 	
