@@ -1,0 +1,4 @@
+
+addccopt optimization -O3
+
+addwin32ccopt arch -march=pentium3

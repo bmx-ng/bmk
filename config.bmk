@@ -1,0 +1,53 @@
+#
+# BMK Cross-compiler configuration
+#
+# These paths determine where various MingW and Wine paths and files are on your
+# system.
+# The names of the binaries can change between distributions.
+#
+# ----------------------
+#
+# Please edit the following paths and filenames
+#
+
+# The full path to the mingw32 folder
+#
+path_to_mingw=/usr/local/i386-mingw32-3.4.5
+
+# The names of the compiler utils (ar, ld, gcc, g++)
+# (you can find these in the bin folder)
+#
+name_of_ar=i386-mingw32-ar
+name_of_ld=i386-mingw32-ld
+name_of_gcc=i386-mingw32-gcc
+name_of_gpp=i386-mingw32-g++
+
+
+# The path in which crt2.o resides.
+#
+path_to_mingw_lib=%path_to_mingw%/i386-mingw32/lib
+
+# The path where crtbegin.o and crtend.o reside
+# 
+path_to_mingw_lib2=%path_to_mingw%/lib/gcc/i386-mingw32/3.4.5
+
+
+# The path to Wine executable
+#
+path_to_wine=/usr/bin/wine
+
+
+# ----------------------
+#
+# No need to edit these. They are configured by the above settings.
+#
+#
+path_to_mingw_include=%path_to_mingw%/include
+path_to_mingw_lib3=%path_to_mingw%/i386-mingw32/lib
+
+path_to_ar=%path_to_mingw%/bin/%name_of_ar%
+path_to_ld=%path_to_mingw%/bin/%name_of_ld%
+path_to_gcc=%path_to_mingw%/bin/%name_of_gcc%
+path_to_gpp=%path_to_mingw%/bin/%name_of_gpp%
+
+
