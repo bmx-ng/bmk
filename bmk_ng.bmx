@@ -49,20 +49,31 @@ Type TBMK
 
 	' loads a .bmk, stores any functions, and runs any commands.
 	Method LoadBMK(path:String)
-
 		Local str:String
 		Try
 			If FileType(path) = 1 Then
 				str = LoadText( path )
 			Else
-				Return
+				If FileType(AppDir + "/" + path) = 1 Then
+					str = LoadText( AppDir + "/" + path )
+				Else
+					If FileType(globals.Get("BUILDPATH") + "/" + path) = 1 Then
+						str = LoadText(globals.Get("BUILDPATH") + "/" + path )
+					Else
+						Return
+					End If
+				End If
 			End If
 		Catch e:Object
 			Try
 				If FileType(AppDir + "/" + path) = 1 Then
 					str = LoadText( AppDir + "/" + path )
 				Else
-					Return
+					If FileType(globals.Get("BUILDPATH") + "/" + path) = 1 Then
+						str = LoadText(globals.Get("BUILDPATH") + "/" + path )
+					Else
+						Return
+					End If
 				End If
 			Catch e:Object
 				' we tried... twice
@@ -70,7 +81,7 @@ Type TBMK
 				Return
 			End Try
 		End Try
-	
+
 		Local pos:Int, inDefine:Int, text:String, name:String
 	
 		While pos < str.length
@@ -395,6 +406,7 @@ Type TBMKGlobals
 
 	' sets the variable with value
 	Method SetVar(variable:String, value:Object)
+'Print "SetVar : " + variable + " : " + String(value)
 		vars.Insert(variable.ToUpper(), value)
 	End Method
 	
@@ -402,6 +414,9 @@ Type TBMKGlobals
 	Method Get:String(variable:String)
 		Local obj:Object = vars.ValueForKey(variable.ToUpper())
 		If obj Then
+			If String(obj) Then
+				Return String(obj)
+			End If
 			Return obj.ToString()
 		End If
 	End Method

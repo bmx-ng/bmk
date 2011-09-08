@@ -180,7 +180,7 @@ Function ParseSourceFile:TSourceFile( path$ )
 				file.pragmas.AddLast pragmaLine[i..]
 			End If
 
-			If Not CharIsAlpha( lline[0] ) Continue
+			If lline.length And Not CharIsAlpha( lline[0] ) Continue
 
 			i=1
 			While i<lline.length And (CharIsAlpha(lline[i]) Or CharIsDigit(lline[i]))

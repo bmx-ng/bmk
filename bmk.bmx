@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.09 30/04/2010 - Fixed loadBMK to work for local app folder.
 ' 2.08 05/04/2010 - Added Tommo's include speedup fix.
 '                   Fixed PPC universal link issue.
 ' 2.07 28/01/2010 - Fixed win32 linking to include libmingw32 both at the start and end of the list. (should cover 3.9.5 and 4.x gcc's)
