@@ -181,6 +181,11 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 			EndIf
 		Next
 		cmd:+" -lSystem -framework CoreServices -framework CoreFoundation"
+		
+		If processor.CPU() = "ppc"
+			cmd:+ " -lc -lgcc_eh"
+		End If
+		
 	End If
 	
 	If processor.Platform() = "win32"

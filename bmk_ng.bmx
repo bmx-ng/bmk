@@ -3,9 +3,9 @@ SuperStrict
 Import BRL.Reflection
 Import BRL.Map
 Import BRL.LinkedList
-?win32
+'?win32
 Import Pub.FreeProcess
-?
+'?
 
 ?threaded
 Import BRL.Threads
@@ -350,7 +350,7 @@ Type TBMK
 	End Method
 	
 	Method GCCVersion:Int()
-?win32
+'?win32
 		Local process:TProcess = CreateProcess("gcc -v")
 		Local s:String
 		
@@ -375,7 +375,7 @@ Type TBMK
 		Wend
 		
 		Return s.toInt()
-?
+'?
 	End Method
 	
 End Type

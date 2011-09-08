@@ -22,6 +22,7 @@ If t EXPERIMENTAL_SPEEDUP=True
 Type TFile
 
 	Field path$,time
+	Field itime 'Tommo:added timestamp for included file
 
 	Function Create:TFile( path$,files:TList, time:Int = 0 )
 		Local f:TFile=New TFile
@@ -260,7 +261,12 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 		'incbins
 		For Local inc$=EachIn src_file.incbins
 			Local time=FileTime( inc )
-			If time>src.time src.time=time
+			'Tommo: 
+			If time > src.time Then
+				src.time = time
+				src.itime = time 'update inc timestamp 
+			End If
+			'Tommo: End of mod
 		Next
 		'includes
 		For Local inc$=EachIn src_file.includes
@@ -268,7 +274,12 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 			If Match(inc_ext,"bmx")
 				Local dep:TFile=MakeSrc(RealPath(inc),False)
 				If Not dep Continue
-				If dep.time>src.time src.time=dep.time
+				'Tommo:
+				If dep.time > src.time  'update inc timestamp 
+					src.time = dep.time
+					src.itime = dep.time
+				EndIf
+				'Tommo:End of mod
 			Else
 				Throw "Unrecognized Include file type: "+inc
 			EndIf
@@ -388,7 +399,11 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 				
 						Local i_path2$=i_path+"2",update=True
 
-						If Not opt_all And FileType( i_path2 )=FILETYPE_FILE And src.time=FileTime( src.path )
+						'Tommo:
+						If Not opt_all And FileType(i_path2) = FILETYPE_FILE ..
+								And (src.time = FileTime(src.path) Or src.time = src.itime) ' added checking for Included file timestamp
+						'Tommo: end of mod
+
 							If FileSize( i_path )=FileSize( i_path2 )
 								Local i_bytes:Byte[]=LoadByteArray( i_path )
 								Local i_bytes2:Byte[]=LoadByteArray( i_path2 )

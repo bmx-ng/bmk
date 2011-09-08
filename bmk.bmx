@@ -1,5 +1,7 @@
 '
 ' Change History :
+' 2.08 05/04/2010 - Added Tommo's include speedup fix.
+'                   Fixed PPC universal link issue.
 ' 2.07 28/01/2010 - Fixed win32 linking to include libmingw32 both at the start and end of the list. (should cover 3.9.5 and 4.x gcc's)
 ' 2.06 30/12/2009 - Added APPID variable for scripts on Mac (useful for custom plists).
 ' 2.05 10/12/2009 - Added .cc file support.
