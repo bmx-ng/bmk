@@ -252,7 +252,7 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	
 	If processor.Platform() = "linux"
 		cmd$="g++"
-		cmd:+" -m32 -s -Os --eh-frame-hdr -pthread"
+		cmd:+" -m32 -s --eh-frame-hdr -pthread"
 		cmd:+" -o "+CQuote( path )
 		cmd:+" "+CQuote( tmpfile )
 		cmd:+" -L/usr/lib32"

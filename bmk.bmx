@@ -1,5 +1,7 @@
 '
 ' Change History :
+' 2.05 10/12/2009 - Added .cc file support.
+'                   Fixed Linux optimization flag -Os always being set.
 ' 2.04 28/06/2009 - Tweaked thread error reporting.
 '                   Small speedup with threading.
 ' 2.03 28/06/2009 - Improved custom options support for Universal builds.
