@@ -5,7 +5,7 @@ Import BRL.MaxUtil
 
 Import Pub.MacOS
 
-Const BMK_VERSION:String = "2.12"
+Const BMK_VERSION:String = "2.13"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -185,6 +185,10 @@ Function CQuote$( t$ )
 		Return "~q"+t+"~q"
 	Next
 	Return t
+End Function
+
+Function ReQuote:String(t:String)
+	Return t.Replace("~~q", "~q")
 End Function
 
 Function CharIsDigit:Int( ch:Int )

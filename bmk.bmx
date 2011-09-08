@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.13 21/08/2011 - ModuleInfo quotes support.
 ' 2.12 30/07/2011 - OSX 10.7 (Lion) tweaks.
 ' 2.11 27/02/2011 - Use g++ instead of ld for linking on win32.
 ' 2.10 24/02/2011 - Added option for skipping module builds.

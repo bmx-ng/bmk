@@ -15,9 +15,9 @@ Type TModOpt ' BaH
 	
 	Method addOption(qval:String)
 		If qval.startswith("CC_OPTS") Then
-			cc_opts:+ " " + qval[qval.find(":") + 1..].Trim()
+			cc_opts:+ " " + ReQuote(qval[qval.find(":") + 1..].Trim())
 		ElseIf qval.startswith("LD_OPTS") Then
-			Local opt:String = qval[qval.find(":") + 1..].Trim()
+			Local opt:String = ReQuote(qval[qval.find(":") + 1..].Trim())
 			
 			If opt.startsWith("-L") Then
 				opt = "-L" + CQuote(opt[2..])
