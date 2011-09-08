@@ -437,7 +437,23 @@ Type TBMKGlobals
 		If TOptionVariable(v) Then
 			TOptionVariable(v).AddVar(key, value)
 		Else
-			SetVar(variable, String(v) + " " + value)
+			Local opt:TOptionVariable = New TOptionVariable
+			opt.addVar(key, value)
+			setVar(variable, opt)
+		End If
+
+	End Method
+
+	Method SetOption(variable:String, key:String, value:String)
+		variable = variable.ToUpper()
+
+		Local v:Object = vars.ValueForKey(variable)
+		If TOptionVariable(v) Then
+			TOptionVariable(v).SetVar(key, value)
+		Else
+			Local opt:TOptionVariable = New TOptionVariable
+			opt.SetVar(key, value)
+			setVar(variable, opt)
 		End If
 
 	End Method
@@ -449,6 +465,19 @@ Type TBMKGlobals
 		If TOptionVariable(v) Then
 			TOptionVariable(v).RemoveVar(name)
 		End If
+	End Method
+	
+	Method Clear(variable:String)
+		variable = variable.ToUpper()
+
+		Local v:Object = vars.ValueForKey(variable)
+		If TOptionVariable(v) Then
+			vars.remove(variable)
+		End If
+	End Method
+	
+	Method Reset()
+		stack.Clear()
 	End Method
 	
 End Type
@@ -474,8 +503,34 @@ Type TOptionVariable
 			count:+1
 			name = "VAR" + count
 			opt.name = name
+		Else
+			opt.name = name
 		End If
 		opt.value = value
+		
+		options.Insert(name, opt)
+		orderedOptions.AddLast(opt)
+		
+	End Method
+
+	Method SetVar(name:String, value:String)', insertBefore:Int = False)
+		Local opt:TOpt = New TOpt
+	
+		If Not name Then
+			Global count:Int
+			count:+1
+			name = "VAR" + count
+			opt.name = name
+		Else
+			opt.name = name
+		End If
+		opt.value = value
+
+		' option already exists?
+		Local o:TOpt = TOpt(options.ValueForKey(name))
+		If o Then
+			orderedOptions.Remove(o)
+		End If
 		
 		options.Insert(name, opt)
 		orderedOptions.AddLast(opt)
@@ -495,6 +550,7 @@ Type TOptionVariable
 		For Local opt:TOpt = EachIn orderedOptions
 			s:+ opt.value + " "
 		Next
+
 		Return s
 	End Method
 	

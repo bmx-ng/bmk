@@ -138,9 +138,19 @@
 	globals.AddOption("cc_opts", arg1, arg2)
 @end
 
+@define setccopt
+	globals.SetOption("cc_opts", arg1, arg2)
+@end
+
 @define addwin32ccopt
 	if bmk.Platform() == "win32" then
 		globals.AddOption("cc_opts", arg1, arg2)
+	end
+@end
+
+@define setwin32ccopt
+	if bmk.Platform() == "win32" then
+		globals.SetOption("cc_opts", arg1, arg2)
 	end
 @end
 
@@ -150,9 +160,21 @@
 	end
 @end
 
+@define setmacccopt
+	if bmk.Platform() == "macos" then
+		globals.SetOption("cc_opts", arg1, arg2)
+	end
+@end
+
 @define addmacppcccopt
 	if bmk.Platform() == "macos" and bmk.CPU() == "ppc" then
 		globals.AddOption("cc_opts", arg1, arg2)
+	end
+@end
+
+@define setmacppcccopt
+	if bmk.Platform() == "macos" and bmk.CPU() == "ppc" then
+		globals.SetOption("cc_opts", arg1, arg2)
 	end
 @end
 
@@ -162,9 +184,21 @@
 	end
 @end
 
+@define setmacx86ccopt
+	if bmk.Platform() == "macos" and bmk.CPU() == "x86" then
+		globals.SetOption("cc_opts", arg1, arg2)
+	end
+@end
+
 @define addlinuxccopt
 	if bmk.Platform() == "linux" then
 		globals.AddOption("cc_opts", arg1, arg2)
+	end
+@end
+
+@define setlinuxccopt
+	if bmk.Platform() == "linux" then
+		globals.SetOption("cc_opts", arg1, arg2)
 	end
 @end
 
@@ -186,28 +220,30 @@
 # used for compiling c-type files
 @define default_cc_opts
 
+	globals.Clear("cc_opts")
+
 	if bmk.Platform() == "macos" then
 		
 		# compile for 10.3 ?
 		# macos version >= 0x1050 ?
 		if tonumber(%macos_version%) >= 4176 then
-			globals.Addoption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
 		end
 	elseif bmk.Platform() == "win32" then
 
-		globals.AddOption("cc_opts", "arch", "-march=pentium")
-		globals.AddOption("cc_opts", "fastmath", "-ffast-math")
+		globals.SetOption("cc_opts", "arch", "-march=pentium")
+		globals.SetOption("cc_opts", "fastmath", "-ffast-math")
 		
 	elseif bmk.Platform() == "linux" then
-		globals.AddOption("cc_opts", "aliasing", "-fno-strict-aliasing")
-		globals.AddOption("cc_opts", "arch", "-m32")
-		globals.AddOption("cc_opts", "fancymath", "-mfancy-math-387")
+		globals.SetOption("cc_opts", "aliasing", "-fno-strict-aliasing")
+		globals.SetOption("cc_opts", "arch", "-m32")
+		globals.SetOption("cc_opts", "fancymath", "-mfancy-math-387")
 	
 	end
 
-	globals.AddOption("cc_opts", "exceptions", "-fno-exceptions")
-	globals.AddOption("cc_opts", "linker", "-c")
-	globals.AddOption("cc_opts", "optimization", "-Os")
+	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")
+	globals.SetOption("cc_opts", "linker", "-c")
+	globals.SetOption("cc_opts", "optimization", "-Os")
 
 @end
 

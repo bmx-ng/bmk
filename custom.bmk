@@ -1,4 +1,7 @@
 
-addccopt optimization -O3
+setccopt optimization -O3
 
-addwin32ccopt arch -march=pentium3
+setwin32ccopt arch -march=pentium3
+
+setmacx86ccopt arch -march=nocona
+setmacx86ccopt math -msse3

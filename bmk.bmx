@@ -1,5 +1,8 @@
 '
 ' Change History :
+' 2.03 28/06/2009 - Improved custom options support for Universal builds.
+'                   Fixed import ordering.
+' 2.02 08/06/2009 - Fixed multiple defines problem.
 ' 2.01 07/06/2009 - Fixed dependency compilation issue - or lack of it!
 '  BaH 26/05/2009 - Added multi-process (threading) support.
 '                   Improved custom variable overriding.
@@ -30,7 +33,7 @@ args=ParseConfigArgs( AppArgs[2..] )
 RunCommand("default_cc_opts", Null)
 
 ' load any global custom options (in BlitzMax/bin)
-LoadBMK(AppDir + "/custom.bmk")
+LoadOptions
 
 CreateDir BlitzMaxPath()+"/tmp"
 
@@ -49,8 +52,10 @@ Case "makemods"
 		If opt_universal
 			SetConfigMung
 			processor.ToggleCPU()
+			LoadOptions(True) ' reload options for PPC
 			MakeModules args
 			processor.ToggleCPU()
+			LoadOptions(True)
 		End If
 	
 	Else
@@ -61,8 +66,10 @@ Case "makemods"
 		If opt_universal
 			SetConfigMung
 			processor.ToggleCPU()
+			LoadOptions(True) ' reload options for PPC
 			MakeModules args
 			processor.ToggleCPU()
+			LoadOptions(True)
 		End If
 		opt_debug=False
 		opt_release=True
@@ -71,8 +78,10 @@ Case "makemods"
 		If opt_universal
 			SetConfigMung
 			processor.ToggleCPU()
+			LoadOptions(True) ' reload options for PPC
 			MakeModules args
 			processor.ToggleCPU()
+			LoadOptions(True)
 		End If
 	EndIf
 Case "cleanmods"
@@ -304,10 +313,12 @@ Function MakeApplication( args$[],makelib )
 
 		Local previousOutfile:String = opt_outfile
 		processor.ToggleCPU()
+		LoadOptions(True) ' reload options for PPC
 		opt_outfile :+ "." + processor.CPU()
 		BeginMake
 		MakeApp Main,makelib
 		processor.ToggleCPU()
+		LoadOptions(True)
 		
 		MergeApp opt_outfile, previousOutfile
 		
@@ -383,4 +394,13 @@ Function RanlibDir( args$[] )
 	Ranlib args[0]
 
 End Function
+
+Function LoadOptions(reload:Int = False)
+	If reload Then
+		' reset the options to default
+		RunCommand("default_cc_opts", Null)
+	End If
+	LoadBMK(AppDir + "/custom.bmk")
+End Function
+
 
