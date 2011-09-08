@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.06 30/12/2009 - Added APPID variable for scripts on Mac (useful for custom plists).
 ' 2.05 10/12/2009 - Added .cc file support.
 '                   Fixed Linux optimization flag -Os always being set.
 ' 2.04 28/06/2009 - Tweaked thread error reporting.
@@ -305,6 +306,7 @@ Function MakeApplication( args$[],makelib )
 			
 			' Mac GUI exepath is in the bundle...
 			globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
+			globals.SetVar("APPID", appId)
 			
 		EndIf
 	End If
