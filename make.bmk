@@ -98,6 +98,12 @@
 		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
 			cmd = "g++"
 		end
+		
+		# need to use gcc, not llvm...
+		# 10.7
+		if tonumber(%macos_version%) >= 4208 then
+			cmd = cmd .. "-4.2"
+		end
 
 		if bmk.CPU() == "ppc" then
 			cmd = cmd .. " -arch ppc "
@@ -248,7 +254,10 @@
 		
 		# compile for 10.3 ?
 		# macos version >= 0x1050 ?
-		if tonumber(%macos_version%) >= 4176 then
+		if tonumber(%macos_version%) >= 4208 then
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.4")
+			globals.SetOption("cc_opts", "isysroot", "-isysroot /Developer/SDKs/MacOSX10.6.sdk")
+		elseif tonumber(%macos_version%) >= 4176 then
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
 		end
 	elseif bmk.Platform() == "win32" then

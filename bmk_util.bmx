@@ -71,6 +71,11 @@ Function Sys( cmd$ )
 End Function
 
 Function Ranlib( dir$ )
+	'
+	'Note: Somewhat amusingly, ranlib actually BREAKS archives on Lion!
+	'
+	If macos_version>=$1070 Return
+	'
 	For Local f$=EachIn LoadDir( dir )
 		Local p$=dir+"/"+f
 		Select FileType( p )
@@ -158,13 +163,18 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	
 	If processor.Platform() = "macos"
 		cmd="g++"
+		If macos_version>=$1070 cmd:+"-4.2"
+
 		If processor.CPU()="ppc" 
 			cmd:+" -arch ppc" 
 		Else
 			cmd:+" -arch i386 -read_only_relocs suppress"
 		EndIf
-		If macos_version>=$1050
-			cmd:+" -mmacosx-version-min=10.5"
+		If macos_version>=$1070
+			cmd:+" -mmacosx-version-min=10.4"
+			cmd:+" -isysroot /Developer/SDKs/MacOSX10.6.sdk"
+		Else If macos_version>=$1050
+			cmd:+" -mmacosx-version-min=10.3"
 		EndIf
 	
 		cmd:+" -o "+CQuote( path )

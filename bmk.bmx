@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.12 30/07/2011 - OSX 10.7 (Lion) tweaks.
 ' 2.11 27/02/2011 - Use g++ instead of ld for linking on win32.
 ' 2.10 24/02/2011 - Added option for skipping module builds.
 ' 2.09 30/04/2010 - Fixed loadBMK to work for local app folder.
@@ -112,7 +113,7 @@ Case "convertbb"
 Case "ranlibdir"
 	RanlibDir args
 Case "-v"
-	VersionInfo(String(processor.GCCVersion()))
+	VersionInfo(String(processor.GCCVersion()), GetCoreCount())
 Default
 	CmdError "Unknown operation '" + cmd.ToLower() + "'"
 End Select

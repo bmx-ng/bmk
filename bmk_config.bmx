@@ -5,7 +5,7 @@ Import BRL.MaxUtil
 
 Import Pub.MacOS
 
-Const BMK_VERSION:String = "2.11"
+Const BMK_VERSION:String = "2.12"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -259,7 +259,7 @@ Function Usage:String(fullUsage:Int = False)
 	Return s
 End Function
 
-Function VersionInfo(gcc:String)
+Function VersionInfo(gcc:String, cores:Int)
 	Local s:String = "bmk "
 	s:+ BMK_VERSION + " "
 ?threaded
@@ -278,9 +278,10 @@ Function VersionInfo(gcc:String)
 ?ppc
 	s:+ "ppc"
 ?
-'?win32
 	s:+ " / gcc " + gcc
-'?
+
+	s:+ " (cpu x" + cores + ")"
+	
 	Print s + "~n"
 End Function
 

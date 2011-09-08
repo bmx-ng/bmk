@@ -885,7 +885,11 @@ Type TProcessManager
 	Field threads:TList = New TList
 
 	Method New()
-		cpuCount = GetCoreCount() + 1
+		cpuCount = GetCoreCount()
+		' single cpu boost...
+		If cpuCount = 1 Then
+			cpuCount = 2
+		End If
 	End Method
 
 	Method CheckThreads()
