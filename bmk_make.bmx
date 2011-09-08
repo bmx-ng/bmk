@@ -122,9 +122,6 @@ End Function
 'returns mod interface file
 Function MakeMod:TFile( mod_name$, isRequired:Int = False )
 'Print "MakeMod : " + mod_name
-'If mod_name = "bah.freeimage"
-'DebugStop
-'End If
 	Local path$=ModulePath(mod_name)
 	Local id$=ModuleIdent(mod_name)
 	Local src_path$=path+"/"+id+".bmx"
@@ -142,7 +139,7 @@ Function MakeMod:TFile( mod_name$, isRequired:Int = False )
 
 	Local arc:TFile=TFile.Create( arc_path,Null )
 
-	If ((mod_name+".").Find(opt_modfilter)=0 Or isRequired) And FileType(src_path)=FILETYPE_FILE
+	If ((mod_name+".").Find(opt_modfilter)=0 Or (isRequired And opt_modbuild)) And FileType(src_path)=FILETYPE_FILE
 
 		globals.PushAll()
 		Push cc_opts
@@ -198,7 +195,6 @@ Function MakeMod:TFile( mod_name$, isRequired:Int = False )
 	EndIf
 
 	Local src:TFile=MakeSrc( iface_path,False )
-
 	lnk_files.AddFirst arc
 
 	Return src
@@ -365,7 +361,7 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 		Local obj_path$=p+"/"+StripDir( src_path )
 		If main_file obj_path:+"."+opt_apptype
 		obj_path:+opt_configmung+processor.CPU()+".o"
-		
+
 		Local obj:TFile
 		Local time:Int
 		

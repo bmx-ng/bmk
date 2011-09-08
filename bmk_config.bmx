@@ -5,10 +5,11 @@ Import BRL.MaxUtil
 
 Import Pub.MacOS
 
-Const BMK_VERSION:String = "2.01"
+Const BMK_VERSION:String = "2.02"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s"
 
+Global opt_modbuild
 Global opt_arch$
 Global opt_server$
 Global opt_outfile$
