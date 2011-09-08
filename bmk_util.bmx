@@ -231,17 +231,17 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 		files:+" -lstdc++ -lmingwex"
 		
 		' for a native Win32 runtiime of mingw 3.4.5, this needs to appear early.
-		If Not processor.Option("path_to_mingw", "") Then
+		'If Not processor.Option("path_to_mingw", "") Then
 			files:+" -lmingw32"
-		End If
+		'End If
 
 		files:+" -lgcc -lmoldname -lmsvcrt -luser32 -lkernel32 "
 
-		If processor.Option("path_to_mingw", "") Then
+		'If processor.Option("path_to_mingw", "") Then
 			' for a non-native Win32 runtime, this needs to appear last.
 			' (Actually, also for native gcc 4.x, but I dunno how we'll handle that yet!)
 			files:+"-lmingw32 "
-		End If
+		'End If
 		
 		If Not makelib
 			files:+" "+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") + "/crtend.o" )

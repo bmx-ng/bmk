@@ -3,6 +3,9 @@ SuperStrict
 Import BRL.Reflection
 Import BRL.Map
 Import BRL.LinkedList
+?win32
+Import Pub.FreeProcess
+?
 
 ?threaded
 Import BRL.Threads
@@ -31,6 +34,7 @@ If processor.Platform() = "macos"
 End If
 globals.SetVar("cc_opts", New TOptionVariable)
 globals.SetVar("ld_opts", New TOptionVariable)
+'globals.SetVar("gcc_version", String(processor.GCCVersion()))
 
 Function LoadBMK(path:String)
 	processor.LoadBMK(path)
@@ -343,6 +347,35 @@ Type TBMK
 		Else
 			Return value
 		End If
+	End Method
+	
+	Method GCCVersion:Int()
+?win32
+		Local process:TProcess = CreateProcess("gcc -v")
+		Local s:String
+		
+		While True
+		
+			Local line:String = process.err.ReadLine()
+		
+			If Not process.Status() And Not line Then
+				Exit
+			End If
+			
+			If line.startswith("gcc") Then
+				Local parts:String[] = line.split(" ")
+				
+				Local values:String[] = parts[2].split(".")
+				For Local v:String = EachIn values
+					Local n:String = "0" + v
+					s:+ n[n.length - 2..]
+				Next
+			End If
+			
+		Wend
+		
+		Return s.toInt()
+?
 	End Method
 	
 End Type
