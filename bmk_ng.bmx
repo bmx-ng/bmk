@@ -362,11 +362,18 @@ Type TBMK
 	
 	Method GCCVersion:Int()
 '?win32
+		Global version:String
+		
+		If version Then
+			Return version.toInt()
+		End If
+	
 		Local process:TProcess = CreateProcess("gcc -v")
 		Local s:String
 		
 		While True
-		
+			Delay 10
+			
 			Local line:String = process.err.ReadLine()
 		
 			If Not process.Status() And Not line Then
@@ -384,6 +391,8 @@ Type TBMK
 			End If
 			
 		Wend
+		
+		version = s
 		
 		Return s.toInt()
 '?

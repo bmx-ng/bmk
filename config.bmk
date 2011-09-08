@@ -10,7 +10,9 @@
 # Please edit the following paths and filenames
 #
 
-# The full path to the mingw32 folder
+# The full path to the location of mingw
+#
+# for MacPorts, this is usually /opt/local
 #
 path_to_mingw=/usr/local/i386-mingw32-3.4.5
 
@@ -34,8 +36,10 @@ path_to_mingw_lib2=%path_to_mingw%/lib/gcc/i386-mingw32/3.4.5
 
 # The path to Wine executable
 #
-path_to_wine=/usr/bin/wine
-
+# typical on Linux
+#path_to_wine=/usr/bin/wine
+# typical on Mac
+path_to_wine=/Applications/Darwine/Wine.bundle/Contents/bin/wine
 
 # ----------------------
 #

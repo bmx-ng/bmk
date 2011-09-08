@@ -189,18 +189,51 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	End If
 	
 	If processor.Platform() = "win32"
-		cmd=CQuote(processor.Option("path_to_ld", BlitzMaxPath()+"/bin/ld.exe"))+" -s -stack 4194304"
-		If opt_apptype="gui" cmd:+" -subsystem windows"
+		Local version:Int = processor.GCCVersion()
+		Local usingLD:Int = False
+	
+		' always use g++ instead of LD...
+		' uncomment if we want to change to only use LD for GCC's < 4.x
+		'If version < 40000 Then
+		'	usingLD = True
+		'End If
+		' or we can override in the config...
+		If globals.Get("link_with_ld") Then
+			usingLD = True
+		End If
+		
+		If usingLD
+			cmd=CQuote(processor.Option("path_to_ld", BlitzMaxPath()+"/bin/ld.exe"))+" -s -stack 4194304"
+			If opt_apptype="gui" cmd:+" -subsystem windows"
+		Else
+			cmd=CQuote(processor.Option("path_to_gpp", "g++"))+" -s --stack=4194304"
+			If opt_apptype="gui"
+				cmd:+" --subsystem,windows -mwindows"
+			Else
+				If Not makelib
+					cmd:+" -mconsole"
+				End If
+			End If
+			
+			If opt_threaded Then
+				cmd:+" -mthread"
+			End If
+		End If
 		If makelib cmd:+" -shared"
 		
 		cmd:+" -o "+CQuote( path )
-		cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib") ) ' the BlitzMax lib folder 
-		cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") ) )
-		If globals.Get("path_to_mingw_lib2") Then
-			cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") ) )
-		End If
-		If globals.Get("path_to_mingw_lib3") Then
-			cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib3", BlitzMaxPath()+"/lib") ) )
+		If usingLD Then
+			cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib") ) ' the BlitzMax lib folder 
+
+			If globals.Get("path_to_mingw_lib") Then
+				cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") ) )
+			End If
+			If globals.Get("path_to_mingw_lib2") Then
+				cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") ) )
+			End If
+			If globals.Get("path_to_mingw_lib3") Then
+				cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib3", BlitzMaxPath()+"/lib") ) )
+			End If
 		End If
 	
 		If makelib
@@ -209,10 +242,14 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 			If FileType( def )<>FILETYPE_FILE Throw "Cannot locate .def file"
 			cmd:+" "+def
 			cmd:+" --out-implib "+imp
-			files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") + "/dllcrt2.o" )
+			If usingLD Then
+				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") + "/dllcrt2.o" )
+			End If
 		Else
-			files:+"~n"+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") + "/crtbegin.o" )
-			files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") + "/crt2.o" )
+			If usingLD
+				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") + "/crtbegin.o" )
+				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") + "/crt2.o" )
+			End If
 		EndIf
 	
 		Local xpmanifest$
@@ -233,23 +270,31 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 		cmd:+" "+CQuote( tmpfile )
 	
 		files:+"~n-lgdi32 -lwsock32 -lwinmm -ladvapi32"
-		files:+" -lstdc++ -lmingwex"
+		If usingLD
+			files:+" -lstdc++ -lmingwex"
 		
 		' for a native Win32 runtiime of mingw 3.4.5, this needs to appear early.
 		'If Not processor.Option("path_to_mingw", "") Then
 			files:+" -lmingw32"
 		'End If
 
-		files:+" -lgcc -lmoldname -lmsvcrt -luser32 -lkernel32 "
+			files:+" -lgcc -lmoldname -lmsvcrt "
+		End If
+
+		files :+ " -luser32 -lkernel32 "
 
 		'If processor.Option("path_to_mingw", "") Then
 			' for a non-native Win32 runtime, this needs to appear last.
 			' (Actually, also for native gcc 4.x, but I dunno how we'll handle that yet!)
+		If usingLD
 			files:+"-lmingw32 "
+		End If
 		'End If
 		
 		If Not makelib
-			files:+" "+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") + "/crtend.o" )
+			If usingLD
+				files:+" "+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") + "/crtend.o" )
+			End If
 		EndIf
 		
 		files="INPUT("+files+")"
