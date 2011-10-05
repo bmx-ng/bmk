@@ -208,11 +208,11 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 		'	usingLD = True
 		'End If
 		' or we can override in the config...
-		If globals.Get("link_with_ld") Then
+		If globals.Get("link_with_ld") Or version >= 40600 Then
 			usingLD = True
 		End If
 		
-		If usingLD
+		If usingLD Then
 			cmd=CQuote(processor.Option("path_to_ld", BlitzMaxPath()+"/bin/ld.exe"))+" -s -stack 4194304"
 			If opt_apptype="gui" cmd:+" -subsystem windows"
 		Else
@@ -312,7 +312,7 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	
 	If processor.Platform() = "linux"
 		cmd$="g++"
-		cmd:+" -m32 -s --eh-frame-hdr -pthread"
+		cmd:+" -m32 -s -pthread"
 		cmd:+" -o "+CQuote( path )
 		cmd:+" "+CQuote( tmpfile )
 		cmd:+" -L/usr/lib32"

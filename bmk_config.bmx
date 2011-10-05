@@ -5,7 +5,7 @@ Import BRL.MaxUtil
 
 Import Pub.MacOS
 
-Const BMK_VERSION:String = "2.13"
+Const BMK_VERSION:String = "2.14"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -54,6 +54,16 @@ If is_pid_native(0) opt_arch="x86" Else opt_arch="ppc"
 
 opt_arch="x86"
 'cfg_platform="win32"
+
+'Fudge PATH so exec sees our MinGW first!
+Local mingw$=getenv_( "MINGW" )
+If mingw
+	Local path$=getenv_( "PATH" )
+	If path
+		path=mingw+"\bin;"+path
+		putenv_ "PATH="+path
+	EndIf
+EndIf
 
 ?Linux
 
