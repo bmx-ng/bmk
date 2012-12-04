@@ -256,8 +256,7 @@
 		# macos version >= 0x1050 ?
 		if tonumber(%macos_version%) >= 4208 then
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.4")
-			globals.SetOption("cc_opts", "isysroot", "-isysroot /Developer/SDKs/MacOSX10.6.sdk")
-		elseif tonumber(%macos_version%) >= 4176 then
+		elseif tonumber(%macos_version%) >= 4160 then
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
 		end
 	elseif bmk.Platform() == "win32" then

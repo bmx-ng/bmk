@@ -72,9 +72,9 @@ End Function
 
 Function Ranlib( dir$ )
 	'
-	'Note: Somewhat amusingly, ranlib actually BREAKS archives on Lion!
-	'
-	If macos_version>=$1070 Return
+?MacOS
+	If macos_version>=$1040 Return
+?
 	'
 	For Local f$=EachIn LoadDir( dir )
 		Local p$=dir+"/"+f
@@ -163,18 +163,16 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	
 	If processor.Platform() = "macos"
 		cmd="g++"
-		If macos_version>=$1070 cmd:+"-4.2"
 
 		If processor.CPU()="ppc" 
 			cmd:+" -arch ppc" 
 		Else
 			cmd:+" -arch i386 -read_only_relocs suppress"
 		EndIf
-		If macos_version>=$1070
-			cmd:+" -mmacosx-version-min=10.4"
-			cmd:+" -isysroot /Developer/SDKs/MacOSX10.6.sdk"
-		Else If macos_version>=$1050
-			cmd:+" -mmacosx-version-min=10.3"
+		If macos_version>=$1070				'Lion?
+			cmd:+" -mmacosx-version-min=10.4"	'...can build for Tiger++
+		Else If macos_version>=$1040			'Tiger?
+			cmd:+" -mmacosx-version-min=10.3"	'...can build for Panther++
 		EndIf
 	
 		cmd:+" -o "+CQuote( path )
@@ -312,7 +310,7 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	
 	If processor.Platform() = "linux"
 		cmd$="g++"
-		cmd:+" -m32 -s -pthread"
+		cmd:+" -m32 -s -Os -pthread"
 		cmd:+" -o "+CQuote( path )
 		cmd:+" "+CQuote( tmpfile )
 		cmd:+" -L/usr/lib32"

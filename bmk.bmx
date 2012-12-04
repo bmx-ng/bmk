@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.15 04/12/2012 - Update to latest official changes.
 ' 2.14 05/10/2011 - Added recent official changes.
 '                   Fixed mingw gcc 4.6+ build problems.
 ' 2.13 21/08/2011 - ModuleInfo quotes support.
