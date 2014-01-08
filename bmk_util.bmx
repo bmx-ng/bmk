@@ -202,7 +202,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	End If
 	
 	If processor.Platform() = "win32"
-		Local version:Int = Int(processor.GCCVersion())
+		Local version:Int = Int(processor.GCCVersion(True))
 		Local usingLD:Int = False
 	
 		' always use g++ instead of LD...

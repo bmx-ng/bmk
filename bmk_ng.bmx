@@ -406,6 +406,10 @@ Type TBMK
 		
 		version = s
 		
+		If getVersionNum Then
+			Return version
+		End If
+		
 		Return compiler + " " + version
 '?
 	End Method
