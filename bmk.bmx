@@ -1,5 +1,9 @@
 '
 ' Change History :
+' 2.16 07/12/2013 - Support for pre-build scripts.
+'                   Changes for OS X sandbox/codesign support.
+'                   Return correct version when using clang as gcc compiler.
+'                   Added configurable ld_opts settings.
 ' 2.15 04/12/2012 - Update to latest official changes.
 ' 2.14 05/10/2011 - Added recent official changes.
 '                   Fixed mingw gcc 4.6+ build problems.
@@ -117,7 +121,7 @@ Case "convertbb"
 Case "ranlibdir"
 	RanlibDir args
 Case "-v"
-	VersionInfo(String(processor.GCCVersion()), GetCoreCount())
+	VersionInfo(processor.GCCVersion(), GetCoreCount())
 Default
 	CmdError "Unknown operation '" + cmd.ToLower() + "'"
 End Select
@@ -251,6 +255,50 @@ Function MakeApplication( args$[],makelib )
 	globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
 	globals.SetVar("OUTFILE", StripDir(StripExt(opt_outfile)))
 	
+	' some more useful globals
+	If processor.Platform() = "macos" And opt_apptype="gui" Then
+		Local appId$=StripDir( opt_outfile )
+		
+		globals.SetVar("APPID", appId)
+		' modify for bundle
+		globals.SetVar("EXEPATH", ExtractDir(opt_outfile+".app/Contents/MacOS/"+appId))
+		
+		
+		' make bundle dirs
+		Local exeDir$=opt_outfile+".app",d$
+
+		d=exeDir+"/Contents/MacOS"
+		Select FileType( d )
+		Case FILETYPE_NONE
+			CreateDir d,True
+			If FileType( d )<>FILETYPE_DIR
+				Throw "Unable to create application directory"
+			EndIf
+		Case FILETYPE_FILE
+			Throw "Unable to create application directory"
+		Case FILETYPE_DIR
+		End Select
+		
+		d=exeDir+"/Contents/Resources"
+		Select FileType( d )
+		Case FILETYPE_NONE
+			CreateDir d
+			If FileType( d )<>FILETYPE_DIR
+				Throw "Unable to create resources directory"
+			EndIf
+		Case FILETYPE_FILE
+			Throw "Unable to create resources directory"
+		Case FILETYPE_DIR
+		End Select
+		
+		
+	End If
+	
+	
+	' pre process
+	LoadBMK(ExtractDir(Main) + "/pre.bmk")
+
+	
 	If processor.Platform() = "win32" Then
 		If makelib
 			If ExtractExt(opt_outfile).ToLower()<>"dll" opt_outfile:+".dll"
@@ -262,10 +310,11 @@ Function MakeApplication( args$[],makelib )
 	If processor.Platform() = "macos" Then
 		If opt_apptype="gui"
 	
-			Local appId$=StripDir( opt_outfile )
+			'Local appId$=StripDir( opt_outfile )
+			Local appId$ = globals.Get("APPID")
 	
 			Local exeDir$=opt_outfile+".app",d$,t:TStream
-	
+	Rem
 			d=exeDir+"/Contents/MacOS"
 			Select FileType( d )
 			Case FILETYPE_NONE
@@ -289,7 +338,7 @@ Function MakeApplication( args$[],makelib )
 				Throw "Unable to create resources directory"
 			Case FILETYPE_DIR
 			End Select
-	
+	End Rem
 			t=WriteStream( exeDir+"/Contents/Info.plist" )
 			If Not t Throw "Unable to create Info.plist"
 			t.WriteLine "<?xml version=~q1.0~q encoding=~qUTF-8~q?>"
@@ -302,6 +351,9 @@ Function MakeApplication( args$[],makelib )
 			t.WriteLine "~t<string>"+appId+"</string>"
 			t.WriteLine "~t<key>CFBundlePackageType</key>"
 			t.WriteLine "~t<string>APPL</string>"
+			If globals.Get("custom_plist") Then
+				t.WriteLine "~t" + globals.Get("custom_plist")
+			End If
 			t.WriteLine "</dict>"
 			t.WriteLine "</plist>"
 			t.Close
@@ -316,8 +368,8 @@ Function MakeApplication( args$[],makelib )
 			opt_outfile=exeDir+"/Contents/MacOS/"+appId
 			
 			' Mac GUI exepath is in the bundle...
-			globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
-			globals.SetVar("APPID", appId)
+			'globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
+			'globals.SetVar("APPID", appId)
 			
 		EndIf
 	End If

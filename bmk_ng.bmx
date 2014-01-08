@@ -360,12 +360,17 @@ Type TBMK
 		End If
 	End Method
 	
-	Method GCCVersion:Int()
+	Method GCCVersion:String(getVersionNum:Int = False)
 '?win32
+		Global compiler:String
 		Global version:String
 		
-		If version Then
-			Return version.toInt()
+		If compiler Then
+			If getVersionNum Then
+				Return version
+			Else
+				Return compiler + " " + version
+			End If
 		End If
 	
 		Local process:TProcess = CreateProcess("gcc -v")
@@ -381,6 +386,7 @@ Type TBMK
 			End If
 			
 			If line.startswith("gcc") Then
+				compiler = "gcc"
 				Local parts:String[] = line.split(" ")
 				
 				Local values:String[] = parts[2].split(".")
@@ -388,14 +394,23 @@ Type TBMK
 					Local n:String = "0" + v
 					s:+ n[n.length - 2..]
 				Next
+			Else
+				Local pos:Int = line.Find("clang")
+				If pos >= 0 Then
+					compiler = "clang"
+					s = line[pos + 6..line.find(")", pos)]
+				End If
 			End If
 			
 		Wend
 		
 		version = s
 		
-		Return s.toInt()
+		Return compiler + " " + version
 '?
+	End Method
+	
+	Method GCCVersionInt:Int()
 	End Method
 	
 End Type
@@ -463,9 +478,18 @@ Type TBMKGlobals
 	End Method
 	
 	' push all the variables
-	Method PushAll()
+	Method PushAll(exclude:String[] = Null)
 		For Local v:String = EachIn vars.Keys()
-			Push(v)
+			If Not exclude
+				Push(v)
+			Else
+				For Local s:String = EachIn exclude
+					If s <> v Then
+						Push(v)
+						Exit
+					End If
+				Next
+			End If
 		Next
 	End Method
 	
@@ -535,6 +559,12 @@ Type TBMKGlobals
 	
 	Method Reset()
 		stack.Clear()
+	End Method
+	
+	Method Dump()
+		For Local k:String = EachIn vars.Keys()
+			Print k + " : " + Get(k)
+		Next
 	End Method
 	
 End Type

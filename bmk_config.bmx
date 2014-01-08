@@ -5,7 +5,7 @@ Import BRL.MaxUtil
 
 Import Pub.MacOS
 
-Const BMK_VERSION:String = "2.15"
+Const BMK_VERSION:String = "2.16"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -292,7 +292,7 @@ Function VersionInfo(gcc:String, cores:Int)
 ?ppc
 	s:+ "ppc"
 ?
-	s:+ " / gcc " + gcc
+	s:+ " / " + gcc
 
 	s:+ " (cpu x" + cores + ")"
 	

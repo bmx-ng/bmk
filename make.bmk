@@ -101,7 +101,8 @@
 		
 		# need to use gcc, not llvm...
 		# 10.7
-		if tonumber(%macos_version%) >= 4208 then
+		# but for 10.8 we have no choice...
+		if tonumber(%macos_version%) >= 4208 and tonumber(%macos_version%) < 4224 then
 			cmd = cmd .. "-4.2"
 		end
 
@@ -217,6 +218,24 @@
 	globals.AddOption("ld_opts", arg1, arg2)
 @end
 
+@define addwin32ldopt
+	if bmk.Platform() == "win32" then
+		globals.AddOption("ld_opts", arg1, arg2)
+	end
+@end
+
+@define addmacldopt
+	if bmk.Platform() == "macos" then
+		globals.AddOption("ld_opts", arg1, arg2)
+	end
+@end
+
+@define addlinuxldopt
+	if bmk.Platform() == "linux" then
+		globals.AddOption("ld_opts", arg1, arg2)
+	end
+@end
+
 # compiles the specified file, using the current options.
 @define make
 	make.Make(arg1)
@@ -256,7 +275,10 @@
 		# macos version >= 0x1050 ?
 		if tonumber(%macos_version%) >= 4208 then
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.4")
-		elseif tonumber(%macos_version%) >= 4160 then
+			if tonumber(%macos_version%) >= 4224 then
+				globals.SetOption("cc_opts", "isysroot", "-isysroot /Developer/SDKs/MacOSX10.6.sdk")
+			end
+		elseif tonumber(%macos_version%) >= 4176 then
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
 		end
 	elseif bmk.Platform() == "win32" then

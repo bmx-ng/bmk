@@ -261,7 +261,7 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 		globals.SetVar("mod_ccopts", String(mod_opts.cc_opts))
 	End If
 	
-	globals.PushAll()
+	globals.PushAll(["LD_OPTS"])
 	push cc_opts
 	Push CurrentDir()
 	
@@ -498,7 +498,8 @@ Function MakeApp:TFile( Main$,makelib )
 		If Not opt_quiet Print "Linking:"+StripDir( opt_outfile )
 		lnk_files=FilePaths( lnk_files )
 		AddList ext_files,lnk_files
-		LinkApp opt_outfile,lnk_files,makelib
+'globals.Dump()
+		LinkApp opt_outfile,lnk_files,makelib, globals.Get("ld_opts")
 	EndIf
 	
 	' post process

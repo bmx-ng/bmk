@@ -154,7 +154,7 @@ Function CreateArc( path$ , oobjs:TList )
 	EndIf
 End Function
 
-Function LinkApp( path$,lnk_files:TList,makelib )
+Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	DeleteFile path
 
 	Local cmd$
@@ -177,6 +177,7 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	
 		cmd:+" -o "+CQuote( path )
 	'	cmd:+" -bind_at_load"
+	
 		cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib" ) )
 	
 		If Not opt_dumpbuild cmd:+" -filelist "+CQuote( tmpfile )
@@ -189,6 +190,10 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 			EndIf
 		Next
 		cmd:+" -lSystem -framework CoreServices -framework CoreFoundation"
+
+		If opts Then
+			cmd :+ " " + opts
+		End If
 		
 		If processor.CPU() = "ppc"
 			cmd:+ " -lc -lgcc_eh"
@@ -197,7 +202,7 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	End If
 	
 	If processor.Platform() = "win32"
-		Local version:Int = processor.GCCVersion()
+		Local version:Int = Int(processor.GCCVersion())
 		Local usingLD:Int = False
 	
 		' always use g++ instead of LD...
@@ -338,7 +343,7 @@ Function LinkApp( path$,lnk_files:TList,makelib )
 	Local stream:TStream=WriteStream( tmpfile )
 	stream.WriteBytes files.ToCString(),files.length
 	stream.Close
-	
+
 	If Sys( cmd ) Throw "Build Error: Failed to link "+path
 
 End Function
