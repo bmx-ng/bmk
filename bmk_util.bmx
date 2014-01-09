@@ -283,15 +283,27 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		cmd:+" "+CQuote( tmpfile )
 	
 		files:+"~n-lgdi32 -lwsock32 -lwinmm -ladvapi32"
+
+		' add any user-defined linker options
+		files:+ " " + opts
+
 		If usingLD
-			files:+" -lstdc++ -lmingwex"
+			If opts.Find("stdc++") = -1 Then
+				files:+" -lstdc++"
+			End If
+			files:+" -lmingwex"
+			
 		
 		' for a native Win32 runtiime of mingw 3.4.5, this needs to appear early.
 		'If Not processor.Option("path_to_mingw", "") Then
 			files:+" -lmingw32"
 		'End If
 
-			files:+" -lgcc -lmoldname -lmsvcrt "
+			If opts.Find("gcc") = -1 Then
+				files:+" -lgcc"
+			End If
+			
+			files :+ " -lmoldname -lmsvcrt "
 		End If
 
 		files :+ " -luser32 -lkernel32 "
@@ -300,8 +312,12 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			' for a non-native Win32 runtime, this needs to appear last.
 			' (Actually, also for native gcc 4.x, but I dunno how we'll handle that yet!)
 		If usingLD
-			files:+"-lmingw32 "
+			files:+" -lmingw32 "
 		End If
+
+		' add any user-defined linker options, again - just to cover whether we missed dependencies before.
+		files:+ " " + opts
+
 		'End If
 		
 		If Not makelib
