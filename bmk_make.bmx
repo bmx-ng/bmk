@@ -394,8 +394,9 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 		If src.time>FileTime( obj_path ) Or (Not isRequired And opt_all) Or force_build
 
 			' pragmas
+			Local pragma_inDefine:Int, pragma_text:String, pragma_name:String
 			For Local pragma:String = EachIn src_file.pragmas
-				processor.ProcessPragma(pragma)
+				processor.ProcessPragma(pragma, pragma_inDefine, pragma_text, pragma_name)
 			Next
 
 			If Not opt_quiet Print "Compiling:"+StripDir(src_path)

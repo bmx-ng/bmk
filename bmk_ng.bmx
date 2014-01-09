@@ -101,8 +101,7 @@ Type TBMK
 	End Method
 	
 	' processes a pragma
-	Method ProcessPragma(line:String)
-		Local inDefine:Int, text:String, name:String
+	Method ProcessPragma(line:String, inDefine:Int Var, text:String Var, name:String Var)
 		ProcessLine(line, inDefine, text, name)
 	End Method
 	

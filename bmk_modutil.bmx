@@ -174,7 +174,7 @@ Function ParseSourceFile:TSourceFile( path$ )
 			If pragmaLine Then
 				Local lpragma:String = pragmaLine.ToLower()
 				i = 0
-				While i<lpragma.length And Not (CharIsAlpha(lpragma[i]) Or CharIsDigit(lpragma[i]))
+				While i<lpragma.length And Not (CharIsAlpha(lpragma[i]) Or CharIsDigit(lpragma[i]) Or lpragma[i] = Asc("@"))
 					i:+1
 				Wend
 				file.pragmas.AddLast pragmaLine[i..]

@@ -4,6 +4,7 @@
 '                   Changes for OS X sandbox/codesign support.
 '                   Return correct version when using clang as gcc compiler.
 '                   Added configurable ld_opts settings.
+'                   Enhanced inline pragma support.
 ' 2.15 04/12/2012 - Update to latest official changes.
 ' 2.14 05/10/2011 - Added recent official changes.
 '                   Fixed mingw gcc 4.6+ build problems.
