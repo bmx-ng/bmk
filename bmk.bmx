@@ -5,6 +5,7 @@
 '                   Return correct version when using clang as gcc compiler.
 '                   Added configurable ld_opts settings.
 '                   Enhanced inline pragma support.
+'                   Fixed module hierarchical build issue.
 ' 2.15 04/12/2012 - Update to latest official changes.
 ' 2.14 05/10/2011 - Added recent official changes.
 '                   Fixed mingw gcc 4.6+ build problems.
@@ -181,7 +182,9 @@ Function MakeModules( args$[] )
 	MakeMod "brl.blitz"
 	
 	For Local name$=EachIn mods
-		MakeMod name
+		If Not opt_modfilter Or (opt_modfilter And (name.Tolower()+".").Find(opt_modfilter) = 0) Then
+			MakeMod name, True
+		End If
 	Next
 	
 End Function

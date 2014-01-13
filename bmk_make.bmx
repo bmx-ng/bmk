@@ -121,7 +121,7 @@ Function BeginMake()
 End Function
 
 'returns mod interface file
-Function MakeMod:TFile( mod_name$, isRequired:Int = False )
+Function MakeMod:TFile( mod_name$, isRequired:Int = False, isDependency:Int = False )
 
 	Local path$=ModulePath(mod_name)
 	Local id$=ModuleIdent(mod_name)
@@ -153,8 +153,7 @@ Function MakeMod:TFile( mod_name$, isRequired:Int = False )
 '	Assert Not FindFile( arc_path,lnk_files )
 
 	Local arc:TFile=TFile.Create( arc_path,Null )
-
-	If ((mod_name+".").Find(opt_modfilter)=0 Or (isRequired And opt_modbuild)) And FileType(src_path)=FILETYPE_FILE
+	If ((mod_name+".").Find(opt_modfilter)=0 Or (opt_modbuild  And isRequired)) And FileType(src_path)=FILETYPE_FILE
 
 		globals.PushAll()
 		Push cc_opts
@@ -192,12 +191,12 @@ Function MakeMod:TFile( mod_name$, isRequired:Int = False )
 			force_build = True
 		End If
 
-		MakeSrc src_path,True, force_build, isRequired
+		MakeSrc src_path,True, force_build, isRequired, isDependency
 
 ?threaded
 		processManager.WaitForThreads()
 ?			
-		If MaxTime( obj_files )>arc.time Or (Not isRequired And opt_all)
+		If MaxTime( obj_files )>arc.time Or (Not isDependency And opt_all)
 			If Not opt_quiet Print "Archiving:"+StripDir(arc_path)
 			CreateArc arc_path,FilePaths( obj_files )
 			arc.time=FileTime(arc_path)
@@ -218,7 +217,7 @@ End Function
 
 'adds to obj_files
 'returns input src file
-Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:Int = False )
+Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:Int = False, isDependency:Int = False )
 'Print "MakeSrc : " + src_path
 	Local src:TFile=FindFile( src_path,src_files )
 	If src Return src
@@ -301,7 +300,7 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 
 		'module imports
 		For Local imp$=EachIn src_file.modimports
-			Local dep:TFile=MakeMod(imp, True)
+			Local dep:TFile=MakeMod(imp, isRequired, True)
 			If Not dep Continue
 			'cc_opts:+" -I"+CQuote(ExtractDir(dep.path))
 			globals.AddOption("cc_opts", "include_"+imp, "-I"+CQuote(ExtractDir(dep.path)))
@@ -331,7 +330,7 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 				ext_files.AddLast RealPath(imp)
 			Else If Match( imp_ext,ALL_SRC_EXTS )
 
-				Local dep:TFile=MakeSrc(RealPath(imp),True,,isRequired)
+				Local dep:TFile=MakeSrc(RealPath(imp),True,,isRequired, isDependency)
 
 				If Not dep Or Not Match( imp_ext,"bmx;i" ) Continue
 				
@@ -391,7 +390,7 @@ Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:I
 		Local time:Int
 		
 		' Has the source been changed since we last compiled?
-		If src.time>FileTime( obj_path ) Or (Not isRequired And opt_all) Or force_build
+		If src.time>FileTime( obj_path ) Or (Not isDependency And opt_all) Or force_build
 
 			' pragmas
 			Local pragma_inDefine:Int, pragma_text:String, pragma_name:String
