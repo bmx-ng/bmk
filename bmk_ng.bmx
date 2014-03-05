@@ -415,7 +415,38 @@ Type TBMK
 	
 	Method GCCVersionInt:Int()
 	End Method
+
+	Method BCCVersion:String()
+
+		Global bcc:String
+		
+		If bcc Then
+			Return bcc
+		End If
 	
+		Local process:TProcess = CreateProcess(BlitzMaxPath() + "/bin/bcc")
+		Local s:String
+		
+		While True
+			Delay 10
+			
+			Local line:String = process.pipe.ReadLine()
+		
+			If Not process.Status() And Not line Then
+				Exit
+			End If
+			
+			If line.startswith("BlitzMax") Then
+				bcc = "BlitzMax"
+			Else
+				bcc = line[..line.Find(" ")]
+			End If
+			
+		Wend
+
+		Return bcc
+	End Method
+
 End Type
 
 

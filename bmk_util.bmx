@@ -98,15 +98,21 @@ End Function
 Function CompileBMX( src$,obj$,opts$ )
 	DeleteFile obj
 
-	Local azm$=StripExt(obj)+".s"
+	Local azm$=StripExt(obj)
+	
+	If processor.BCCVersion() = "BlitzMax" Then
+		azm :+ ".s"
+	End If
 	
 ?threaded
 		processManager.WaitForThreads()
 ?			
 	RunCommand("CompileBMX", [src, azm, opts])
 
-	' it would be nice to be able to call this from the script... but we need more refactoring first :-p
-	Assemble azm,obj
+	If processor.BCCVersion() = "BlitzMax" Then
+		' it would be nice to be able to call this from the script... but we need more refactoring first :-p
+		Assemble azm,obj
+	End If
 End Function
 
 Function CreateArc( path$ , oobjs:TList )
