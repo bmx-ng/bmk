@@ -128,7 +128,7 @@
 		opts = opts .. " -w"
 	end
 
-	cmd = cmd .. opts .. %cc_opts% .. %mod_ccopts% .. " -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+	cmd = cmd .. opts .. %cc_opts% .. %mod_ccopts% .. " -g -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
 
 	if bmk.MultiSys( cmd, src ) ~= 0 then
 		bmk.ThrowNew("Build Error: failed to compile " .. src)
@@ -288,8 +288,10 @@
 		
 	elseif bmk.Platform() == "linux" then
 		globals.SetOption("cc_opts", "aliasing", "-fno-strict-aliasing")
-		globals.SetOption("cc_opts", "arch", "-m32")
-		globals.SetOption("cc_opts", "fancymath", "-mfancy-math-387")
+		if bmk.CPU() == "x86" then
+			globals.SetOption("cc_opts", "arch", "-m32")
+			globals.SetOption("cc_opts", "fancymath", "-mfancy-math-387")
+		end
 	
 	end
 

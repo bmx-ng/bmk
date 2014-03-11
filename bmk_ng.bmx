@@ -283,21 +283,19 @@ Type TBMK
 		End If
 	End Method
 	
-	Field cputypes:String[] = ["ppc", "x86"]
-?ppc
-	Field cputype:Int = 0
-?x86
-	Field cputype:Int = 1
-?
-	
 	' returns the cpu type, as a string
 	Method CPU:String()
-		Return cputypes[cputype]
+		Return opt_arch
+'		Return cputypes[cputype]
 	End Method
 	
 	Method ToggleCPU()
 		If opt_universal Then
-			cputype = 1 - cputype
+			If opt_arch = "ppc" Then
+				opt_arch = "x86"
+			Else
+				opt_arch = "ppc"
+			End If
 		End If
 	End Method
 	

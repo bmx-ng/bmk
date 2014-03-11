@@ -337,10 +337,16 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	
 	If processor.Platform() = "linux"
 		cmd$="g++"
-		cmd:+" -m32 -s -Os -pthread"
+		'cmd:+" -m32 -s -Os -pthread"
+		If processor.CPU() = "x86" Then
+			cmd:+" -m32"
+		End If
+		cmd:+" -pthread"
 		cmd:+" -o "+CQuote( path )
 		cmd:+" "+CQuote( tmpfile )
-		cmd:+" -L/usr/lib32"
+		If processor.CPU() = "x86" Then
+			cmd:+" -L/usr/lib32"
+		End If
 		cmd:+" -L/usr/X11R6/lib"
 		cmd:+" -L/usr/lib"
 		cmd:+" -L"+CQuote( BlitzMaxPath()+"/lib" )

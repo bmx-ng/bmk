@@ -110,11 +110,13 @@ Function ParseSourceFile:TSourceFile( path$ )
 					cc=opt_debug
 				Case "threaded"
 					cc=opt_threaded
-?x86
+'?x86
 				Case "x86" cc=processor.CPU()="x86"
-?ppc
+'?ppc
 				Case "ppc" cc=processor.CPU()="ppc"
-?
+				Case "x64" cc=processor.CPU()="x64"
+				Case "arm" cc=processor.CPU()="arm"
+'?
 				Case "win32" 
 					cc=False
 					If processor.Platform() = "win32"
@@ -145,6 +147,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					If processor.Platform() = "linux"
 						 cc=opt_arch="ppc"
 					End If
+				Case "linuxx64"
+					cc=False
+					If processor.Platform() = "linux"
+						 cc=opt_arch="x64"
+					End If
 				Case "macos"
 					cc=False
 					If processor.Platform() = "macos"
@@ -159,6 +166,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					cc=False
 					If processor.Platform() = "macos"
 						 cc=processor.CPU()="ppc"
+					End If
+				Case "macosx64"
+					cc=False
+					If processor.Platform() = "macos"
+						 cc=processor.CPU()="x64"
 					End If
 				Default
 					cc=False
