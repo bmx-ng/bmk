@@ -119,8 +119,7 @@
 		end
 		
 	elseif bmk.Platform() == "linux" then
-	
-		cmd = "gcc"
+		cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
 	end
 
 	# disable warnings ?
@@ -138,6 +137,10 @@
 
 @define addlib
 	globals.Add("libs", arg1)
+@end
+
+@define addoption
+	globals.Add(arg1, arg2)
 @end
 
 ## adds a cc_opt option

@@ -149,7 +149,7 @@ Function CreateArc( path$ , oobjs:TList )
 				EndIf
 				cmd=""
 			EndIf
-			If Not cmd cmd="ar -r "+CQuote(path)
+			If Not cmd cmd=processor.Option(processor.BuildName("ar"), "ar") + " -r "+CQuote(path)
 			cmd:+" "+CQuote(t)
 		Next
 	End If
@@ -336,7 +336,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	End If
 	
 	If processor.Platform() = "linux"
-		cmd$="g++"
+		cmd$ = processor.Option(processor.BuildName("gpp"), "g++")
 		'cmd:+" -m32 -s -Os -pthread"
 		If processor.CPU() = "x86" Then
 			cmd:+" -m32"
@@ -345,10 +345,10 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		cmd:+" -o "+CQuote( path )
 		cmd:+" "+CQuote( tmpfile )
 		If processor.CPU() = "x86" Then
-			cmd:+" -L/usr/lib32"
+			cmd:+ " -L" + processor.Option(processor.BuildName("lib32"), "/usr/lib32")
 		End If
-		cmd:+" -L/usr/X11R6/lib"
-		cmd:+" -L/usr/lib"
+		cmd:+" -L" + processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib")
+		cmd:+" -L" + processor.Option(processor.BuildName("lib"), "/usr/lib")
 		cmd:+" -L"+CQuote( BlitzMaxPath()+"/lib" )
 	
 		For Local t$=EachIn lnk_files

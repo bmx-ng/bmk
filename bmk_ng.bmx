@@ -299,6 +299,11 @@ Type TBMK
 		End If
 	End Method
 	
+	Method BuildName:String(v:String)
+		Local s:String = Platform() + "." + CPU() + "." + v
+		Return s.ToLower()
+	End Method
+	
 	Method Sys:Int(cmd:String)
 		If Int(globals.Get("verbose")) Or opt_verbose
 			Print cmd

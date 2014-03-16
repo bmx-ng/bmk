@@ -1,6 +1,7 @@
 '
 ' Change History :
 ' 2.17 25/02/2014 - Support multiple build systems.
+'                 - Added Linux custom tool locations.
 ' 2.16 07/12/2013 - Support for pre-build scripts.
 '                   Changes for OS X sandbox/codesign support.
 '                   Return correct version when using clang as gcc compiler.
