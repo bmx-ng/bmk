@@ -172,8 +172,10 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 
 		If processor.CPU()="ppc" 
 			cmd:+" -arch ppc" 
-		Else
+		Else If processor.CPU()="x86"
 			cmd:+" -arch i386 -read_only_relocs suppress"
+		Else
+			cmd:+" -arch x86_64"
 		EndIf
 		If macos_version>=$1070				'Lion?
 			cmd:+" -mmacosx-version-min=10.4"	'...can build for Tiger++

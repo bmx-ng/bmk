@@ -9,8 +9,10 @@
 	if bmk.Platform() == "macos" then
 		if bmk.CPU() == "ppc" then
 			cmd = "as -arch ppc"
-		else
+		elseif bmk.CPU() == "x86" then
 			cmd = "as -arch i386"
+		else
+			cmd = "as -arch x86_64"
 		end
 		cmd = cmd .. " -W -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
 	else
@@ -70,7 +72,7 @@
 		bmk.ThrowNew("Build Error: failed to compile " .. src)
 	end
 
-	if bmk.Platform() == "macos" and bmk.CPU() == "x86" then
+	if bmk.Platform() == "macos" and bmk.CPU() == "x86" and bmk.BCCVersion() == "BlitzMax" then
 		cmd = bmk.Quote(utils.BlitzMaxPath() .. "/bin/fasm2as") .. " " .. bmk.Quote(azm)
 			if bmk.Sys( cmd ) ~= 0 then
 				bmk.ThrowNew("Fasm2as failed - please contact BRL!")
@@ -108,8 +110,10 @@
 
 		if bmk.CPU() == "ppc" then
 			cmd = cmd .. " -arch ppc "
-		else
+		elseif bmk.CPU() == "x86" then
 			cmd = cmd .. " -arch i386 "
+		else
+			cmd = cmd .. " -arch x86_64 "
 		end
 		
 	elseif bmk.Platform() == "win32" then
@@ -125,6 +129,10 @@
 	# disable warnings ?
 	if %CC_WARNINGS% == "" then
 		opts = opts .. " -w"
+	end
+	
+	if bmk.BCCVersion() ~= "BlitzMax" then
+		opts = opts .. " -DBMX_NG"
 	end
 
 	cmd = cmd .. opts .. %cc_opts% .. %mod_ccopts% .. " -g -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)

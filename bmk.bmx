@@ -1,5 +1,7 @@
 '
 ' Change History :
+' 2.18 13/04/2014 - Added suport for 64-bit OS X build options.
+'                 - Added new bcc c/c++ compiler definition : BMX_NG
 ' 2.17 25/02/2014 - Support multiple build systems.
 '                 - Added Linux custom tool locations.
 ' 2.16 07/12/2013 - Support for pre-build scripts.

@@ -5,7 +5,7 @@ Import BRL.MaxUtil
 
 Import Pub.MacOS
 
-Const BMK_VERSION:String = "2.17"
+Const BMK_VERSION:String = "2.18"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
