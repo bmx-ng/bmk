@@ -2,10 +2,11 @@
 Strict
 
 Import BRL.MaxUtil
-
+Import BRL.StandardIO
+?macos
 Import Pub.MacOS
-
-Const BMK_VERSION:String = "2.18"
+?
+Const BMK_VERSION:String = "2.19"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -50,10 +51,20 @@ If is_pid_native(0) opt_arch="ppc" Else opt_arch="x86"
 ?MacOsX86
 If is_pid_native(0) opt_arch="x86" Else opt_arch="ppc"
 
-?Win32
+?win32x64
+opt_arch="x64"
 
+Local mingw$=getenv_( "MINGW" )
+If mingw
+	Local path$=getenv_( "PATH" )
+	If path
+		path=mingw+"\bin;"+path
+		putenv_ "PATH="+path
+	EndIf
+EndIf
+
+?Win32
 opt_arch="x86"
-'cfg_platform="win32"
 
 'Fudge PATH so exec sees our MinGW first!
 Local mingw$=getenv_( "MINGW" )
@@ -65,11 +76,12 @@ If mingw
 	EndIf
 EndIf
 
-?Linux
-
+?Linuxx86
 opt_arch="x86"
-'cfg_platform="linux"
-
+?linuxx64
+opt_arch="x64"
+?linuxarm
+opt_arch="arm"
 ?
 
 ChangeDir LaunchDir
@@ -235,6 +247,23 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t-d~n"
 		s:+ "~t~tBuilds a debug version. (This is the default for makeapp)."
 		s:+ "~n~n"
+		s:+ "~t-g <architecture>~n"
+		s:+ "~t~tCompiles to the specified architecture. (the default is the native for this binary - "
+?x86
+		s:+ "x86"
+?x64
+		s:+ "x64"
+?ppc
+		s:+ "ppc"
+?arm
+		s:+ "arm"
+?
+		s:+ ")~n"
+		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
+		s:+ "~t~t~tOS X  : x86, x64~n"
+		s:+ "~t~t~tWin32 : x86, x64~n"
+		s:+ "~t~t~tLinux : x86, x64, arm~n"
+		s:+ "~n~n"
 		s:+ "~t-h~n"
 		s:+ "~t~tBuild multithreaded version. (By default, the single threaded version is built.)"
 		s:+ "~n~n"
@@ -291,6 +320,10 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "x86"
 ?ppc
 	s:+ "ppc"
+?x64
+	s:+ "x64"
+?arm
+	s:+ "arm"
 ?
 	s:+ " / " + gcc
 

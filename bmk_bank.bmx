@@ -4,6 +4,7 @@ Strict
 Import "bmk_config.bmx"
 
 Import Pub.ZLib
+Import BRL.SocketStream
 
 Function CompressBank:TBank( bank:TBank )
 

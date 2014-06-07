@@ -1,5 +1,8 @@
 '
 ' Change History :
+' 2.19 05/06/2014 - Linux compilation fix for new bcc.
+'                 - Architecture tweaks and documentation update.
+'                 - Removed bb2bmx/convertbb option.
 ' 2.18 13/04/2014 - Added suport for 64-bit OS X build options.
 '                 - Added new bcc c/c++ compiler definition : BMX_NG
 ' 2.17 25/02/2014 - Support multiple build systems.
@@ -39,11 +42,10 @@
 '
 Strict
 
-Framework brl.basic
+Framework brl.filesystem
 
 Import "bmk_make.bmx"
 Import "bmk_zap.bmx"
-Import "bmk_bb2bmx.bmx"
 
 ?MacOS
 Incbin "macos.icns"
@@ -122,8 +124,6 @@ Case "modstatus"
 	ModuleStatus args
 Case "syncmods" 
 	SyncModules args
-Case "convertbb"
-	ConvertBB args
 Case "ranlibdir"
 	RanlibDir args
 Case "-v"

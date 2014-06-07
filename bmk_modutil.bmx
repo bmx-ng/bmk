@@ -132,6 +132,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					If processor.Platform() = "win32"
 						cc=opt_arch="ppc"
 					End If
+				Case "win32x64"
+					cc=False
+					If processor.Platform() = "win32"
+						cc=opt_arch="x64"
+					End If
 				Case "linux"
 					cc=False
 					If processor.Platform() = "linux"
@@ -151,6 +156,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					cc=False
 					If processor.Platform() = "linux"
 						 cc=opt_arch="x64"
+					End If
+				Case "linuxarm"
+					cc=False
+					If processor.Platform() = "linux"
+						 cc=opt_arch="arm"
 					End If
 				Case "macos"
 					cc=False

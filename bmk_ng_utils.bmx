@@ -2,7 +2,9 @@ SuperStrict
 
 Import BRL.MaxUtil
 Import BRL.FileSystem
+?Not linux
 Import BRL.System
+?
 Import BRL.MaxLua
 
 'Import "lua_object.bmx"
@@ -124,7 +126,7 @@ Type TSystem
 		Return BRL.FileSystem.ChangeDir(path)
 	End Method
 	
-	
+?Not linux	
 	' System
 	Method CurrentDate:String()
 		Return BRL.System.CurrentDate()
@@ -141,14 +143,32 @@ Type TSystem
 	Method OpenURL(url:String)
 		BRL.System.OpenURL(url)
 	End Method
+?linux
+	Method CurrentDate:String(_format$="%d %b %Y")
+		Local time:Byte[256],buff:Byte[256]
+		time_(time)
+		strftime_(buff,256,_format,localtime_( time ))
+		Return String.FromCString(buff)
+	End Method
 	
+	Method CurrentTime:String()
+		Local time:Byte[256],buff:Byte[256]
+		time_(time)
+		strftime_( buff,256,"%H:%M:%S",localtime_( time ) );
+		Return String.FromCString(buff)
+	End Method
+
+	Method Notify(text:String, serious:Int = False)
+		WriteStdout text+"~r~n"
+	End Method
+?
 End Type
 
 Extern
 ?macos
 	Function sysctlbyname:Int(name:Byte Ptr, count:Int Ptr, size:Int Ptr, a:Byte Ptr, b:Int)
 ?linux
-	Function popen:Int(command:Byte Ptr, Mode:Byte Ptr)
+	Function popen:Byte Ptr(command:Byte Ptr, Mode:Byte Ptr)
 ?
 End Extern
 ?win32
@@ -181,7 +201,7 @@ Function GetCoreCount:Int()
 		sysctlbyname("hw.ncpu", Varptr count, Varptr l,Null,0)
 ?linux
 		Local buf:Byte[128]
-		Local fp:Int = popen("/bin/cat /proc/cpuinfo |grep -c '^processor'", "r")
+		Local fp:Byte Ptr = popen("/bin/cat /proc/cpuinfo |grep -c '^processor'", "r")
 		fread_(buf, 1, 127, fp)
 		fclose_(fp)
 		count = String.FromCString(buf).ToInt()
