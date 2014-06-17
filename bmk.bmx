@@ -48,6 +48,7 @@ Import "bmk_make.bmx"
 Import "bmk_zap.bmx"
 
 ?MacOS
+Import BRL.RamStream
 Incbin "macos.icns"
 ?
 
