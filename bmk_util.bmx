@@ -102,6 +102,8 @@ Function CompileBMX( src$,obj$,opts$ )
 	
 	If processor.BCCVersion() = "BlitzMax" Then
 		azm :+ ".s"
+	Else
+		opts :+ " -p " + processor.Platform()
 	End If
 	
 ?threaded
