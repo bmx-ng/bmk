@@ -1,5 +1,7 @@
 SuperStrict
 
+Import Pub.stdc
+
 Extern
 ?bmxng
 	Function popen:Byte Ptr(command:Byte Ptr, Mode:Byte Ptr)
