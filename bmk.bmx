@@ -1,6 +1,7 @@
 '
 ' Change History :
 ' 2.20 17/07/2014 - Improved target (cross-compile) options.
+'                 - Fixed issue with Linux popen signature and old bcc.
 ' 2.19 05/06/2014 - Linux compilation fix for new bcc.
 '                 - Architecture tweaks and documentation update.
 '                 - Removed bb2bmx/convertbb option.

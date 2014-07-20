@@ -7,7 +7,13 @@ Import BRL.System
 ?
 Import BRL.MaxLua
 
-'Import "lua_object.bmx"
+?linux
+Import "bmk_cores_linux.bmx"
+?macos
+Import "bmk_cores_macos.bmx"
+?win32
+Import "bmk_cores_win32.bmx"
+?
 
 Global utils:TMaxUtils = New TMaxUtils
 Global fsys:TSystem = New TSystem
@@ -163,55 +169,4 @@ Type TSystem
 	End Method
 ?
 End Type
-
-Extern
-?macos
-	Function sysctlbyname:Int(name:Byte Ptr, count:Int Ptr, size:Int Ptr, a:Byte Ptr, b:Int)
-?linux
-	Function popen:Byte Ptr(command:Byte Ptr, Mode:Byte Ptr)
-?
-End Extern
-?win32
-' http://msdn.microsoft.com/en-us/library/ms724958(VS.85).aspx
-Extern "win32"
-	Function GetSystemInfo(info:Byte Ptr)
-End Extern
-
-Type SYSTEM_INFO
-	Field wProcessorArchitecture:Short
-	Field wReserved:Short
-	Field dwPageSize:Int
-	Field lpMinimumApplicationAddress:Byte Ptr
-	Field lpMaximumApplicationAddress:Byte Ptr
-	Field dwActiveProcessorMask:Int
-	Field dwNumberOfProcessors:Int
-	Field dwProcessorType:Int
-	Field dwAllocationGranularity:Int
-	Field wProcessorLevel:Short
-	Field wProcessorRevision:Short
-End Type
-?
-
-Function GetCoreCount:Int()
-	Global count:Int
-
-	If Not count Then
-?macos
-		Local l:Int = 4
-		sysctlbyname("hw.ncpu", Varptr count, Varptr l,Null,0)
-?linux
-		Local buf:Byte[128]
-		Local fp:Byte Ptr = popen("/bin/cat /proc/cpuinfo |grep -c '^processor'", "r")
-		fread_(buf, 1, 127, fp)
-		fclose_(fp)
-		count = String.FromCString(buf).ToInt()
-?win32
-		Local info:SYSTEM_INFO = New SYSTEM_INFO
-		GetSystemInfo(info)
-		count = info.dwNumberOfProcessors
-?
-	End If
-
-	Return count
-End Function
 
