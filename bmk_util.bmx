@@ -225,6 +225,11 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			usingLD = True
 		End If
 		
+		Local blitzMaxLibDir:String = "/lib"
+		If processor.CPU()="x64" Then
+			blitzMaxLibDir = "/lib64"
+		End If
+
 		If usingLD Then
 			cmd=CQuote(processor.Option("path_to_ld", BlitzMaxPath()+"/bin/ld.exe"))+" -s -stack 4194304"
 			If opt_apptype="gui" cmd:+" -subsystem windows"
@@ -246,7 +251,16 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		
 		cmd:+" -o "+CQuote( path )
 		If usingLD Then
-			cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib") ) ' the BlitzMax lib folder 
+			If processor.CPU()="x86"
+				cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib") ) ' the BlitzMax lib folder
+				
+				' linking for x86 when using mingw64 binaries
+				If processor.HasTarget("x86_64") Then
+					cmd:+" -mi386pe"
+				End If
+			Else
+				cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib64") ) ' the BlitzMax lib folder 
+			End If
 
 			If globals.Get("path_to_mingw_lib") Then
 				cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") ) )
@@ -266,12 +280,12 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			cmd:+" "+def
 			cmd:+" --out-implib "+imp
 			If usingLD Then
-				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") + "/dllcrt2.o" )
+				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+blitzMaxLibDir) + "/dllcrt2.o" )
 			End If
 		Else
 			If usingLD
-				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") + "/crtbegin.o" )
-				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") + "/crt2.o" )
+				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+blitzMaxLibDir) + "/crtbegin.o" )
+				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+blitzMaxLibDir) + "/crt2.o" )
 			End If
 		EndIf
 	
@@ -301,6 +315,12 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			If opts.Find("stdc++") = -1 Then
 				files:+" -lstdc++"
 			End If
+
+			' if using mingw64, we need to link to pthreads
+			If processor.HasTarget("x86_64") Then
+				files :+ " -lwinpthread "
+			End If
+
 			files:+" -lmingwex"
 			
 		
@@ -332,7 +352,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		
 		If Not makelib
 			If usingLD
-				files:+" "+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") + "/crtend.o" )
+				files:+" "+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+blitzMaxLibDir) + "/crtend.o" )
 			End If
 		EndIf
 		

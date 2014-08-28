@@ -396,6 +396,8 @@ Type TBMK
 					Local n:String = "0" + v
 					s:+ n[n.length - 2..]
 				Next
+			Else If line.startswith("Target:") Then
+				_target = line[7..].Trim()
 			Else
 				Local pos:Int = line.Find("clang")
 				If pos >= 0 Then
@@ -414,6 +416,24 @@ Type TBMK
 		
 		Return compiler + " " + version
 '?
+	End Method
+	
+	Global _target:String
+	
+	Method HasTarget:Int(find:String)
+		
+		If Not _target Then
+			GCCVersion()	
+		End If
+		
+		If _target Then
+			If _target.Find(find) >= 0 Then
+				Return True
+			End If
+		End If
+		
+		Return False
+		
 	End Method
 	
 	Method GCCVersionInt:Int()
