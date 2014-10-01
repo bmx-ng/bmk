@@ -362,20 +362,34 @@ Type TBMK
 		End If
 	End Method
 	
-	Method GCCVersion:String(getVersionNum:Int = False)
+	Method GCCVersion:String(getVersionNum:Int = False, getRawVersion:Int = False)
 '?win32
 		Global compiler:String
 		Global version:String
+		Global rawVersion:String
 		
 		If compiler Then
 			If getVersionNum Then
-				Return version
+				If getRawVersion Then
+					Return rawVersion
+				Else
+					Return version
+				End If
 			Else
 				Return compiler + " " + version
 			End If
 		End If
-	
-		Local process:TProcess = CreateProcess("gcc -v")
+
+		Local process:TProcess
+		If Platform() = "win32" Then
+			If processor.BCCVersion() = "BlitzMax" Then
+				process = CreateProcess("gcc -v")
+			Else
+				process = CreateProcess(MinGWBinPath() + "/gcc -v")
+			End If
+		Else
+			process = CreateProcess("gcc -v")
+		End If
 		Local s:String
 		
 		While True
@@ -391,6 +405,7 @@ Type TBMK
 				compiler = "gcc"
 				Local parts:String[] = line.split(" ")
 				
+				rawVersion = parts[2].Trim()
 				Local values:String[] = parts[2].split(".")
 				For Local v:String = EachIn values
 					Local n:String = "0" + v
@@ -411,7 +426,11 @@ Type TBMK
 		version = s
 		
 		If getVersionNum Then
-			Return version
+			If getRawVersion Then
+				Return rawVersion
+			Else
+				Return version
+			End If
 		End If
 		
 		Return compiler + " " + version
@@ -470,6 +489,164 @@ Type TBMK
 		Return bcc
 	End Method
 
+	Method MinGWBinPath:String()
+		Global _path:String
+
+		If Not _path Then
+			If processor.BCCVersion() = "BlitzMax" Then
+				_path = BlitzMaxPath() + "/bin"
+			Else
+				_path = MinGWPath() + "/bin"
+			End If
+		End If
+		
+		Return _path
+	End Method
+	
+	Method MinGWPath:String()
+		Global _path:String
+		
+		If Not _path Then
+			If processor.BCCVersion() = "BlitzMax" Then
+				_path = getenv_("MINGW")
+			Else
+				Local path:String
+				' look for local MinGW32 dir
+				path = BlitzMaxPath() + "/MinGW32/bin"
+				If FileType(path) = FILETYPE_DIR Then
+					' bin dir exists, go with that
+					_path = BlitzMaxPath() + "/MinGW32"
+					Return _path
+				End If
+				
+				' try MINGW environment variable
+				path = getenv_("MINGW")
+				If FileType(path) = FILETYPE_DIR Then
+					' check for bin dir
+					If FileType(path + "/bin") = FILETYPE_DIR Then
+						' go with that
+						_path = path
+						Return _path
+					End If
+				End If
+				
+				' none of the above? fallback to BlitzMax dir (for bin and lib)
+				_path = BlitzMaxPath()
+			End If
+		End If
+		
+		Return _path
+	End Method
+	
+	Method MinGWLinkPaths:String()
+		Global _links:String
+		
+		If Not _links Then
+			If processor.BCCVersion() = "BlitzMax" Then
+				_links = "-L" + CQuote(BlitzMaxPath() + "/lib")
+			Else
+				Local links:String
+				
+				If processor.HasTarget("x86_64") Then
+					If processor.CPU()="x86" Then
+						links :+ " -L" +  CQuote( MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True) + "/32")
+						links :+ " -L" +  CQuote( MinGWPath() + "/x86_64-w64-mingw32/lib32")
+					Else
+						links :+ " -L" +  CQuote( MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True))
+						links :+ " -L" +  CQuote( MinGWPath() + "/x86_64-w64-mingw32/lib")
+					End If
+				Else
+					links :+ " -L" + CQuote(MinGWPath() + "/lib")
+					links :+ " -L" + CQuote(MinGWPath() +"lib/gcc/mingw32/" + GCCVersion(True, True))
+				End If
+				
+				_links = links
+			End If
+		End If
+		
+		Return _links
+	End Method
+	
+	' the path where dllcrt2.o resides
+	Method MinGWDLLCrtPath:String()
+		Global _path:String
+		
+		If Not _path Then
+			If processor.BCCVersion() = "BlitzMax" Then
+				_path = BlitzMaxPath() + "/lib"
+			Else
+				' mingw64 ?
+				Local path:String = MinGWPath() + "/"
+				If processor.HasTarget("x86_64") Then
+					
+					path :+ "x86_64-w64-mingw32/"
+					
+					If processor.CPU()="x86" Then
+						path :+ "lib32"
+					Else
+						path :+ "lib"
+					End If
+					
+					If FileType(path) = 0 Then
+						Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
+					End If
+					
+					_path = path
+				Else
+					path :+ "lib"
+
+					If FileType(path) = 0 Then
+						Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
+					End If
+					
+					_path = path
+				End If
+			End If
+		End If
+		
+		Return _path
+	End Method
+	
+	' the path where crtbegin.o resides
+	Method MinGWCrtPath:String()
+		Global _path:String
+		
+		If Not _path Then
+			If processor.BCCVersion() = "BlitzMax" Then
+				_path = BlitzMaxPath() + "/lib"
+			Else
+				' mingw64 ?
+				Local path:String = MinGWPath() + "/"
+				If processor.HasTarget("x86_64") Then
+					
+					path :+ "x86_64-w64-mingw32/"
+					
+					If processor.CPU()="x86" Then
+						path :+ "lib32"
+					Else
+						path :+ "lib"
+					End If
+					
+					If FileType(path) = 0 Then
+						Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
+					End If
+					
+					_path = path
+				Else
+					path :+ "lib/gcc/mingw32/" + GCCVersion(True, True)
+
+					If FileType(path) = 0 Then
+						Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
+					End If
+					
+					_path = path
+				End If
+			End If
+		End If
+		
+		Return _path
+	End Method
+	
 End Type
 
 

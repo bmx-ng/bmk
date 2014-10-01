@@ -117,9 +117,16 @@
 		end
 		
 	elseif bmk.Platform() == "win32" then
-		cmd = bmk.Option("path_to_gcc", "gcc")
-		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-			cmd = bmk.Option("path_to_gpp", "g++")
+		if bmk.BCCVersion() == "BlitzMax" then
+			cmd = bmk.Option("path_to_gcc", "gcc")
+			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
+				cmd = bmk.Option("path_to_gpp", "g++")
+			end
+		else
+			cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/gcc")
+			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
+				cmd = bmk.Option("path_to_gpp", bmk.MinGWBinPath() .. "/g++")
+			end
 		end
 		
 	elseif bmk.Platform() == "linux" then
@@ -293,8 +300,20 @@
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
 		end
 	elseif bmk.Platform() == "win32" then
-
-		globals.SetOption("cc_opts", "arch", "-march=pentium")
+	
+		if bmk.BCCVersion() == "BlitzMax" then
+			globals.SetOption("cc_opts", "arch", "-march=pentium")
+		else
+			if bmk.hasTarget("x86_64") then
+				if bmk.CPU() == "x86" then
+					globals.SetOption("cc_opts", "arch", "-m32")
+				elseif bmk.CPU() == "x64" then
+					globals.SetOption("cc_opts", "arch", "-m64")
+				end
+			else
+				globals.SetOption("cc_opts", "arch", "-march=pentium")
+			end
+		end
 		globals.SetOption("cc_opts", "fastmath", "-ffast-math")
 		
 	elseif bmk.Platform() == "linux" then

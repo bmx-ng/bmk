@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.22 28/08/2014 - Win32 NG will now prefer MINGW-located files (bin/lib), instead of BlitzMax bin/lib.
 ' 2.21 28/08/2014 - Added support for 64-bit Win32 build options.
 ' 2.20 17/07/2014 - Improved target (cross-compile) options.
 '                 - Fixed issue with Linux popen signature and old bcc.
