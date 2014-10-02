@@ -392,11 +392,15 @@ Type TBMK
 		End If
 		Local s:String
 		
+		If Not process Then
+			Throw "Cannot find a valid GCC compiler. Please check your paths and environment."
+		End If
+		
 		While True
 			Delay 10
 			
 			Local line:String = process.err.ReadLine()
-		
+
 			If Not process.Status() And Not line Then
 				Exit
 			End If
@@ -469,6 +473,10 @@ Type TBMK
 		Local process:TProcess = CreateProcess(BlitzMaxPath() + "/bin/bcc")
 		Local s:String
 		
+		If Not process Then
+			Throw "Cannot find a valid bcc. I am looking for it here : " + BlitzMaxPath() + "/bin/bcc"
+		End If
+		
 		While True
 			Delay 10
 			
@@ -505,7 +513,7 @@ Type TBMK
 	
 	Method MinGWPath:String()
 		Global _path:String
-		
+
 		If Not _path Then
 			If processor.BCCVersion() = "BlitzMax" Then
 				_path = getenv_("MINGW")
@@ -518,10 +526,10 @@ Type TBMK
 					_path = BlitzMaxPath() + "/MinGW32"
 					Return _path
 				End If
-				
+
 				' try MINGW environment variable
 				path = getenv_("MINGW")
-				If FileType(path) = FILETYPE_DIR Then
+				If path And FileType(path) = FILETYPE_DIR Then
 					' check for bin dir
 					If FileType(path + "/bin") = FILETYPE_DIR Then
 						' go with that
@@ -529,7 +537,7 @@ Type TBMK
 						Return _path
 					End If
 				End If
-				
+
 				' none of the above? fallback to BlitzMax dir (for bin and lib)
 				_path = BlitzMaxPath()
 			End If
