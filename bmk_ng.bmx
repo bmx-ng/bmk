@@ -557,7 +557,7 @@ Type TBMK
 					End If
 				Else
 					links :+ " -L" + CQuote(MinGWPath() + "/lib")
-					links :+ " -L" + CQuote(MinGWPath() +"lib/gcc/mingw32/" + GCCVersion(True, True))
+					links :+ " -L" + CQuote(MinGWPath() +"/lib/gcc/mingw32/" + GCCVersion(True, True))
 				End If
 				
 				_links = links
