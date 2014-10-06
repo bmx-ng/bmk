@@ -510,6 +510,10 @@ Type TBMK
 				_path = BlitzMaxPath() + "/bin"
 			Else
 				_path = MinGWPath() + "/bin"
+
+				Local PATH:String = _wgetenv("PATH")
+				PATH = _path + ";" + PATH
+				_wputenv("PATH=" + PATH)
 			End If
 		End If
 		
@@ -662,6 +666,12 @@ Type TBMK
 	
 End Type
 
+?win32
+Extern
+	Function _wgetenv$w(varname$w)
+	Function _wputenv:Int(varname$w)
+End Extern
+?
 
 ' stores variables, as well as a variable stack which can be pushed and popped.
 Type TBMKGlobals
