@@ -130,7 +130,7 @@ Function CreateArc( path$ , oobjs:TList )
 				EndIf
 				cmd=""
 			EndIf
-			If Not cmd cmd= processor.Option("path_to_ar", processor.MinGWBinPath() + "/ar") + " -r "+CQuote(path)
+			If Not cmd cmd= processor.Option("path_to_ar", processor.MinGWBinPath() + "/ar.exe") + " -r "+CQuote(path)
 			cmd:+" "+CQuote(t)
 		Next
 	End If
@@ -234,7 +234,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			cmd=CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))+" -s -stack 4194304"
 			If opt_apptype="gui" cmd:+" -subsystem windows"
 		Else
-			cmd=CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++"))+" -s --stack=4194304"
+			cmd=CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe"))+" -s --stack=4194304"
 			If opt_apptype="gui"
 				cmd:+" --subsystem,windows -mwindows"
 			Else

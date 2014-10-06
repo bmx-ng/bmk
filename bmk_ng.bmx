@@ -385,7 +385,7 @@ Type TBMK
 			If processor.BCCVersion() = "BlitzMax" Then
 				process = CreateProcess("gcc -v")
 			Else
-				process = CreateProcess(MinGWBinPath() + "/gcc -v")
+				process = CreateProcess(MinGWBinPath() + "/gcc.exe -v")
 			End If
 		Else
 			process = CreateProcess("gcc -v")
@@ -469,12 +469,17 @@ Type TBMK
 		If bcc Then
 			Return bcc
 		End If
-	
-		Local process:TProcess = CreateProcess(BlitzMaxPath() + "/bin/bcc")
+
+		Local exe:String = "bcc"
+		If Platform() = "win32" Then
+			exe :+ ".exe"
+		End If
+
+		Local process:TProcess = CreateProcess(BlitzMaxPath() + "/bin/" + exe)
 		Local s:String
 		
 		If Not process Then
-			Throw "Cannot find a valid bcc. I am looking for it here : " + BlitzMaxPath() + "/bin/bcc"
+			Throw "Cannot find a valid bcc. I am looking for it here : " + BlitzMaxPath() + "/bin/" + exe
 		End If
 		
 		While True
