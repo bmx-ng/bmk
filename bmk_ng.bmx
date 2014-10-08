@@ -510,10 +510,11 @@ Type TBMK
 				_path = BlitzMaxPath() + "/bin"
 			Else
 				_path = MinGWPath() + "/bin"
-
+?win32
 				Local PATH:String = _wgetenv("PATH")
 				PATH = _path + ";" + PATH
 				_wputenv("PATH=" + PATH)
+?
 			End If
 		End If
 		
