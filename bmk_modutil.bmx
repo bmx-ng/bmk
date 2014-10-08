@@ -224,7 +224,7 @@ Function ParseSourceFile:TSourceFile( path$ )
 				file.framewk=val.ToLower()
 			Case "import"
 				If qval
-					file.imports.AddLast qval
+					file.imports.AddLast ReQuote(qval)
 				Else
 					file.modimports.AddLast val.ToLower()
 				EndIf
