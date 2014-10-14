@@ -180,9 +180,9 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			cmd:+" -arch x86_64"
 		EndIf
 		If macos_version>=$1070				'Lion?
-			cmd:+" -mmacosx-version-min=10.4"	'...can build for Tiger++
-		Else If macos_version>=$1040			'Tiger?
-			cmd:+" -mmacosx-version-min=10.3"	'...can build for Panther++
+			cmd:+" -mmacosx-version-min=10.5"	'...can build for Tiger++
+		Else If macos_version>=$1050			'Tiger?
+			cmd:+" -mmacosx-version-min=10.5"	'...can build for Panther++
 		EndIf
 	
 		cmd:+" -o "+CQuote( path )

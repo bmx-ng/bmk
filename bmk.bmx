@@ -4,6 +4,7 @@
 '                 - Use .exe suffixes for binaries on Windows.
 '                 - Add MinGW/bin to PATH on Windows.
 '                 - Handle quotes in Import strings.
+'                 - Minimum OS-X version 10.5 (released 2007!).
 ' 2.21 28/08/2014 - Added support for 64-bit Win32 build options.
 ' 2.20 17/07/2014 - Improved target (cross-compile) options.
 '                 - Fixed issue with Linux popen signature and old bcc.
