@@ -141,8 +141,13 @@
 	if bmk.BCCVersion() ~= "BlitzMax" then
 		opts = opts .. " -DBMX_NG"
 	end
+	
+	local genDebug = ""
+	if bmk.IsDebugBuild() == 1 then
+		genDebug = " -g"
+	end
 
-	cmd = cmd .. opts .. %cc_opts% .. %mod_ccopts% .. " -g -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+	cmd = cmd .. opts .. %cc_opts% .. %mod_ccopts% .. genDebug .. " -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
 
 	if bmk.MultiSys( cmd, src ) ~= 0 then
 		bmk.ThrowNew("Build Error: failed to compile " .. src)
@@ -328,6 +333,11 @@
 	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")
 	globals.SetOption("cc_opts", "linker", "-c")
 	globals.SetOption("cc_opts", "optimization", "-O2")
+	
+	if bmk.IsDebugBuild() == 0 then
+		globals.SetOption("cc_opts", "stripsymbols", "-s")
+		globals.SetOption("ld_opts", "stripsymbols", "-s")
+	end
 
 @end
 

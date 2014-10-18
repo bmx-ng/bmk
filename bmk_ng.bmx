@@ -665,6 +665,10 @@ Type TBMK
 		Return _path
 	End Method
 	
+	Method IsDebugBuild:Int()
+		Return opt_debug
+	End Method
+	
 End Type
 
 ?win32
