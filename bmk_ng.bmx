@@ -282,6 +282,12 @@ Type TBMK
 			Return opt_target_platform
 		End If
 	End Method
+
+	'returns the app type as a string ("gui", "console" ...)
+	Method AppType:String()
+		Return opt_apptype
+	End Method
+
 	
 	' returns the cpu type, as a string
 	Method CPU:String()
@@ -668,7 +674,6 @@ Type TBMK
 	Method IsDebugBuild:Int()
 		Return opt_debug
 	End Method
-	
 End Type
 
 ?win32

@@ -1,0 +1,8 @@
+*.bak
+.bmx
+.bmx/
+/bmk
+/bmk.debug
+/bmk.exe
+/bmk.debug.exe
+/bmk.app
