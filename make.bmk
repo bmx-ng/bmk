@@ -336,7 +336,7 @@
 	
 	if bmk.IsDebugBuild() == 0 then
 		globals.SetOption("cc_opts", "stripsymbols", "-s")
-		globals.SetOption("ld_opts", "stripsymbols", "-s")
+		#globals.SetOption("ld_opts", "stripsymbols", "-s")
 	end
 
 @end
