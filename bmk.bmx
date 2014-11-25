@@ -270,7 +270,6 @@ Function MakeApplication( args$[],makelib )
 	globals.SetVar("BUILDPATH", ExtractDir(opt_outfile))
 	globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
 	globals.SetVar("OUTFILE", StripDir(StripExt(opt_outfile)))
-	globals.SetVar("APPTYPE", opt_apptype)
 	
 	
 	' some more useful globals
