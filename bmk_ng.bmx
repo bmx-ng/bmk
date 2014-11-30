@@ -276,6 +276,10 @@ Type TBMK
 			Return "linux"
 ?win32
 			Return "win32"
+?android
+			Return "android"
+?raspberrypi
+			Return "raspberrypi"
 ?
 		Else
 			' the custom target platform

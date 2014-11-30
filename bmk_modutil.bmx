@@ -139,12 +139,12 @@ Function ParseSourceFile:TSourceFile( path$ )
 					End If
 				Case "linux"
 					cc=False
-					If processor.Platform() = "linux"
+					If processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi"
 						 cc=True
 					End If
 				Case "linuxx86"
 					cc=False
-					If processor.Platform() = "linux"
+					If processor.Platform() = "linux" Or processor.Platform() = "android"
 						 cc=processor.CPU()="x86"
 					End If
 				Case "linuxppc"
@@ -154,12 +154,12 @@ Function ParseSourceFile:TSourceFile( path$ )
 					End If
 				Case "linuxx64"
 					cc=False
-					If processor.Platform() = "linux"
+					If processor.Platform() = "linux" Or processor.Platform() = "android"
 						 cc=processor.CPU()="x64"
 					End If
 				Case "linuxarm"
 					cc=False
-					If processor.Platform() = "linux"
+					If processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi"
 						 cc=processor.CPU()="arm"
 					End If
 				Case "macos"
@@ -181,6 +181,26 @@ Function ParseSourceFile:TSourceFile( path$ )
 					cc=False
 					If processor.Platform() = "macos"
 						 cc=processor.CPU()="x64"
+					End If
+				Case "android"
+					cc=False
+					If processor.Platform() = "android"
+						 cc=True
+					End If
+				Case "androidarm"
+					cc=False
+					If processor.Platform() = "android"
+						 cc=processor.CPU()="arm"
+					End If
+				Case "raspberrypi"
+					cc=False
+					If processor.Platform() = "raspberrypi"
+						 cc=True
+					End If
+				Case "raspberrypiarm"
+					cc=False
+					If processor.Platform() = "raspberrypi"
+						 cc=processor.CPU()="arm"
 					End If
 				Default
 					cc=False

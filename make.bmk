@@ -27,7 +27,7 @@
 			cmd = bmk.Quote(utils.BlitzMaxPath() .. "/bin/fasm") .. " "
 		end
 		
-		if bmk.Platform() == "linux" then
+		if bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 			cmd = cmd .. " -m32768 "
 		end
 		
@@ -129,7 +129,7 @@
 			end
 		end
 		
-	elseif bmk.Platform() == "linux" then
+	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
 	end
 
@@ -221,13 +221,13 @@
 @end
 
 @define addlinuxccopt
-	if bmk.Platform() == "linux" then
+	if bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		globals.AddOption("cc_opts", arg1, arg2)
 	end
 @end
 
 @define setlinuxccopt
-	if bmk.Platform() == "linux" then
+	if bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		globals.SetOption("cc_opts", arg1, arg2)
 	end
 @end
@@ -254,7 +254,7 @@
 @end
 
 @define addlinuxldopt
-	if bmk.Platform() == "linux" then
+	if bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		globals.AddOption("ld_opts", arg1, arg2)
 	end
 @end
@@ -281,7 +281,7 @@
 @end
 
 @define skipmodlinux
-	if bmk.Platform() == "linux" then
+	if bmk.Platform() == "linux" or bmk.Platform() == "raspberrypi" or bmk.Platform() == "raspberrypi" then
 		globals.Add("skip_mod", arg1)
 	end
 @end
@@ -321,7 +321,7 @@
 		end
 		globals.SetOption("cc_opts", "fastmath", "-ffast-math")
 		
-	elseif bmk.Platform() == "linux" then
+	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		globals.SetOption("cc_opts", "aliasing", "-fno-strict-aliasing")
 		if bmk.CPU() == "x86" then
 			globals.SetOption("cc_opts", "arch", "-m32")
@@ -336,7 +336,6 @@
 	
 	if bmk.IsDebugBuild() == 0 then
 		globals.SetOption("cc_opts", "stripsymbols", "-s")
-		#globals.SetOption("ld_opts", "stripsymbols", "-s")
 	end
 
 @end

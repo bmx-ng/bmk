@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.23 01/12/2014 - Added direct support for android and raspberrypi targets.
 ' 2.22 02/10/2014 - Win32 NG will now prefer MINGW-located files (bin/lib), instead of BlitzMax bin/lib.
 '                 - Use .exe suffixes for binaries on Windows.
 '                 - Add MinGW/bin to PATH on Windows.

@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "2.22"
+Const BMK_VERSION:String = "2.23"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -181,7 +181,16 @@ Function ParseConfigArgs$[]( args$[] )
 			n:+1
 			If n=args.length CmdError "Missing arg for '-l'"
 			opt_target_platform=args[n].ToLower()
-			If opt_target_platform <> "win32" And opt_target_platform <> "mac" And opt_target_platform <> "linux" CmdError "Not valid platform : '" + opt_target_platform + "'"
+			Select opt_target_platform
+				Case "win32"
+				Case "macos"
+				Case "linux"
+				Case "android"
+				Case "raspberrypi"
+				Default
+					' oops
+					CmdError "Not valid platform : '" + opt_target_platform + "'"
+			End Select
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -263,6 +272,8 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~t~tOS X  : x86, x64~n"
 		s:+ "~t~t~tWin32 : x86, x64~n"
 		s:+ "~t~t~tLinux : x86, x64, arm~n"
+		s:+ "~t~t~tAndroid : x86, x64, arm~n"
+		s:+ "~t~t~tRaspberryPi : arm~n"
 		s:+ "~n~n"
 		s:+ "~t-h~n"
 		s:+ "~t~tBuild multithreaded version. (By default, the single threaded version is built.)"
@@ -273,7 +284,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-l <target platfom>~n"
 		s:+ "~t~tCross-compiles to the specific target platform.~n"
-		s:+ "~t~tCurrently, only win32 is supported as a target platform on Mac and Linux systems.~n"
+		s:+ "~t~tValid targets are win32, linux, android, and raspberrypi.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
 		s:+ "~n~n"
 		s:+ "~t-o <output file>~n"
@@ -314,6 +325,10 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "linux"
 ?macos
 	s:+ "macos"
+?android
+	s:+ "-android"
+?raspberrypi
+	s:+ "-raspberrypi"
 ?
 	s:+ "-"
 ?x86
