@@ -271,6 +271,7 @@ Function MakeApplication( args$[],makelib )
 	globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
 	globals.SetVar("OUTFILE", StripDir(StripExt(opt_outfile)))
 	
+	
 	' some more useful globals
 	If processor.Platform() = "macos" And opt_apptype="gui" Then
 		Local appId$=StripDir( opt_outfile )
