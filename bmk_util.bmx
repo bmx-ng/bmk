@@ -142,7 +142,7 @@ Function CreateArc( path$ , oobjs:TList )
 		Next
 	End If
 	
-	If processor.Platform() = "linux"
+	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android"
 		For Local t$=EachIn oobjs
 			If Len(cmd)+Len(t)>1000
 				If Sys( cmd )
@@ -359,7 +359,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		files="INPUT("+files+")"
 	End If
 	
-	If processor.Platform() = "linux"
+	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android"
 		cmd$ = processor.Option(processor.BuildName("gpp"), "g++")
 		'cmd:+" -m32 -s -Os -pthread"
 		If processor.CPU() = "x86" Then
