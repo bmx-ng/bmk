@@ -144,6 +144,18 @@ Function ParseConfigArgs$[]( args$[] )
 			n:+1
 			If n=args.length CmdError "Missing arg for '-g'"
 			opt_arch=args[n].ToLower()
+			Select opt_arch
+				Case "ppc"
+				Case "x86"
+				Case "x64"
+				Case "arm"
+				Case "armeabi"
+				Case "armeabiv7a"
+				Case "arm64v8a"
+				Default
+					' oops
+					CmdError "Not a valid architecture : '" + opt_arch + "'"
+			End Select
 		Case "t"
 			n:+1
 			If n=args.length CmdError "Missing arg for '-t'"
@@ -266,13 +278,19 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "ppc"
 ?arm
 		s:+ "arm"
+?armaebi
+		s:+ "armaebi"
+?armaebiv7a
+		s:+ "armaebiv7a"
+?arm64v8a
+		s:+ "arm64v8a"
 ?
 		s:+ ")~n"
 		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
 		s:+ "~t~t~tOS X  : x86, x64~n"
 		s:+ "~t~t~tWin32 : x86, x64~n"
-		s:+ "~t~t~tLinux : x86, x64, arm~n"
-		s:+ "~t~t~tAndroid : x86, x64, arm~n"
+		s:+ "~t~t~tLinux : x86, x64, arm , armeabi, armeabiv7a, arm64v8a~n"
+		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm~n"
 		s:+ "~n~n"
 		s:+ "~t-h~n"
@@ -339,6 +357,12 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "x64"
 ?arm
 	s:+ "arm"
+?armaebi
+	s:+ "armaebi"
+?armaebiv7a
+	s:+ "armaebiv7a"
+?arm64v8a
+	s:+ "arm64v8a"
 ?
 	s:+ " / " + gcc
 

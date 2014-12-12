@@ -359,7 +359,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		files="INPUT("+files+")"
 	End If
 	
-	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android"
+	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi"
 		cmd$ = processor.Option(processor.BuildName("gpp"), "g++")
 		'cmd:+" -m32 -s -Os -pthread"
 		If processor.CPU() = "x86" Then
@@ -383,6 +383,48 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 				files:+" "+t
 			EndIf
 		Next
+	
+		files="INPUT("+files+")"
+	End If
+	
+	If processor.Platform() = "android" Then
+		cmd$ = processor.Option(processor.BuildName("gpp"), "g++")
+		
+		Local libso:String = StripDir(path)
+		cmd :+ " -fPIC -shared "
+		
+		cmd :+ " -Wl,-soname,lib" + libso + ".so "
+		cmd :+ " -Wl,--export-dynamic -rdynamic "
+		cmd:+" -o "+CQuote( ExtractDir(path) + "/lib" + libso + ".so" )
+		cmd:+" "+CQuote( tmpfile )
+		cmd:+" -L"+CQuote( BlitzMaxPath()+"/lib" )
+		
+		Rem
+		'cmd:+" -m32 -s -Os -pthread"
+		If processor.CPU() = "x86" Then
+			cmd:+" -m32"
+		End If
+		cmd:+" -pthread"
+		cmd:+" -o "+CQuote( path )
+		cmd:+" "+CQuote( tmpfile )
+		If processor.CPU() = "x86" Then
+			cmd:+ " -L" + processor.Option(processor.BuildName("lib32"), "/usr/lib32")
+		End If
+		cmd:+" -L" + processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib")
+		cmd:+" -L" + processor.Option(processor.BuildName("lib"), "/usr/lib")
+		cmd:+" -L"+CQuote( BlitzMaxPath()+"/lib" )
+	End Rem
+		For Local t$=EachIn lnk_files
+			t=CQuote(t)
+			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
+				cmd:+" "+t
+			Else
+				files:+" "+t
+			EndIf
+		Next
+	
+		cmd :+ " -Wl,-Bdynamic -lGLESv2 -lGLESv1_CM "
+		cmd :+ " -llog -ldl -landroid "
 	
 		files="INPUT("+files+")"
 	End If
@@ -411,3 +453,249 @@ Function MergeApp(fromFile:String, toFile:String)
 	DeleteFile fromFile
 
 End Function
+
+Function DeployAndroidProject()
+	Local appId:String = StripDir(StripExt(opt_outfile))
+	Local buildDir:String = ExtractDir(opt_outfile)
+
+	' eg. android-project-test_01
+	Local projectDir:String = buildDir + "/android-project-" + appId '+ "-" + processor.CPU()
+
+	' check for dir
+	If Not FileType(projectDir) Then
+		' doesn't exist. create it
+
+		Local resourceProject:String = BlitzMaxPath() + "/resources/android/android-project"
+		If Not FileType(resourceProject) Then
+			Throw "Missing resources folder for Android build : " + resourceProject
+		End If
+		
+		CopyDir(resourceProject, projectDir)
+	End If
+	
+	' check for valid dir
+	If FileType(projectDir) <> FILETYPE_DIR Then
+		Throw "Error creating project dir '" + projectDir + "'"
+	End If
+	
+	' create assets dir if missing
+	Local assetsDir:String = projectDir + "/assets"
+	
+	If FileType(assetsDir) <> FILETYPE_DIR Then
+		CreateDir(assetsDir)
+
+		If FileType(assetsDir) <> FILETYPE_DIR Then
+			Throw "Error creating assests dir '" + assetsDir + "'"
+		End If
+	End If
+
+	' create libs/abi dir if missing
+	Local abiDir:String = projectDir + "/libs/"
+	Select processor.CPU()
+		Case "x86"
+			abiDir :+ "x86"
+		Case "x64"
+			abiDir :+ "x86_64"
+		Case "arm"
+			abiDir :+ "armeabi-v7a"
+		Case "armeabi"
+			abiDir :+ "armeabi"
+		Case "armeabiv7a"
+			abiDir :+ "armeabi-v7a"
+		Case "arm64v8a"
+			abiDir :+ "arm64-v8a"
+		Default
+			Throw "Not a valid architecture '" + processor.CPU() + "'"
+	End Select
+	
+	If FileType(abiDir) <> FILETYPE_DIR Then
+		CreateDir(abiDir)
+
+		If FileType(abiDir) <> FILETYPE_DIR Then
+			Throw "Error creating libs abi dir '" + abiDir + "'"
+		End If
+	End If
+	
+	Local projectSettings:TMap = ParseIniFile()
+	
+	Local appPackage:String = String(projectSettings.ValueForKey("app.package"))
+	
+	Local packagePath:String = projectDir + "/src/" + PathFromPackage(appPackage)
+	
+	' create the package
+	If Not FileType(packagePath) Then
+		CreateDir(packagePath, True)
+	
+		If FileType(packagePath) <> FILETYPE_DIR Then
+			Throw "Error creating package '" + packagePath + "'"
+		End If
+	End If
+	
+	' copy/create java
+	Local gameClassFile:String = packagePath+ "/BlitzMaxApp.java"
+	
+	If Not FileType(gameClassFile) Then
+		CopyFile(projectDir + "/BlitzMaxApp.java", gameClassFile)
+		
+		If Not FileType(gameClassFile) Then
+			Throw "Error creating class file '" + gameClassFile + "'"
+		End If
+	End If
+	
+	' merge project data
+	'     update AndroidManifest.xml
+	MergeFile(projectDir, "AndroidManifest.xml", projectSettings)
+	
+	'     update BlitzMaxApp.java
+	MergeFile(packagePath, "BlitzMaxApp.java", projectSettings)
+	
+	' set the package
+	Local javaApp:String = LoadString( gameClassFile )
+	javaApp = ReplaceBlock( javaApp, "app.package","package " + appPackage + ";" )
+	SaveString(javaApp, gameClassFile)
+
+	'     update strings.xml
+	MergeFile(projectDir + "/res/values", "strings.xml", projectSettings)
+
+	'     update build.xml
+	MergeFile(projectDir, "build.xml", projectSettings)
+
+End Function
+
+Function ParseIniFile:TMap()
+	Local appId:String = StripDir(StripExt(opt_outfile))
+	Local buildDir:String = ExtractDir(opt_outfile)
+
+	Local path:String = ExtractDir(opt_outfile) + "/" + appId + ".android"
+
+	Local settings:TMap = New TMap
+	
+	If Not FileType(path) Then
+		Print "Not Found : application settings file '" + appId + ".android'"
+		Return DefaultAndroidSettings()
+	End If
+
+	Local file:TStream = ReadFile(path)
+	If Not file
+		Return Null
+	EndIf
+
+	Local line:String
+	Local pos:Int
+	While Not Eof(file)
+		line = ReadLine(file).Trim()
+
+		If line.Find("#") = 0 Then
+			Continue
+		End If
+
+		pos = line.Find("=")
+
+		If pos = -1 Then
+			Continue
+		End If
+
+		settings.Insert(line[..pos], line[pos+1..])
+	Wend
+
+	file.Close()
+	
+	settings.Insert("app.id", StripDir(StripExt(opt_outfile)))
+	
+	Return settings
+End Function
+
+Function DefaultAndroidSettings:TMap()
+	Local settings:TMap = New TMap
+	settings.Insert("app.package", "com.blitzmax.android")
+	settings.Insert("app.version.code", "1")
+	settings.Insert("app.version.name", "1.0")
+	settings.Insert("app.name", "BlitzMax Application")
+	settings.Insert("app.orientation", "landscape")
+	settings.Insert("app.id", StripDir(StripExt(opt_outfile)))
+	Return settings
+End Function
+
+Function PathFromPackage:String(package:String)
+	Return package.Replace(".", "/")
+End Function
+
+Function MergeFile(dir:String, file:String, settings:TMap)
+	Local s:String = LoadString(dir + "/" + file)
+	s = ReplaceEnv(s, settings)
+	SaveString(s, dir + "/" + file)
+End Function
+
+Function ReplaceEnv:String( str:String, settings:TMap )
+	Local bits:TStringStack = New TStringStack
+
+	Repeat
+		Local i:Int = str.Find( "${" )
+		If i=-1 Exit
+
+		Local e:Int = str.Find( "}",i+2 ) 
+		If e=-1 Exit
+		
+		If i>=2 And str[i-2..i] = "//" Then
+			bits.AddLast str[..e+1]
+			str = str[e+1..]
+			Continue
+		EndIf
+		
+		Local t:String = str[i+2..e]
+
+		Local v:String = String(settings.ValueForKey(t))
+
+		If Not v Then
+			v = "${" + t + "}"
+		End If
+
+		bits.AddLast str[..i]
+		bits.AddLast v
+		
+		str = str[e+1..]
+	Forever
+	If bits.IsEmpty() Then
+		Return str
+	End If
+	
+	bits.AddLast str
+	Return bits.Join( "" )
+End Function
+
+Function ReplaceBlock:String( text:String,tag:String,repText:String,mark:String="~n//" )
+
+	'find begin tag
+	Local beginTag:String = mark+"${start."+tag+"}"
+	Local i:Int = text.Find( beginTag )
+	If i=-1 Throw "Error updating target project - can't find block begin tag '"+tag+"'."
+	i :+ beginTag.Length
+	While i < text.Length And text[i-1]<>10
+		i :+ 1
+	Wend
+	
+	'find end tag
+	Local endTag:String = mark+"${end."+tag+"}"
+	Local i2:Int = text.Find( endTag,i-1 )
+	If i2=-1 Throw "Error updating target project - can't find block end tag '"+tag+"'."
+	If Not repText Or repText[repText.Length-1]=10 Then
+		i2 :+ 1
+	End If
+	
+	Return text[..i]+repText+text[i2..]
+End Function
+
+Type TStringStack Extends TList
+
+	Method Join:String(s:String)
+		Local arr:String[] = New String[count()]
+		Local index:Int
+		For Local t:String = EachIn Self
+			arr[index] = t
+			index :+ 1
+		Next
+		
+		Return s.Join(arr)
+	End Method
+
+End Type

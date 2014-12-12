@@ -488,8 +488,14 @@ Function MakeApp:TFile( Main$,makelib )
 	Case SOURCE_BMX
 		app_type="bmx"
 		MakeMod "brl.blitz"
+		' don't know if this swap can't be applied to *all* build types, and not just Android
+		If processor.Platform() = "android"
+			MakeMod opt_appstub
+		End If
 		MakeSrc Main,True
-		MakeMod opt_appstub
+		If processor.Platform() <> "android"
+			MakeMod opt_appstub
+		End If
 	Case SOURCE_C '"c","cpp","cxx","mm"
 		app_type="c/c++"
 		If opt_framework MakeMod opt_framework
@@ -511,7 +517,129 @@ Function MakeApp:TFile( Main$,makelib )
 	
 	' post process
 	LoadBMK(ExtractDir(Main) + "/post.bmk")
-	
+
+	If processor.Platform() = "android"
+		' create the apk
+		
+		' setup environment
+		CheckAndroidPaths()
+		
+		' copy shared object
+		Local androidABI:String = getenv_("ANDROID_ABI")
+		
+		Local appId:String = StripDir(StripExt(opt_outfile))
+		Local buildDir:String = ExtractDir(opt_outfile)
+		Local projectDir:String = buildDir + "/android-project-" + appId
+
+		Local abiPath:String = projectDir + "/libs/" + androidABI
+
+		Local sharedObject:String = "lib" + appId + ".so"
+		
+		CopyFile(buildDir + "/" + sharedObject, abiPath + "/" + sharedObject)
+
+		' build the apk :
+		Local antHome:String = getenv_("ANT_HOME").Trim()
+		Local cmd:String = "~q" + antHome + "/bin/ant"
+?win32
+		cmd :+ ".bat"
+?
+		cmd :+ "~q debug"
+		
+		Local dir:String = CurrentDir()
+		
+		ChangeDir(projectDir)
+
+		If opt_dumpbuild Then
+			Print cmd
+		End If
+		
+		If Sys( cmd ) Then
+			Throw "Error creating apk"
+		End If
+		
+		ChangeDir(dir)
+
+	End If
+
 	app_main=""
 
 End Function
+
+Function CheckAndroidPaths()
+	' check envs and paths
+	Local androidHome:String = getenv_("ANDROID_HOME")
+	If Not androidHome Then
+		androidHome = processor.Option("android.home", "")
+		If Not androidHome Then
+			Throw "ANDROID_HOME or 'android.home' config option not set"
+		End If
+		
+		putenv_("ANDROID_HOME=" + androidHome.Trim())
+	End If
+	
+	Local androidSDK:String = getenv_("ANDROID_SDK")
+	If Not androidSDK Then
+		androidSDK = processor.Option("android.sdk", "")
+		If Not androidSDK Then
+			Throw "ANDROID_SDK or 'android.sdk' config option not set"
+		End If
+		
+		putenv_("ANDROID_SDK=" + androidSDK.Trim())
+	End If
+
+	Local androidNDK:String = getenv_("ANDROID_NDK")
+	If Not androidNDK Then
+		androidNDK = processor.Option("android.ndk", "")
+		If Not androidNDK Then
+			Throw "ANDROID_NDK or 'android.ndk' config option not set"
+		End If
+		
+		putenv_("ANDROID_NDK=" + androidNDK.Trim())
+	End If
+
+	Local androidABI:String = getenv_("ANDROID_ABI")
+	If Not androidABI Then
+		androidABI = processor.Option(processor.BuildName("abi"), "")
+		If Not androidABI Then
+			Throw "ANDROID_ABI or '" + processor.BuildName("abi") + "' config option not set"
+		End If
+		
+		putenv_("ANDROID_ABI=" + androidABI.Trim())
+	End If
+
+	Local androidToolchainVersion:String = getenv_("ANDROID_TOOLCHAIN_VERSION")
+	If Not androidToolchainVersion Then
+		androidToolchainVersion = processor.Option("android.toolchain.version", "")
+		If Not androidToolchainVersion Then
+			Throw "ANDROID_TOOLCHAIN_VERSION or 'android.toolchain.version' config option not set"
+		End If
+		
+		putenv_("ANDROID_TOOLCHAIN_VERSION=" + androidToolchainVersion.Trim())
+	End If
+
+	Local antHome:String = getenv_("ANT_HOME")
+	If Not antHome Then
+		antHome = processor.Option("ant.home", "")
+		If Not androidToolchainVersion Then
+			Throw "ANT_HOME or 'ant.home' config option not set"
+		End If
+		
+		putenv_("ANT_HOME=" + antHome.Trim())
+	End If
+
+?Not win32	
+	Local pathSeparator:String = ":"
+	Local dirSeparator:String = "/"
+?win32
+	Local pathSeparator:String = ";"
+	Local dirSeparator:String = "\"
+?
+	Local path:String = getenv_("PATH")
+	path = androidSDK.Trim() + dirSeparator + "platform-tools" + pathSeparator + path
+	path = androidSDK.Trim() + dirSeparator + "tools" + pathSeparator + path
+	path = androidNDK.Trim() + pathSeparator + path
+	path = antHome.Trim() + dirSeparator + "bin" + pathSeparator + path
+	putenv_("PATH=" + path)
+
+End Function
+

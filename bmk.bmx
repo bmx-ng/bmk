@@ -1,6 +1,7 @@
 '
 ' Change History :
 ' 2.23 01/12/2014 - Added direct support for android and raspberrypi targets.
+'                 - Added android configuration settings and project template.
 ' 2.22 02/10/2014 - Win32 NG will now prefer MINGW-located files (bin/lib), instead of BlitzMax bin/lib.
 '                 - Use .exe suffixes for binaries on Windows.
 '                 - Add MinGW/bin to PATH on Windows.
@@ -392,6 +393,11 @@ Function MakeApplication( args$[],makelib )
 		EndIf
 	End If
 	
+	' "android-project" check and copy
+	If processor.Platform() = "android" Then
+		DeployAndroidProject()
+	End If
+	
 	BeginMake
 	
 	MakeApp Main,makelib
@@ -414,6 +420,7 @@ Function MakeApplication( args$[],makelib )
 	
 	If opt_execute
 
+?Not android
 		Print "Executing:"+StripDir( opt_outfile )
 
 		Local cmd$=CQuote( opt_outfile )
@@ -422,6 +429,11 @@ Function MakeApplication( args$[],makelib )
 		Next
 		
 		Sys cmd
+?android
+		' on android we'll deploy the apk
+
+?
+
 		
 	EndIf
 
