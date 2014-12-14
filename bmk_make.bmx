@@ -565,6 +565,25 @@ Function MakeApp:TFile( Main$,makelib )
 
 End Function
 
+'checks if the requirements are met for the given target
+'exits out using "throw" containing information what is missing.
+Function CheckBuildRequirements()
+	' BCC is needed for all bmx-incarnations 
+	' exits if the required binary is not found (eg. path setup missing)
+	processor.BCCVersion()
+	
+	' GCC/compiler-chain is only needed for adjusted BCC/BMK
+	' exits if the required binary is not found (eg. path setup missing)
+	If processor.BCCVersion() <> "BlitzMax" Then
+		processor.GCCVersion()
+	EndIf
+	
+	If processor.Platform() = "android"
+		' setup environment
+		CheckAndroidPaths()
+	EndIf
+End Function
+
 Function CheckAndroidPaths()
 	' check envs and paths
 	Local androidHome:String = getenv_("ANDROID_HOME")
