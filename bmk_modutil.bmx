@@ -116,6 +116,10 @@ Function ParseSourceFile:TSourceFile( path$ )
 				Case "ppc" cc=processor.CPU()="ppc"
 				Case "x64" cc=processor.CPU()="x64"
 				Case "arm" cc=processor.CPU()="arm"
+				Case "armaebi" cc=processor.CPU()="armaebi"
+				Case "armaebiv7a" cc=processor.CPU()="armaebiv7a"
+				Case "arm64v8a" cc=processor.CPU()="arm64v8a"
+				Case "js" cc=processor.CPU()="js"
 '?
 				Case "win32" 
 					cc=False
@@ -192,6 +196,21 @@ Function ParseSourceFile:TSourceFile( path$ )
 					If processor.Platform() = "android"
 						 cc=processor.CPU()="arm"
 					End If
+				Case "androidarmaebi"
+					cc=False
+					If processor.Platform() = "android"
+						 cc=processor.CPU()="armaebi"
+					End If
+				Case "androidarmaebiv7a"
+					cc=False
+					If processor.Platform() = "android"
+						 cc=processor.CPU()="armaebiv7a"
+					End If
+				Case "androidarm64v8a"
+					cc=False
+					If processor.Platform() = "android"
+						 cc=processor.CPU()="arm64v8a"
+					End If
 				Case "raspberrypi"
 					cc=False
 					If processor.Platform() = "raspberrypi"
@@ -201,6 +220,16 @@ Function ParseSourceFile:TSourceFile( path$ )
 					cc=False
 					If processor.Platform() = "raspberrypi"
 						 cc=processor.CPU()="arm"
+					End If
+				Case "emscripten"
+					cc=False
+					If processor.Platform() = "emscripten"
+						 cc=True
+					End If
+				Case "emscriptenjs"
+					cc=False
+					If processor.Platform() = "emscripten"
+						 cc=processor.CPU()="js"
 					End If
 				Default
 					cc=False
@@ -278,4 +307,42 @@ Function ParseSourceFile:TSourceFile( path$ )
 	
 	Return file
 
+End Function
+
+Function ValidatePlatformArchitecture()
+	Local valid:Int = False
+	
+	Local platform:String = processor.Platform()
+	Local arch:String = processor.CPU()
+
+	Select platform
+		Case "win32"
+			If arch = "x86" Or arch = "x64" Then
+				valid = True
+			End If
+		Case "linux"
+			If arch = "x86" Or arch = "x64" Then
+				valid = True
+			End If
+		Case "macos"
+			If arch = "x86" Or arch = "x64" Or arch = "ppc" Then
+				valid = True
+			End If
+		Case "android"
+			If arch = "x86" Or arch = "x64" Or arch = "arm" Or arch = "armeabi"  Or arch = "armaebiv7a"  Or arch = "arm64v8a" Then
+				valid = True
+			End If
+		Case "raspberrypi"
+			If arch = "arm" Then
+				valid = True
+			End If
+		Case "emscripten"
+			If arch = "js" Then
+				valid = True
+			End If
+	End Select
+	
+	If Not valid Then
+		CmdError "Invalid Platform/Architecture configuration : " + platform + "/" + arch
+	End If
 End Function

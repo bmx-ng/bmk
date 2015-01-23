@@ -131,6 +131,10 @@
 		
 	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
+	elseif bmk.Platform() == "emscripten" then
+		cmd = bmk.Option(bmk.BuildName("gcc"), "emcc")
+		
+		cmd = cmd .. " -Wno-warn-absolute-paths "
 	end
 
 	# disable warnings ?
@@ -281,7 +285,7 @@
 @end
 
 @define skipmodlinux
-	if bmk.Platform() == "linux" or bmk.Platform() == "raspberrypi" or bmk.Platform() == "raspberrypi" then
+	if bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		globals.Add("skip_mod", arg1)
 	end
 @end
@@ -321,7 +325,7 @@
 		end
 		globals.SetOption("cc_opts", "fastmath", "-ffast-math")
 		
-	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
+	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" or bmk.Platform() == "emscripten" then
 		globals.SetOption("cc_opts", "aliasing", "-fno-strict-aliasing")
 		if bmk.CPU() == "x86" then
 			globals.SetOption("cc_opts", "arch", "-m32")
@@ -335,7 +339,9 @@
 	globals.SetOption("cc_opts", "optimization", "-O2")
 	
 	if bmk.IsDebugBuild() == 0 then
-		globals.SetOption("cc_opts", "stripsymbols", "-s")
+		if bmk.Platform() ~= "emscripten" then
+			globals.SetOption("cc_opts", "stripsymbols", "-s")
+		end
 	end
 
 @end

@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "2.23"
+Const BMK_VERSION:String = "2.24"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -50,6 +50,9 @@ If is_pid_native(0) opt_arch="ppc" Else opt_arch="x86"
 
 ?MacOsX86
 If is_pid_native(0) opt_arch="x86" Else opt_arch="ppc"
+
+?MacOsx64
+opt_arch="x64"
 
 ?win32x64
 opt_arch="x64"
@@ -152,6 +155,7 @@ Function ParseConfigArgs$[]( args$[] )
 				Case "armeabi"
 				Case "armeabiv7a"
 				Case "arm64v8a"
+				Case "js"
 				Default
 					' oops
 					CmdError "Not a valid architecture : '" + opt_arch + "'"
@@ -199,6 +203,7 @@ Function ParseConfigArgs$[]( args$[] )
 				Case "linux"
 				Case "android"
 				Case "raspberrypi"
+				Case "emscripten"
 				Default
 					' oops
 					CmdError "Not valid platform : '" + opt_target_platform + "'"
@@ -284,14 +289,17 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "armaebiv7a"
 ?arm64v8a
 		s:+ "arm64v8a"
+?js
+		s:+ "js"
 ?
 		s:+ ")~n"
 		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
-		s:+ "~t~t~tOS X  : x86, x64~n"
+		s:+ "~t~t~tMacOS : x86, x64~n"
 		s:+ "~t~t~tWin32 : x86, x64~n"
-		s:+ "~t~t~tLinux : x86, x64, arm , armeabi, armeabiv7a, arm64v8a~n"
+		s:+ "~t~t~tLinux : x86, x64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm~n"
+		s:+ "~t~t~tEmscripten : js~n"
 		s:+ "~n~n"
 		s:+ "~t-h~n"
 		s:+ "~t~tBuild multithreaded version. (By default, the single threaded version is built.)"
@@ -302,7 +310,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-l <target platfom>~n"
 		s:+ "~t~tCross-compiles to the specific target platform.~n"
-		s:+ "~t~tValid targets are win32, linux, android, and raspberrypi.~n"
+		s:+ "~t~tValid targets are win32, linux, macos, android, raspberrypi and emscripten.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
 		s:+ "~n~n"
 		s:+ "~t-o <output file>~n"
@@ -347,6 +355,8 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "-android"
 ?raspberrypi
 	s:+ "-raspberrypi"
+?emscripten
+	s:+ "-emscripten"
 ?
 	s:+ "-"
 ?x86
@@ -363,6 +373,8 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "armaebiv7a"
 ?arm64v8a
 	s:+ "arm64v8a"
+?js
+	s:+ "js"
 ?
 	s:+ " / " + gcc
 
@@ -370,4 +382,3 @@ Function VersionInfo(gcc:String, cores:Int)
 	
 	Print s + "~n"
 End Function
-

@@ -280,6 +280,8 @@ Type TBMK
 			Return "android"
 ?raspberrypi
 			Return "raspberrypi"
+?emscripten
+			Return "emscripten"
 ?
 		Else
 			' the custom target platform
@@ -397,7 +399,7 @@ Type TBMK
 			Else
 				process = CreateProcess(MinGWBinPath() + "/gcc.exe -v")
 			End If
-		Else
+		Else	
 			process = CreateProcess("gcc -v")
 		End If
 		Local s:String

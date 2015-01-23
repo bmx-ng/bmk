@@ -142,7 +142,7 @@ Function CreateArc( path$ , oobjs:TList )
 		Next
 	End If
 	
-	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android"
+	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten"
 		For Local t$=EachIn oobjs
 			If Len(cmd)+Len(t)>1000
 				If Sys( cmd )
@@ -151,7 +151,11 @@ Function CreateArc( path$ , oobjs:TList )
 				EndIf
 				cmd=""
 			EndIf
-			If Not cmd cmd=processor.Option(processor.BuildName("ar"), "ar") + " -r "+CQuote(path)
+			If processor.Platform() = "emscripten" Then
+				If Not cmd cmd=processor.Option(processor.BuildName("ar"), "emar") + " r "+CQuote(path)
+			Else
+				If Not cmd cmd=processor.Option(processor.BuildName("ar"), "ar") + " -r "+CQuote(path)
+			End If
 			cmd:+" "+CQuote(t)
 		Next
 	End If
@@ -428,7 +432,27 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	
 		files="INPUT("+files+")"
 	End If
+
+	If processor.Platform() = "emscripten"
+		cmd$ = processor.Option(processor.BuildName("gpp"), "em++")
+
+		' cmd:+" -pthread" ' No threading support yet...
+		cmd:+" -o "+CQuote( path )
+		'cmd:+" -filelist "+CQuote( tmpfile )
 	
+		For Local t$=EachIn lnk_files
+			t=CQuote(t)
+			'If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
+				cmd:+" "+t
+			'Else
+			'	files:+" "+t
+			'EndIf
+		Next
+	
+		files="INPUT("+files+")"
+	End If
+	
+
 	Local t$=getenv_( "BMK_LD_OPTS" )
 	If t 
 		cmd:+" "+t

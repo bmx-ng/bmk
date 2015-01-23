@@ -1,5 +1,7 @@
 '
 ' Change History :
+' 2.24 22/01/2015 - Added support for emscripten target.
+'                   Added platform/arch validation.
 ' 2.23 01/12/2014 - Added direct support for android and raspberrypi targets.
 '                 - Added android configuration settings and project template.
 ' 2.22 02/10/2014 - Win32 NG will now prefer MINGW-located files (bin/lib), instead of BlitzMax bin/lib.
@@ -68,6 +70,9 @@ If AppArgs.length<2 CmdError "Not enough parameters", True
 Local cmd$=AppArgs[1],args$[]
 
 args=ParseConfigArgs( AppArgs[2..] )
+
+' validate the platform configuration
+ValidatePlatformArchitecture()
 
 ' preload the default options
 RunCommand("default_cc_opts", Null)
