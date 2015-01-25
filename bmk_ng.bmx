@@ -726,7 +726,14 @@ Type TBMKGlobals
 		End If
 		Return obj
 	End Method
-	
+
+	Method GetOptionVar:String(variable:String, name:String)
+		Local obj:TOptionVariable = TOptionVariable(vars.ValueForKey(variable.ToUpper()))
+		If obj Then
+			Return obj.GetVar(name)
+		End If
+	End Method
+
 	' push the variable onto the stack (save the value)
 	Method Push(variable:String)
 		variable = variable.ToUpper()
@@ -895,6 +902,10 @@ Type TOptionVariable
 		options.Insert(name, opt)
 		orderedOptions.AddLast(opt)
 		
+	End Method
+	
+	Method GetVar:String(name:String)
+		Return String(options.ValueForKey(name))
 	End Method
 	
 	' finds and removes a matching value

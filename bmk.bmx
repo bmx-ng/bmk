@@ -2,6 +2,8 @@
 ' Change History :
 ' 2.24 22/01/2015 - Added support for emscripten target.
 '                   Added platform/arch validation.
+'                   Auto suffix .html for emscripten apps.
+'                   Added opengles target platform preprocessor option.
 ' 2.23 01/12/2014 - Added direct support for android and raspberrypi targets.
 '                 - Added android configuration settings and project template.
 ' 2.22 02/10/2014 - Win32 NG will now prefer MINGW-located files (bin/lib), instead of BlitzMax bin/lib.
@@ -401,6 +403,10 @@ Function MakeApplication( args$[],makelib )
 	' "android-project" check and copy
 	If processor.Platform() = "android" Then
 		DeployAndroidProject()
+	End If
+	
+	If processor.Platform() = "emscripten" Then
+		If ExtractExt(opt_outfile).ToLower()<>"html" opt_outfile:+".html"
 	End If
 	
 	BeginMake

@@ -439,7 +439,9 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		' cmd:+" -pthread" ' No threading support yet...
 		cmd:+" -o "+CQuote( path )
 		'cmd:+" -filelist "+CQuote( tmpfile )
-	
+		
+		cmd:+ " " + opts
+		
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
 			'If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")

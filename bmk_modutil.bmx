@@ -231,6 +231,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					If processor.Platform() = "emscripten"
 						 cc=processor.CPU()="js"
 					End If
+				Case "opengles"
+					cc=False
+					If processor.Platform() = "android" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "emscripten"
+						 cc=True
+					End If
 				Default
 					cc=False
 				End Select
