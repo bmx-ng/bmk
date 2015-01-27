@@ -245,6 +245,10 @@
 	globals.AddOption("ld_opts", arg1, arg2)
 @end
 
+@define setldopt
+	globals.SetOption("ld_opts", arg1, arg2)
+@end
+
 @define addwin32ldopt
 	if bmk.Platform() == "win32" then
 		globals.AddOption("ld_opts", arg1, arg2)
