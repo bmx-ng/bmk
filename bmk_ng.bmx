@@ -270,16 +270,16 @@ Type TBMK
 	Method Platform:String()
 		If Not opt_target_platform Then
 			' the native target platform
+?raspberrypi
+			Return "raspberrypi"
+?android
+			Return "android"
 ?macos
 			Return "macos"
 ?linux
 			Return "linux"
 ?win32
 			Return "win32"
-?android
-			Return "android"
-?raspberrypi
-			Return "raspberrypi"
 ?emscripten
 			Return "emscripten"
 ?

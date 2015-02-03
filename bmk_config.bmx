@@ -85,6 +85,8 @@ opt_arch="x86"
 opt_arch="x64"
 ?linuxarm
 opt_arch="arm"
+?raspberrypi
+opt_arch="arm"
 ?
 
 ChangeDir LaunchDir
