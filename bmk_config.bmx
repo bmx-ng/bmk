@@ -34,6 +34,7 @@ Global opt_traceheaders
 Global opt_appstub$="brl.appstub" ' BaH 28/9/2007
 Global opt_universal=False
 Global opt_target_platform:String
+Global opt_gdbdebug=False
 
 Global opt_dumpbuild
 
@@ -210,6 +211,8 @@ Function ParseConfigArgs$[]( args$[] )
 					' oops
 					CmdError "Not valid platform : '" + opt_target_platform + "'"
 			End Select
+		Case "gdb"
+			opt_gdbdebug = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select

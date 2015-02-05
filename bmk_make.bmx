@@ -183,6 +183,9 @@ Function MakeMod:TFile( mod_name$, isRequired:Int = False )
 		If opt_verbose bcc_opts:+" -v"
 		If opt_release bcc_opts:+" -r"
 		If opt_threaded bcc_opts:+" -h"
+		If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
+			bcc_opts:+" -d"
+		End If
 
 		obj_files=New TList
 		

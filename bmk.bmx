@@ -4,6 +4,8 @@
 '                   Added platform/arch validation.
 '                   Auto suffix .html for emscripten apps.
 '                   Added opengles target platform preprocessor option.
+'                   Added project-specific pre-processing - "<app file>.bmk".
+'                   Added gdb debug generation option.
 ' 2.23 01/12/2014 - Added direct support for android and raspberrypi targets.
 '                 - Added android configuration settings and project template.
 ' 2.22 02/10/2014 - Win32 NG will now prefer MINGW-located files (bin/lib), instead of BlitzMax bin/lib.
@@ -321,9 +323,11 @@ Function MakeApplication( args$[],makelib )
 	End If
 	
 	
-	' pre process
+	' generic pre process
 	LoadBMK(ExtractDir(Main) + "/pre.bmk")
-
+	
+	' project-specific pre process
+	LoadBMK(ExtractDir(Main) + "/" + StripDir( opt_outfile ) + ".bmk")
 	
 	If processor.Platform() = "win32" Then
 		If makelib
