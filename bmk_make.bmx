@@ -484,6 +484,9 @@ Function MakeApp:TFile( Main$,makelib )
 	If opt_release bcc_opts:+" -r"
 	If opt_threaded bcc_opts:+" -h"
 	If opt_framework bcc_opts:+" -f "+opt_framework
+	If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
+		bcc_opts:+" -d"
+	End If
 	
 	Local app_ext$=ExtractExt( app_main ).ToLower()
 	Local _type:Int = String(RunCommand("source_type", [app_ext])).ToInt()
