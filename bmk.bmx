@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 2.25 15/02/2015 - Fix for preprocessor bmxng version check.
 ' 2.24 22/01/2015 - Added support for emscripten target.
 '                   Added platform/arch validation.
 '                   Auto suffix .html for emscripten apps.

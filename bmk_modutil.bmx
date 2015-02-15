@@ -236,6 +236,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					If processor.Platform() = "android" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "emscripten"
 						 cc=True
 					End If
+				Case "bmxng"
+					cc=False
+					If processor.BCCVersion() <> "BlitzMax" Then
+						cc=True
+					End If
 				Default
 					cc=False
 				End Select
