@@ -320,11 +320,6 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 				files:+" -lstdc++"
 			End If
 
-			' if using mingw64, we need to link to pthreads
-			If processor.HasTarget("x86_64") And processor.BCCVersion() <> "BlitzMax" Then
-				files :+ " -lwinpthread "
-			End If
-
 			files:+" -lmingwex"
 			
 		
@@ -335,6 +330,11 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 
 			If opts.Find("gcc") = -1 Then
 				files:+" -lgcc"
+			End If
+
+			' if using mingw64, we need to link to pthreads
+			If processor.HasTarget("x86_64") And processor.BCCVersion() <> "BlitzMax" Then
+				files :+ " -lwinpthread "
 			End If
 			
 			files :+ " -lmoldname -lmsvcrt "
