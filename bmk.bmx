@@ -2,6 +2,7 @@
 ' Change History :
 ' 2.25 15/02/2015 - Fix for preprocessor bmxng version check.
 '                   Fixed Win32 pthread link order issue.
+'                   Use Win32 pthread link for GCC 4.8+
 ' 2.24 22/01/2015 - Added support for emscripten target.
 '                   Added platform/arch validation.
 '                   Auto suffix .html for emscripten apps.

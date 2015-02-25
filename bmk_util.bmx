@@ -332,8 +332,8 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 				files:+" -lgcc"
 			End If
 
-			' if using mingw64, we need to link to pthreads
-			If processor.HasTarget("x86_64") And processor.BCCVersion() <> "BlitzMax" Then
+			' if using 4.8+ or mingw64, we need to link to pthreads
+			If version >= 40800 Or (processor.HasTarget("x86_64") And processor.BCCVersion() <> "BlitzMax") Then
 				files :+ " -lwinpthread "
 			End If
 			
