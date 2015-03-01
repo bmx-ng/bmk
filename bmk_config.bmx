@@ -288,10 +288,10 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "ppc"
 ?arm
 		s:+ "arm"
-?armaebi
-		s:+ "armaebi"
-?armaebiv7a
-		s:+ "armaebiv7a"
+?armeabi
+		s:+ "armeabi"
+?armeabiv7a
+		s:+ "armeabiv7a"
 ?arm64v8a
 		s:+ "arm64v8a"
 ?js
@@ -372,10 +372,10 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "x64"
 ?arm
 	s:+ "arm"
-?armaebi
-	s:+ "armaebi"
-?armaebiv7a
-	s:+ "armaebiv7a"
+?armeabi
+	s:+ "armeabi"
+?armeabiv7a
+	s:+ "armeabiv7a"
 ?arm64v8a
 	s:+ "arm64v8a"
 ?js
