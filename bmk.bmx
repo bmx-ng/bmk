@@ -186,6 +186,9 @@ End Function
 Function MakeModules( args$[] )
 
 	If args.length>1 CmdError "Expecting only 1 argument for makemods"
+
+	' check if build requirements are met, throws error on failing
+	CheckBuildRequirements() 
 	
 	Local mods:TList
 	
@@ -324,7 +327,9 @@ Function MakeApplication( args$[],makelib )
 		
 		
 	End If
-	
+
+	' check build requirements: exits execution if not met
+	CheckBuildRequirements() 
 	
 	' generic pre process
 	LoadBMK(ExtractDir(Main) + "/pre.bmk")
