@@ -1,4 +1,6 @@
 #include <stdio.h>
+
+/*
 #include <sys/wait.h>
 #include <errno.h>
 
@@ -19,14 +21,7 @@ int bmx_waitpid(pid_t pid) {
 	}
 	return -999;
 }
-
-void bmx_system(const char * c) {
-	int res = system(c);
-	
-	// don't ask..
-	if (res) {
-		res = 1;
-	}
-
-	exit(res);
+*/
+int bmx_system(const char * c) {
+	return system(c);
 }

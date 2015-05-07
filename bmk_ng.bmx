@@ -18,7 +18,6 @@ Import "bmk_config.bmx"
 Import "bmk_ng_utils.bmx"
 
 
-Global commands:TMap = New TMap
 Global processor:TBMK = New TBMK
 Global globals:TBMKGlobals = New TBMKGlobals
 
@@ -42,6 +41,8 @@ End Function
 
 ' this is the core bmk processor.
 Type TBMK
+
+	Field commands:TMap = New TMap
 
 	Method New()
 		LuaRegisterObject Self,"bmk"
@@ -680,6 +681,22 @@ Type TBMK
 	Method IsDebugBuild:Int()
 		Return opt_debug
 	End Method
+
+	Method RunCommand:Object(command:String, args:String[])
+		Local cmd:TBMKCommand = TBMKCommand(commands.ValueForKey(command.ToLower()))
+		If cmd Then
+			' we need to add the "arg0" string to the front of the array
+			Local all:String
+			For Local i:Int = 0 Until args.length
+				Local arg:String = args[i]
+				all:+ CQuote$(arg) + " "
+			Next
+			args = [ all.Trim() ] + args
+			' now we can run the command
+			Return cmd.RunCommandArgs(args)
+		End If
+	End Method
+
 End Type
 
 ?win32
@@ -939,21 +956,6 @@ Type TOptionVariable
 
 End Type
 
-Function RunCommand:Object(command:String, args:String[])
-	Local cmd:TBMKCommand = TBMKCommand(commands.ValueForKey(command.ToLower()))
-	If cmd Then
-		' we need to add the "arg0" string to the front of the array
-		Local all:String
-		For Local i:Int = 0 Until args.length
-			Local arg:String = args[i]
-			all:+ CQuote$(arg) + " "
-		Next
-		args = [ all.Trim() ] + args
-		' now we can run the command
-		Return cmd.RunCommandArgs(args)
-	End If
-End Function
-
 ' a bmk function/command
 Type TBMKCommand
 
@@ -1197,6 +1199,9 @@ Type TProcessManager
 	Field cpuCount:Int
 	
 	Field threads:TList = New TList
+	Field count:Int
+	
+	Field mutex:TMutex
 
 	Method New()
 		cpuCount = GetCoreCount()
@@ -1204,32 +1209,44 @@ Type TProcessManager
 		If cpuCount = 1 Then
 			cpuCount = 2
 		End If
+		mutex = TMutex.Create()
 	End Method
 
 	Method CheckThreads()
-		While threads.Count() = cpuCount
+		While count = cpuCount
+			mutex.Lock()
 			For Local thread:TThread = EachIn threads
 				If Not thread.Running() Then
 					threads.Remove(thread)
+					count :- 1
+					Exit
 				End If
 			Next
+			mutex.Unlock()
 			Delay 5
 		Wend
 	End Method
 	
 	Method WaitForThreads()
-		While threads.Count()
+		While count
+			mutex.Lock()
 			For Local thread:TThread = EachIn threads
 				If Not thread.Running() Then
+					count :- 1
 					threads.Remove(thread)
+					Exit
 				End If
 			Next
+			mutex.Unlock()
 			Delay 5
 		Wend
 	End Method
 	
 	Method DoSystem(cmd:String, src:String)
+		mutex.Lock()
+		count :+ 1
 		threads.AddLast(CreateThread(TProcessTask._DoTasks, New TProcessTask.Create(cmd, src)))
+		mutex.Unlock()
 
 		CheckThreads()
 	End Method
@@ -1238,9 +1255,7 @@ End Type
 
 ?Not win32
 Extern
-	Function fork:Int()
-	Function bmx_waitpid:Int(pid:Int)
-	Function bmx_system(cmd:Byte Ptr)
+	Function bmx_system:Int(cmd:Byte Ptr)
 End Extern
 ?
 
@@ -1263,16 +1278,12 @@ Type TProcessTask
 		Local res:Int
 		
 ?Not win32
-		Local pid:Int = fork()
-		If Not pid Then
-			bmx_system(command)
-		Else
-			res = bmx_waitpid(pid)
-		End If
+		Local s:Byte Ptr = command.ToUtf8String()
+		res = bmx_system(s)
+		MemFree(s)
 ?win32
 		res = system_(command)
 ?
-
 		If res Then
 			Local s:String = "Build Error: failed to compile (" + res + ") " + source
 			Print s + "~n"

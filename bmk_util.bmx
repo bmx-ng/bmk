@@ -22,7 +22,6 @@ Type TModOpt ' BaH
 			If opt.startsWith("-L") Then
 				opt = "-L" + CQuote(opt[2..])
 			End If
-			
 			ld_opts.addLast opt
 		End If
 	End Method
@@ -88,11 +87,11 @@ Function Ranlib( dir$ )
 End Function
 
 Function Assemble( src$,obj$ )
-	RunCommand("assemble", [src, obj])
+	processor.RunCommand("assemble", [src, obj])
 End Function
 
 Function CompileC( src$,obj$,opts$ )
-	RunCommand("CompileC", [src, obj, opts])
+	processor.RunCommand("CompileC", [src, obj, opts])
 End Function
 
 Function CompileBMX( src$,obj$,opts$ )
@@ -109,7 +108,7 @@ Function CompileBMX( src$,obj$,opts$ )
 ?threaded
 		processManager.WaitForThreads()
 ?			
-	RunCommand("CompileBMX", [src, azm, opts])
+	processor.RunCommand("CompileBMX", [src, azm, opts])
 
 	If processor.BCCVersion() = "BlitzMax" Then
 		' it would be nice to be able to call this from the script... but we need more refactoring first :-p

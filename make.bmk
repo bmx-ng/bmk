@@ -68,7 +68,7 @@
 	azm = sys.StripExt(obj) .. ".s"
 	cmd = prefix .. bmk.Quote(utils.BlitzMaxPath() .. "/bin/" .. bcc_app) .." " .. opts .. " -o " .. bmk.Quote(azm) .. " " .. bmk.Quote(src)
 
-	if bmk.Sys( cmd ) ~= 0 then
+	if bmk.MultiSys( cmd, src ) ~= 0 then
 		bmk.ThrowNew("Build Error: failed to compile " .. src)
 	end
 
@@ -151,7 +151,18 @@
 		genDebug = " -g"
 	end
 
-	cmd = cmd .. opts .. %cc_opts% .. %mod_ccopts% .. genDebug .. " -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+	# Remove -fno-exceptions if we have provided -fexceptions
+	local cc_opts = %cc_opts%
+
+	if cc_opts:find("-fexceptions") ~= nil then
+		cc_opts = cc_opts:gsub("%-fno%-exceptions", print)
+	end
+
+	if opts:find("-fexceptions") ~= nil then
+		cc_opts = cc_opts:gsub("%-fno%-exceptions", "")
+	end
+
+	cmd = cmd .. opts .. cc_opts .. %mod_ccopts% .. genDebug .. " -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
 
 	if bmk.MultiSys( cmd, src ) ~= 0 then
 		bmk.ThrowNew("Build Error: failed to compile " .. src)

@@ -19,556 +19,16 @@ Global EXPERIMENTAL_SPEEDUP
 Local t$=getenv_( "BMK_SPEEDUP" )
 If t EXPERIMENTAL_SPEEDUP=True
 
-Type TFile
-
-	Field path$,time
-	Field itime 'Tommo:added timestamp for included file
-
-	Function Create:TFile( path$,files:TList, time:Int = 0 )
-		Local f:TFile=New TFile
-		f.path=path
-		If time Then
-			f.time = time
-		Else
-			f.time=FileTime(path)
-		End If
-		If files files.AddFirst f
-		Return f
-	End Function
-
-End Type
-
-Global make:TMake = New TMake
-
-
-Type TMake
-
-	Method New()
-		LuaRegisterObject Self,"make"
-	End Method
-
-	'Method CC(src_path:String)
-	'	MakeSrc(RealPath(src_path), True)
-	'End Method
-	
-	Method Make(src_path:String)
-		MakeSrc(RealPath(src_path), True)
-	End Method
-
-End Type
-
-
-
 Global cc_opts$
 Global bcc_opts$
 Global app_main$
 Global app_type$
-Global src_files:TList
-Global obj_files:TList
-Global lnk_files:TList
-Global tmp_stack:TList
-Global ext_files:TList
-
-Function Push( o:Object )
-	tmp_stack.AddLast o
-End Function
-
-Function Pop:Object() 
-	Return tmp_stack.RemoveLast()
-End Function
-
-Function FindFile:TFile( path$,files:TList )
-	path=path.ToLower()
-	Local f:TFile
-	For f=EachIn files
-		If f.path.ToLower()=path Return f
-	Next
-End Function
-
-Function MaxTime( files:TList )
-	Local f:TFile,t
-	For f=EachIn files
-		If f.time>t t=f.time
-	Next
-	Return t
-End Function
-
-Function FilePaths:TList( files:TList )
-	Local f:TFile,p:TList=New TList
-	For f=EachIn files
-		p.AddLast f.path
-	Next
-	Return p
-End Function
-
-Function AddList( src:TList,dst:TList )
-	Local t:Object
-	For t=EachIn src
-		dst.AddLast t
-	Next
-End Function
 
 Function BeginMake()
 	cc_opts=Null
 	bcc_opts=Null
 	app_main=Null
-	src_files=New TList
-	obj_files=New TList
-	lnk_files=New TList
-	tmp_stack=New TList
-	ext_files=New TList
 	opt_framework=""
-End Function
-
-'returns mod interface file
-Function MakeMod:TFile( mod_name$, isRequired:Int = False )
-
-	Local path$=ModulePath(mod_name)
-	Local id$=ModuleIdent(mod_name)
-	Local src_path$=path+"/"+id+".bmx"
-	Local arc_path$=path+"/"+id+opt_configmung+processor.CPU()+".a"
-	Local iface_path$=path+"/"+id+opt_configmung+processor.CPU()+".i"
-
-	Local skip:String = globals.Get("skip_mod")
-	If skip Then
-		skip :+ " "
-		Local name:String = mod_name + " "
-		If skip.tolower().find(name.tolower()) >= 0 Then
-			If opt_debug Then
-				Print "Skipping " + mod_name + " (d)"
-			Else
-				Print "Skipping " + mod_name + " (r)"
-			End If
-			Return
-		End If
-	End If
-
-	mod_opts = New TModOpt ' BaH
-
-	Local iface:TFile=FindFile( iface_path,src_files )
-	If iface Return iface
-
-' commented out, because it throws asserts all the time in debug mode. So,
-' either it shouldn't be checking it here, or something else isn't right. I vote the former.
-'	Assert Not FindFile( arc_path,lnk_files )
-
-	Local arc:TFile=TFile.Create( arc_path,Null )
-
-	If ((mod_name+".").Find(opt_modfilter)=0 Or (isRequired And opt_modbuild)) And FileType(src_path)=FILETYPE_FILE
-
-		globals.PushAll()
-		Push cc_opts
-		Push bcc_opts
-		Push obj_files
-
-		globals.SetVar("universal", String(opt_universal))
-		
-		cc_opts=""
-		'cc_opts:+" -I"+CQuote(path)
-		globals.AddOption("cc_opts", "filepath", "-I"+CQuote(path))
-		'cc_opts:+" -I"+CQuote(ModulePath(""))
-		globals.AddOption("cc_opts", "modulepath", "-I"+CQuote(ModulePath("")))
-		If opt_release Then
-			'cc_opts:+" -DNDEBUG"
-			globals.AddOption("cc_opts", "nodebug", "-DNDEBUG")
-		End If
-		If opt_threaded Then
-			'cc_opts:+" -DTHREADED"
-			globals.AddOption("cc_opts", "threaded", "-DTHREADED")
-		End If
-
-		bcc_opts=" -g "+processor.CPU()
-		bcc_opts:+" -m "+mod_name$
-		If opt_quiet bcc_opts:+" -q"
-		If opt_verbose bcc_opts:+" -v"
-		If opt_release bcc_opts:+" -r"
-		If opt_threaded bcc_opts:+" -h"
-		If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
-			bcc_opts:+" -d"
-		End If
-
-		obj_files=New TList
-		
-		Local force_build:Int = False
-		If Not FileType(iface_path) Then
-			' if the interface file is missing... we *really* want to force a recompile
-			force_build = True
-		End If
-
-		MakeSrc src_path,True, force_build, isRequired
-
-?threaded
-		processManager.WaitForThreads()
-?			
-		If MaxTime( obj_files )>arc.time Or (Not isRequired And opt_all)
-			If Not opt_quiet Print "Archiving:"+StripDir(arc_path)
-			CreateArc arc_path,FilePaths( obj_files )
-			arc.time=FileTime(arc_path)
-		EndIf
-
-		obj_files=TList(Pop())
-		bcc_opts=String(Pop())
-		cc_opts=String(Pop())
-		globals.PopAll()
-	EndIf
-
-	Local src:TFile=MakeSrc( iface_path,False )
-	lnk_files.AddFirst arc
-
-	Return src
-
-End Function
-
-'adds to obj_files
-'returns input src file
-Function MakeSrc:TFile( src_path$,buildit, force_build:Int = False, isRequired:Int = False )
-'Print "MakeSrc : " + src_path
-	Local src:TFile=FindFile( src_path,src_files )
-	If src Return src
-
-	If FileType(src_path)<>FILETYPE_FILE Return
-
-	src=TFile.Create( src_path,src_files )
-
-	Local src_file:TSourceFile=ParseSourceFile( src_path )
-	If Not src_file Return
-	
-	Local main_file=(src_path=app_main)
-	
-	Local keep_opts:TModOpt = mod_opts ' BaH
-	If mod_opts Then
-		globals.SetVar("mod_ccopts", String(mod_opts.cc_opts))
-	End If
-	
-	If main_file
-		If src_file.framewk
-			If opt_framework Throw "Framework already specified on commandline"
-			opt_framework=src_file.framewk
-			bcc_opts:+" -f "+opt_framework
-			MakeMod opt_framework
-		Else
-			If app_type="bmx"
-				For Local t$=EachIn EnumModules()
-					If t.Find("brl.")=0 Or t.Find("pub.")=0
-						If t<>"brl.blitz" And t<>opt_appstub MakeMod t
-					EndIf
-				Next
-			EndIf
-		EndIf
-	Else If src_file.framewk
-		Throw "Framework must appear in main source file"
-	EndIf
-	
-	mod_opts = keep_opts ' BaH
-	If mod_opts Then
-		globals.SetVar("mod_ccopts", String(mod_opts.cc_opts))
-	End If
-	
-	globals.PushAll(["LD_OPTS"])
-	push cc_opts
-	Push CurrentDir()
-	
-	ChangeDir ExtractDir( src_path )
-	
-	Local src_ext$=ExtractExt( src_path ).ToLower()
-	
-	Local src_type:Int = String(RunCommand("source_type", [src_ext])).ToInt()
-
-	If src_type & (SOURCE_BMX | SOURCE_IFACE)
-		'incbins
-		For Local inc$=EachIn src_file.incbins
-			Local time=FileTime( inc )
-			'Tommo: 
-			If time > src.time Then
-				src.time = time
-				src.itime = time 'update inc timestamp 
-			End If
-			'Tommo: End of mod
-		Next
-		'includes
-		For Local inc$=EachIn src_file.includes
-			Local inc_ext$=ExtractExt(inc).ToLower()
-			If Match(inc_ext,"bmx")
-				Local dep:TFile=MakeSrc(RealPath(inc),False)
-				If Not dep Continue
-				'Tommo:
-				If dep.time > src.time  'update inc timestamp 
-					src.time = dep.time
-					src.itime = dep.time
-				EndIf
-				'Tommo:End of mod
-			Else
-				Throw "Unrecognized Include file type: "+inc
-			EndIf
-		Next
-
-		'module imports
-		For Local imp$=EachIn src_file.modimports
-			Local dep:TFile=MakeMod(imp, True)
-			If Not dep Continue
-			'cc_opts:+" -I"+CQuote(ExtractDir(dep.path))
-			globals.AddOption("cc_opts", "include_"+imp, "-I"+CQuote(ExtractDir(dep.path)))
-			If dep.time>src.time src.time=dep.time
-		Next
-
-		mod_opts = keep_opts ' BaH
-		If mod_opts Then
-			globals.SetVar("mod_ccopts", String(mod_opts.cc_opts))
-		End If
-
-		For Local imp$=EachIn mod_opts.ld_opts ' BaH
-			ext_files.AddLast TModOpt.setPath(imp, ExtractDir(src_path))
-		Next
-
-		'quoted imports
-		For Local imp$=EachIn src_file.imports
-			If imp[0]=Asc("-")
-				ext_files.AddLast imp
-				Continue
-			EndIf
-			Local imp_ext$=ExtractExt(imp).ToLower()
-			If Match( imp_ext,"h;hpp;hxx" )
-				'cc_opts:+" -I"+CQuote(RealPath(ExtractDir(imp)))
-				globals.AddOption("cc_opts", "include_" + imp, "-I"+CQuote(RealPath(ExtractDir(imp))))
-			Else If Match( imp_ext,"o;a;lib" )
-				ext_files.AddLast RealPath(imp)
-			Else If Match( imp_ext,ALL_SRC_EXTS )
-
-				Local dep:TFile=MakeSrc(RealPath(imp),True,,isRequired)
-
-				If Not dep Or Not Match( imp_ext,"bmx;i" ) Continue
-				
-				If EXPERIMENTAL_SPEEDUP And Match( imp_ext,"bmx" )
-					Local p$=ExtractDir( dep.path )+"/.bmx"
-					Local i_path$=p+"/"+StripDir( dep.path )+opt_configmung+processor.CPU()+".i2"
-					If FileType( i_path )=FILETYPE_FILE
-						Local i_time=FileTime( i_path )
-						If i_time>src.time src.time=i_time
-					Else
-						If dep.time>src.time src.time=dep.time
-					EndIf
-				Else
-					If dep.time>src.time src.time=dep.time
-				EndIf
-				
-			Else
-				Throw "Unrecognized Import file type: "+imp
-			EndIf
-		Next
-	Else If src_type & (SOURCE_C | SOURCE_HEADER) 'If Match( src_ext,"c;m;cpp;cxx;mm;h;hpp;hxx" )
-		For Local inc$=EachIn src_file.includes
-			Local inc_ext$=ExtractExt(inc).ToLower()
-			Local inc_type:Int = String(RunCommand("source_type", [inc_ext])).ToInt()
-			If Not inc_type & SOURCE_HEADER 'Match(inc_ext,"h;hpp;hxx")
-				Continue
-			EndIf
-			Local path$=RealPath(inc)
-			Local dep:TFile=MakeSrc(path,False)
-			If dep And dep.time>src.time src.time=dep.time
-			If Not opt_traceheaders Continue
-			Local src$=StripExt(path)+".cpp"
-			If FileType(src)<>FILETYPE_FILE
-				src=""
-			EndIf
-			If Not src Continue
-			MakeSrc src,True
-		Next
-	EndIf
-	
-	If buildit And src_type & (SOURCE_BMX | SOURCE_C | SOURCE_ASM) 'Match( src_ext,"bmx;c;m;cpp;cxx;mm;s;asm;cc" )
-
-		Local p$=ExtractDir( src_path )+"/.bmx"
-		
-		If opt_dumpbuild Or FileType( p )=FILETYPE_NONE
-			CreateDir p
-			'Sys "mkdir "+p   'Windows no likey...
-		EndIf
-		
-		If FileType( p )<>FILETYPE_DIR Throw "Unable to create temporary directory"
-
-		Local obj_path$=p+"/"+StripDir( src_path )
-		If main_file obj_path:+"."+opt_apptype
-		obj_path:+opt_configmung+processor.CPU()+".o"
-
-		Local obj:TFile
-		Local time:Int
-		
-		' Has the source been changed since we last compiled?
-		If src.time>FileTime( obj_path ) Or (Not isRequired And opt_all) Or force_build
-
-			' pragmas
-			Local pragma_inDefine:Int, pragma_text:String, pragma_name:String
-			For Local pragma:String = EachIn src_file.pragmas
-				processor.ProcessPragma(pragma, pragma_inDefine, pragma_text, pragma_name)
-			Next
-
-			If Not opt_quiet Print "Compiling:"+StripDir(src_path)
-			Select src_type
-			Case SOURCE_BMX
-				Local opts$=bcc_opts
-				If main_file opts=" -t "+opt_apptype+opts
-			
-				CompileBMX src_path,obj_path,opts
-						
-				If EXPERIMENTAL_SPEEDUP
-					Local i_path$=StripExt( obj_path )+".i"
-
-					If FileType( i_path )=FILETYPE_FILE
-				
-						Local i_path2$=i_path+"2",update=True
-
-						'Tommo:
-						If Not opt_all And FileType(i_path2) = FILETYPE_FILE ..
-								And (src.time = FileTime(src.path) Or src.time = src.itime) ' added checking for Included file timestamp
-						'Tommo: end of mod
-
-							If FileSize( i_path )=FileSize( i_path2 )
-								Local i_bytes:Byte[]=LoadByteArray( i_path )
-								Local i_bytes2:Byte[]=LoadByteArray( i_path2 )
-								If i_bytes.length=i_bytes2.length And memcmp_( i_bytes,i_bytes2,i_bytes.length )=0
-									update=False
-								EndIf
-							EndIf
-						EndIf
-						If update CopyFile i_path,i_path2
-					EndIf
-				EndIf
-				
-				If processor.BCCVersion() <> "BlitzMax" Then
-					Local csrc_path:String = StripExt(obj_path) + ".c"
-					Local cobj_path:String = StripExt(obj_path) + ".o"
-					CompileC csrc_path,cobj_path,cc_opts
-				End If
-
-
-			Case SOURCE_C '"c","m","cpp","cxx","mm"
-				CompileC src_path,obj_path,cc_opts
-?threaded
-				time_(Varptr time)
-?
-
-			Case SOURCE_ASM '"s","asm"
-				Assemble src_path,obj_path
-			End Select
-
-		EndIf
-
-		obj = TFile.Create( obj_path,obj_files, time )
-		lnk_files.AddFirst obj
-	EndIf
-
-	ChangeDir String(Pop())
-	cc_opts=String(Pop())
-	globals.PopAll()
-	
-	Return src
-	
-End Function
-
-Function MakeApp:TFile( Main$,makelib )
-
-	app_main=Main
-	
-	cc_opts=""
-
-	globals.AddOption("cc_opts", "modulepath", "-I"+CQuote(ModulePath("")))
-	If opt_release Then
-		globals.AddOption("cc_opts", "nodebug", "-DNDEBUG")
-	End If
-
-	globals.SetVar("universal", String(opt_universal))
-
-	bcc_opts=" -g "+processor.CPU()
-	If opt_quiet bcc_opts:+" -q"
-	If opt_verbose bcc_opts:+" -v"
-	If opt_release bcc_opts:+" -r"
-	If opt_threaded bcc_opts:+" -h"
-	If opt_framework bcc_opts:+" -f "+opt_framework
-	If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
-		bcc_opts:+" -d"
-	End If
-	
-	Local app_ext$=ExtractExt( app_main ).ToLower()
-	Local _type:Int = String(RunCommand("source_type", [app_ext])).ToInt()
-	Select _type
-	Case SOURCE_BMX
-		app_type="bmx"
-		MakeMod "brl.blitz"
-		' don't know if this swap can't be applied to *all* build types, and not just Android
-		If processor.Platform() = "android"
-			MakeMod opt_appstub
-		End If
-		MakeSrc Main,True
-		If processor.Platform() <> "android"
-			MakeMod opt_appstub
-		End If
-	Case SOURCE_C '"c","cpp","cxx","mm"
-		app_type="c/c++"
-		If opt_framework MakeMod opt_framework
-		MakeSrc Main,True
-	Default
-		Throw "Unrecognized app source file extension:"+app_ext
-	End Select
-	
-?threaded
-		processManager.WaitForThreads()
-?
-	If MaxTime( lnk_files )>FileTime( opt_outfile ) Or opt_all
-		If Not opt_quiet Print "Linking:"+StripDir( opt_outfile )
-		lnk_files=FilePaths( lnk_files )
-		AddList ext_files,lnk_files
-'globals.Dump()
-		LinkApp opt_outfile,lnk_files,makelib, globals.Get("ld_opts")
-	EndIf
-	
-	' post process
-	LoadBMK(ExtractDir(Main) + "/post.bmk")
-
-	If processor.Platform() = "android"
-		' create the apk
-		
-		' setup environment
-		CheckAndroidPaths()
-		
-		' copy shared object
-		Local androidABI:String = getenv_("ANDROID_ABI")
-		
-		Local appId:String = StripDir(StripExt(opt_outfile))
-		Local buildDir:String = ExtractDir(opt_outfile)
-		Local projectDir:String = buildDir + "/android-project-" + appId
-
-		Local abiPath:String = projectDir + "/libs/" + androidABI
-
-		Local sharedObject:String = "lib" + appId + ".so"
-		
-		CopyFile(buildDir + "/" + sharedObject, abiPath + "/" + sharedObject)
-
-		' build the apk :
-		Local antHome:String = getenv_("ANT_HOME").Trim()
-		Local cmd:String = "~q" + antHome + "/bin/ant"
-?win32
-		cmd :+ ".bat"
-?
-		cmd :+ "~q debug"
-		
-		Local dir:String = CurrentDir()
-		
-		ChangeDir(projectDir)
-
-		If opt_dumpbuild Then
-			Print cmd
-		End If
-		
-		If Sys( cmd ) Then
-			Throw "Error creating apk"
-		End If
-		
-		ChangeDir(dir)
-
-	End If
-
-	app_main=""
-
 End Function
 
 Function CheckAndroidPaths()
@@ -649,3 +109,528 @@ Function CheckAndroidPaths()
 
 End Function
 
+Type TBuildManager
+
+	Field sources:TMap = New TMap
+	
+	Field buildAll:Int
+
+	Method MakeMods(mods:TList, rebuild:Int = False)
+
+		For Local m:String = EachIn mods
+			If (opt_modfilter And ((m).Find(opt_modfilter) = 0)) Or (Not opt_modfilter) Then
+				GetMod(m, rebuild Or buildAll)
+			End If
+		Next
+	End Method
+
+	Method MakeApp(main_path:String, makelib:Int)
+
+		app_main = main_path
+
+		Local source:TSourceFile = GetSourceFile(app_main, False, opt_all)
+
+		If Not source Then
+			Return
+		End If
+
+		Local build_path:String = ExtractDir(main_path) + "/.bmx"
+
+		source.obj_path = build_path + "/" + StripDir( main_path ) + "." + opt_apptype + opt_configmung + processor.CPU() + ".o"
+		source.obj_time = FileTime(source.obj_path)
+	
+		Local cc_opts:String = " -I" + CQuote(ModulePath(""))
+		If opt_release Then
+			cc_opts :+ " -DNDEBUG"
+		End If
+	
+		Local bcc_opts:String = " -g " + processor.CPU()
+		If opt_quiet bcc_opts:+" -q"
+		If opt_verbose bcc_opts:+" -v"
+		If opt_release bcc_opts:+" -r"
+		If opt_threaded bcc_opts:+" -h"
+		If opt_framework bcc_opts:+" -f " + opt_framework
+		If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
+			bcc_opts:+" -d"
+		End If
+
+		source.cc_opts :+ cc_opts
+
+		source.modimports.AddLast("brl.blitz")
+		source.modimports.AddLast(opt_appstub)
+
+		If source.framewk
+			If opt_framework Then
+				Throw "Framework already specified on commandline"
+			End If
+			opt_framework = source.framewk
+			bcc_opts :+" -f " + opt_framework
+			source.modimports.AddLast(opt_framework)
+		Else
+			For Local t:String = EachIn EnumModules()
+				If t.Find("brl.") = 0 Or t.Find("pub.") = 0 Then
+					If t <> "brl.blitz" And t <> opt_appstub Then
+						source.modimports.AddLast(t)
+					End If
+				End If
+			Next
+		End If
+		
+		bcc_opts :+ " -t " + opt_apptype
+	
+		source.bcc_opts = bcc_opts
+
+		source.requiresBuild = opt_all
+
+		CalculateDependencies(source, False, opt_all)
+		
+		' create bmx stages :
+		Local gen:TSourceFile = CreateGenStage(source)
+		Local link:TSourceFile = CreateLinkStage(gen)
+
+	End Method
+	
+	Method DoBuild(app_build:Int = False)
+		Local files:TList = New TList
+		For Local file:TSourceFile = EachIn sources.Values()
+			files.AddLast(file)
+		Next
+
+		' get the list of parallelizable batches
+		' each list of batches has no outstanding dependencies, and therefore
+		' can be compiled in parallel.
+		' the last list of batches requires all previous lists to have
+		' been compiled.
+		Local batches:TList = CalculateBatches(files)
+		
+		For Local batch:TList = EachIn batches
+			Local s:String
+			For Local m:TSourceFile = EachIn batch
+
+				Local build_path:String = ExtractDir(m.path) + "/.bmx"
+				
+				If Not FileType(build_path) Then
+					CreateDir build_path
+				End If
+				
+				If FileType(build_path) <> FILETYPE_DIR Then
+					Throw "Unable to create temporary directory"
+				End If
+
+				' bmx file
+				If Match(m.ext, "bmx") Then
+					If m.time > m.obj_time Or m.time > m.iface_time Then
+						m.requiresBuild = True
+					End If
+
+					If m.requiresBuild Then
+
+						Select m.stage
+							Case STAGE_GENERATE
+								If Not opt_quiet Then
+									Print "Processing:" + StripDir(m.path)
+								End If
+								
+								CompileBMX m.path, m.obj_path, m.bcc_opts
+								
+							Case STAGE_OBJECT
+								If processor.BCCVersion() <> "BlitzMax" Then
+
+									Local csrc_path:String = StripExt(m.obj_path) + ".c"
+									Local cobj_path:String = StripExt(m.obj_path) + ".o"
+
+									If Not opt_quiet Then
+										Print "Compiling:" + StripDir(csrc_path)
+									End If
+
+									CompileC csrc_path,cobj_path, m.cc_opts
+								Else
+									' asm compilation
+									' TODO
+								End If
+							Case STAGE_LINK
+
+								' a module?
+								If m.modid Then
+									Local max_obj_time:Int = m.MaxObjTime()
+
+									If max_obj_time > m.arc_time Then
+										Local objs:TList = New TList
+										m.GetObjs(objs)
+			
+										If Not opt_quiet Then
+											Print "Archiving:" + StripDir(m.arc_path)
+										End If
+
+										CreateArc m.arc_path, objs
+										m.arc_time = FileTime(m.arc_path)
+										
+									End If
+								Else
+									' an app!
+									Local max_lnk_time:Int = m.MaxLinkTime()
+								
+									If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
+										If Not opt_quiet Then
+											Print "Linking:" + StripDir(opt_outfile)
+										End If
+										
+										Local links:TList = New TList
+										m.GetLinks(links)
+										LinkApp opt_outfile, links, False, globals.Get("ld_opts")
+									End If
+
+								End If
+
+						End Select
+
+						m.obj_time = time_(0)
+
+					End If
+					
+				Else
+					' c/c++ source
+					If m.time > m.obj_time Then ' object is older or doesn't exist
+						m.requiresBuild = True
+					End If
+					
+					If m.requiresBuild Then
+
+						If Not opt_quiet Then
+							Print "Compiling:" + StripDir(m.path)
+						End If
+
+						CompileC m.path, m.obj_path, m.cc_opts
+						
+						m.obj_time = time_(0)
+					End If
+				End If
+				
+			Next
+
+?threaded
+		processManager.WaitForThreads()
+?
+
+		Next
+		
+		If app_build Then
+		
+			' post process
+			LoadBMK(ExtractDir(app_main) + "/post.bmk")
+		
+			If processor.Platform() = "android"
+				' create the apk
+				
+				' setup environment
+				CheckAndroidPaths()
+				
+				' copy shared object
+				Local androidABI:String = getenv_("ANDROID_ABI")
+				
+				Local appId:String = StripDir(StripExt(opt_outfile))
+				Local buildDir:String = ExtractDir(opt_outfile)
+				Local projectDir:String = buildDir + "/android-project-" + appId
+		
+				Local abiPath:String = projectDir + "/libs/" + androidABI
+		
+				Local sharedObject:String = "lib" + appId + ".so"
+				
+				CopyFile(buildDir + "/" + sharedObject, abiPath + "/" + sharedObject)
+		
+				' build the apk :
+				Local antHome:String = getenv_("ANT_HOME").Trim()
+				Local cmd:String = "~q" + antHome + "/bin/ant"
+?win32
+				cmd :+ ".bat"
+?
+				cmd :+ "~q debug"
+				
+				Local dir:String = CurrentDir()
+				
+				ChangeDir(projectDir)
+		
+				If opt_dumpbuild Then
+					Print cmd
+				End If
+				
+				If Sys( cmd ) Then
+					Throw "Error creating apk"
+				End If
+				
+				ChangeDir(dir)
+		
+			End If
+			
+		
+		End If
+
+	End Method
+	
+	Method CalculateDependencies(source:TSourceFile, isMod:Int = False, rebuildImports:Int = False)
+		If source And Not source.processed Then
+			source.processed = True
+
+			For Local m:String = EachIn source.modimports
+
+				Local s:TSourceFile = GetMod(m)
+
+				If s Then
+					If Not source.moddeps Then
+						source.moddeps = New TMap
+					End If
+					
+					If Not source.moddeps.ValueForKey(m) Then
+						source.moddeps.Insert(m, s)
+						source.deps.Insert(s.GetSourcePath(), s)
+					
+						source.cc_opts :+ " -I" + CQuote(ExtractDir(s.path))
+					End If
+				End If
+			Next
+
+			For Local f:String = EachIn source.imports
+				If f[0] <> Asc("-") Then
+					Local path:String = RealPath(ExtractDir(source.path) + "/" + f)
+
+					Local s:TSourceFile = GetSourceFile(path, isMod)
+					If s Then
+	
+						If rebuildImports Then
+							s.requiresBuild = rebuildImports
+						End If
+	
+						If Match(s.ext, "bmx") Then
+							s.modimports.AddLast("brl.blitz")
+	
+							s.bcc_opts :+ source.bcc_opts
+							s.cc_opts :+ source.cc_opts
+							
+							CalculateDependencies(s, isMod, rebuildImports)
+							
+							Local gen:TSourceFile = CreateGenStage(s)
+	
+							source.deps.Insert(gen.GetSourcePath(), gen)
+							If Not source.depsList Then
+								source.depsList = New TList
+							End If
+							source.depsList.AddLast(gen)
+						Else
+							s.cc_opts = source.cc_opts
+							
+							source.deps.Insert(s.GetSourcePath(), s)
+							If Not source.depsList Then
+								source.depsList = New TList
+							End If
+							source.depsList.AddLast(s)
+						End If
+						
+	
+					Else ' header?
+
+						Local ext:String = ExtractExt(path)
+						If Match(ext, "h;hpp;hxx") Then
+							source.cc_opts :+ " -I" + CQuote(ExtractDir(path))
+						End If
+						
+					End If
+				Else
+					If Not source.ext_files Then
+						source.ext_files = New TList
+					End If
+					
+					source.ext_files.AddLast(f)
+					
+				End If
+			Next
+
+			If source.depsList Then			
+				For Local s:TSourceFile = EachIn source.depsList
+					If Not Match(s.ext, "bmx") Then
+						s.cc_opts = source.cc_opts
+					End If
+				Next
+			End If
+			
+		End If
+	End Method
+	
+	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False)
+		Local source:TSourceFile = TSourceFile(sources.ValueForKey(source_path))
+
+		If Not source Then
+			source = ParseSourceFile(source_path)
+			
+			If source Then
+				Local ext:String = ExtractExt(source_path)
+				If Match(ext, ALL_SRC_EXTS) Then
+
+					sources.Insert(source_path, source)
+					
+					source.obj_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".o"
+					source.obj_time = FileTime(source.obj_path)
+					
+					If Match(ext, "bmx") Then
+						source.iface_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".i"
+						source.iface_time = FileTime(source.iface_path)
+					End If
+				End If
+			End If
+		End If
+		
+		Return source
+	End Method
+	
+	Method GetMod:TSourceFile(m:String, rebuild:Int = False)
+		Local path:String = ModulePath(m)
+		Local id:String = ModuleIdent(m)
+		Local src_path:String = path + "/" + id + ".bmx"
+		Local source:TSourceFile = GetSourceFile(src_path, True, rebuild)
+		Local link:TSourceFile
+
+		If Not source Then
+			Return Null
+		End If
+		
+		If Not source.processed Then
+
+			source.arc_path = path + "/" + id + opt_configmung + processor.CPU() + ".a"
+			source.arc_time = FileTime(source.arc_path)
+			source.iface_path = path + "/" + id + opt_configmung + processor.CPU() + ".i"
+			source.iface_time = FileTime(source.iface_path)
+			
+			Local cc_opts:String = " -I" + CQuote(path)
+			cc_opts :+ " -I" + CQuote(ModulePath(""))
+			If opt_release Then
+				cc_opts :+ " -DNDEBUG"
+			End If
+			If opt_threaded Then
+				cc_opts :+ " -DTHREADED"
+			End If
+			
+			source.cc_opts = ""
+			If source.mod_opts Then
+				source.cc_opts :+ source.mod_opts.cc_opts
+			End If
+			source.cc_opts :+ cc_opts
+	
+			' Module BCC opts
+			Local bcc_opts:String = " -g "+processor.CPU()
+			bcc_opts :+ " -m " + m
+			If opt_quiet bcc_opts:+" -q"
+			If opt_verbose bcc_opts:+" -v"
+			If opt_release bcc_opts:+" -r"
+			If opt_threaded bcc_opts:+" -h"
+			If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
+				bcc_opts:+" -d"
+			End If
+	
+			source.bcc_opts = bcc_opts
+			
+			source.requiresBuild = rebuild
+
+			If m <> "brl.blitz" Then	
+				source.modimports.AddLast("brl.blitz")
+			End If
+			
+			CalculateDependencies(source, True, rebuild)
+			
+			' create bmx stages :
+			Local gen:TSourceFile = CreateGenStage(source)
+			link = CreateLinkStage(gen)
+		Else
+			link = TSourceFile(sources.ValueForKey(source.arc_path))
+			If Not link Then
+				Throw "Can't find link for : " + source.path
+			End If
+		End If
+		
+		Return link
+	End Method
+	
+	Method CreateGenStage:TSourceFile(source:TSourceFile)
+		Local gen:TSourceFile = New TSourceFile
+		
+		source.CopyInfo(gen)
+		
+		gen.deps.Insert(source.path, source)
+		gen.stage = STAGE_OBJECT
+		gen.processed = True
+		gen.depsList = New TList
+		gen.depsList.AddLast(source)		
+
+		sources.Insert(StripExt(gen.obj_path) + ".c", gen)
+
+		Return gen
+	End Method
+	
+	Method CreateLinkStage:TSourceFile(source:TSourceFile)
+		Local link:TSourceFile = New TSourceFile
+		
+		source.CopyInfo(link)
+		
+		link.deps.Insert(StripExt(link.obj_path) + ".c", source)
+		link.stage = STAGE_LINK
+		link.processed = True
+		link.depsList = New TList
+		link.depsList.AddLast(source)		
+
+		sources.Insert(link.arc_path, link)
+
+		Return link
+	End Method
+	
+	Method CalculateBatches:TList(files:TList)
+		Local batches:TList = New TList
+	
+		Local instances:TMap = New TMap
+		For Local m:TSourceFile = EachIn files
+			instances.Insert(m.GetSourcePath(), m)
+		Next
+		
+		Local dependencies:TMap = New TMap
+		For Local m:TSourceFile = EachIn files
+			dependencies.Insert(m.GetSourcePath(), m.deps)
+		Next
+		
+		While Not dependencies.IsEmpty()
+			
+			Local noDeps:TList = New TList
+			For Local depName:String = EachIn dependencies.Keys()
+				Local dep:TMap = TMap(dependencies.ValueForKey(depName))
+				If dep.IsEmpty() Then
+					noDeps.AddLast(depName)
+				End If
+			Next
+			
+			If noDeps.IsEmpty() Then
+				' circular dependency!
+				' TODO : dump current list for user to work out?
+				Throw "circular dependency!"
+			End If
+		
+			' remove from dependencies
+			For Local name:String = EachIn noDeps
+				dependencies.Remove(name)
+			Next
+			
+			For Local dep:TMap = EachIn dependencies.Values()
+				For Local name:String = EachIn noDeps
+					dep.Remove(name)
+				Next
+			Next
+		
+			Local list:TList = New TList
+			For Local name:String = EachIn noDeps
+				list.AddLast(instances.ValueForKey(name))
+			Next 
+
+			batches.AddLast(list)
+		
+		Wend
+		
+		Return batches
+		
+	End Method
+
+End Type

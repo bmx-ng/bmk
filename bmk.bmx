@@ -1,5 +1,7 @@
 '
 ' Change History :
+' 3.00 05/05/2015 - "Chirpy Chipmunk"
+'                 - Redesign of dependency processing - parallel build!
 ' 2.25 15/02/2015 - Fix for preprocessor bmxng version check.
 '                   Fixed Win32 pthread link order issue.
 '                   Use Win32 pthread link for GCC 4.8+
@@ -82,7 +84,7 @@ args=ParseConfigArgs( AppArgs[2..] )
 ValidatePlatformArchitecture()
 
 ' preload the default options
-RunCommand("default_cc_opts", Null)
+processor.RunCommand("default_cc_opts", Null)
 
 ' load any global custom options (in BlitzMax/bin)
 LoadOptions
@@ -136,6 +138,7 @@ Case "makemods"
 			LoadOptions(True)
 		End If
 	EndIf
+
 Case "cleanmods"
 	CleanModules args
 Case "zapmod"
@@ -177,7 +180,7 @@ Function SetModfilter( t$ )
 
 	If opt_modfilter="*"
 		opt_modfilter=""
-	Else If opt_modfilter[opt_modfilter.length-1]<>"." 
+	Else If opt_modfilter[opt_modfilter.length-1]<>"."  And opt_modfilter.Find(".") < 0 Then
 		opt_modfilter:+"."
 	EndIf
 	
@@ -207,11 +210,16 @@ Function MakeModules( args$[] )
 	
 	BeginMake
 
-	MakeMod "brl.blitz"
+	Local buildManager:TBuildManager = New TBuildManager
+	'mods.AddLast("brl.blitz")
+	buildManager.MakeMods(mods, opt_all)
+	buildManager.DoBuild()
+'End
+'	MakeMod "brl.blitz"
 	
-	For Local name$=EachIn mods
-		MakeMod name
-	Next
+'	For Local name$=EachIn mods
+'		MakeMod name
+'	Next
 	
 End Function
 
@@ -418,8 +426,14 @@ Function MakeApplication( args$[],makelib )
 	
 	BeginMake
 	
-	MakeApp Main,makelib
+	'MakeApp Main,makelib
 
+	Local buildManager:TBuildManager = New TBuildManager
+
+	buildManager.MakeApp(Main, makelib)
+	buildManager.DoBuild()
+
+Rem
 	If opt_universal
 
 		Local previousOutfile:String = opt_outfile
@@ -435,7 +449,7 @@ Function MakeApplication( args$[],makelib )
 		
 		opt_outfile = previousOutfile
 	End If
-	
+End Rem
 	If opt_execute
 
 ?Not android
@@ -515,7 +529,7 @@ End Function
 Function LoadOptions(reload:Int = False)
 	If reload Then
 		' reset the options to default
-		RunCommand("default_cc_opts", Null)
+		processor.RunCommand("default_cc_opts", Null)
 	End If
 	LoadBMK(AppDir + "/custom.bmk")
 End Function

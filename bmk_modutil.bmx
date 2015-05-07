@@ -17,6 +17,10 @@ Const SOURCE_ASM:Int = $10
 'Const SOURCE_RUBY:Int = $80
 ' etc ?
 
+Const STAGE_GENERATE:Int = 0
+Const STAGE_OBJECT:Int = 1
+Const STAGE_LINK:Int = 2
+
 Type TSourceFile
 	Field ext$		'one of: "bmx", "i", "c", "cpp", "m", "s", "h"
 	Field path$
@@ -30,9 +34,189 @@ Type TSourceFile
 	Field includes:TList=New TList
 	Field incbins:TList=New TList
 	
-	Field declids:TList=New TList
-	
 	Field pragmas:TList = New TList
+	
+	Field stage:Int
+	Field deps:TMap = New TMap
+	Field moddeps:TMap
+	Field processed:Int
+	Field arc_path:String
+	Field iface_path:String
+	Field obj_path:String
+	Field time:Int
+	Field obj_time:Int
+	Field arc_time:Int
+	Field iface_time:Int
+	Field requiresBuild:Int
+	Field didBuild:Int
+	Field depsList:TList
+	Field ext_files:TList
+	
+	Field cc_opts:String
+	Field bcc_opts:String
+	
+	Field mod_opts:TModOpt
+	
+	' add cc_opts or ld_opts
+	Method AddModOpt(opt:String)
+		If Not mod_opts Then
+			mod_opts = New TModOpt
+		End If
+		mod_opts.AddOption(opt)
+	End Method
+	
+	Method MaxObjTime:Int()
+		Local t:Int = obj_time
+		If depsList Then
+			For Local s:TSourceFile = EachIn depsList
+				Local st:Int = s.MaxObjTime()
+				If st > t Then
+					t = st
+				End If
+			Next
+		End If
+		Return t
+	End Method
+	
+	Method GetObjs(list:TList)
+		If list And obj_time Then
+			If Not stage Then
+				list.AddLast(obj_path)
+			End If
+
+			If depsList Then
+				For Local s:TSourceFile = EachIn depsList
+					s.GetObjs(list)
+				Next
+			End If
+		End If
+	End Method
+
+	Method MaxLinkTime:Int(modsOnly:Int = False)
+		Local t:Int
+		
+		If modid Then
+			t = arc_time
+		Else
+			t = obj_time
+		End If
+		If depsList Then
+			For Local s:TSourceFile = EachIn depsList
+				If Not modsOnly Or (modsOnly And s.modid) Then
+					Local st:Int = s.MaxLinkTime(modsOnly)
+					If st > t Then
+						t = st
+					End If
+				End If
+			Next
+		End If
+		If moddeps Then
+			For Local s:TSourceFile = EachIn moddeps.Values()
+				Local st:Int = s.MaxLinkTime(True)
+				If st > t Then
+					t = st
+				End If
+			Next
+		End If
+
+		Return t
+	End Method
+
+	Method GetLinks(list:TList, modsOnly:Int = False)
+
+		If list And stage = STAGE_LINK Then
+			Local p:String
+			If modid Then
+				p = arc_path
+			Else
+				p = obj_path
+			End If
+
+			If Not list.Contains(p) Then
+				list.AddLast(p)
+			End If
+		End If
+
+		If depsList And list Then
+			For Local s:TSourceFile = EachIn depsList
+				If Not modsOnly Or (modsOnly And s.modid) Then
+					If Not stage Then
+						If s.modid Then
+							If Not list.Contains(s.arc_path) Then
+								list.AddLast(s.arc_path)
+							End If
+						Else
+							If Not list.Contains(s.obj_path) Then
+								list.AddLast(s.obj_path)
+							End If
+						End If
+					End If
+				End If
+				
+				s.GetLinks(list, modsOnly)
+
+			Next
+		End If
+
+		If moddeps Then
+
+			For Local s:TSourceFile = EachIn moddeps.Values()
+				s.GetLinks(list, True)
+			Next
+		End If
+
+		If mod_opts Then
+			For Local f:String = EachIn mod_opts.ld_opts
+				Local p:String = TModOpt.SetPath(f, ExtractDir(path))
+				If Not list.Contains(p) Then
+					list.AddLast(p)
+				End If
+			Next
+		End If
+
+		If ext_files Then
+			For Local f:String = EachIn ext_files
+				If Not list.Contains(f) Then
+					list.AddLast(f)
+				End If
+			Next
+		End If
+
+	End Method
+
+	Method CopyInfo(source:TSourceFile)
+		source.ext = ext
+		source.path = path
+		source.modid = modid
+		source.framewk = framewk
+		source.info = info
+		source.processed = processed
+		source.arc_path = arc_path
+		source.iface_path = iface_path
+		source.obj_path = obj_path
+		source.time = time
+		source.obj_time = obj_time
+		source.arc_time = arc_time
+		source.iface_time = iface_time
+		source.requiresBuild = requiresBuild
+		source.didBuild = didBuild
+		source.cc_opts = cc_opts
+		source.bcc_opts = bcc_opts
+	End Method
+	
+	Method GetSourcePath:String()
+		Local p:String
+		Select stage
+			Case STAGE_GENERATE
+				p = path
+			Case STAGE_OBJECT
+				p = StripExt(obj_path) + ".c"
+			Case STAGE_LINK
+				p = obj_path
+		End Select
+		Return p
+	End Method
+	
 End Type
 
 Function ValidSourceExt( ext:Int )
@@ -47,13 +231,17 @@ Function ParseSourceFile:TSourceFile( path$ )
 	If FileType(path)<>FILETYPE_FILE Return
 
 	Local ext$=ExtractExt( path ).ToLower()
-	Local exti:Int = String(RunCommand("source_type", [ext])).ToInt()
+	Local exti:Int = String(processor.RunCommand("source_type", [ext])).ToInt()
+	
+	' don't want headers?
+	If exti = SOURCE_HEADER Return
 
 	If Not ValidSourceExt( exti ) Return
 
 	Local file:TSourceFile=New TSourceFile
 	file.ext=ext
 	file.path=path
+	file.time = FileTime(path)
 	
 	Local str$=LoadText( path )
 
@@ -298,19 +486,20 @@ Function ParseSourceFile:TSourceFile( path$ )
 			Case "moduleinfo"
 				If qval
 					file.info.AddLast qval
-					If mod_opts mod_opts.addOption(qval) ' BaH
+					file.AddModOpt(qval) ' bmk2
+					'If mod_opts mod_opts.addOption(qval) ' BaH
 				EndIf
 			End Select
 		Case SOURCE_C, SOURCE_HEADER '"c","m","h","cpp","cxx","hpp","hxx"
-			If line[..8]="#include"
-				Local val$=line[8..].Trim(),qval$,qext$
-				If val.length>1 And val[0]=34 And val[val.length-1]=34
-					qval=val[1..val.length-1]
-				EndIf
-				If qval
-					file.includes.AddLast qval
-				EndIf
-			EndIf
+		'	If line[..8]="#include"
+		''		Local val$=line[8..].Trim(),qval$,qext$
+			'	If val.length>1 And val[0]=34 And val[val.length-1]=34
+			'		qval=val[1..val.length-1]
+			'	EndIf
+			'	If qval
+			'		file.includes.AddLast qval
+			'	EndIf
+			'EndIf
 		End Select
 
 	Wend
