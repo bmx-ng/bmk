@@ -176,14 +176,14 @@ Type TBuildManager
 			Next
 		End If
 		
-		bcc_opts :+ " -t " + opt_apptype
-	
 		source.bcc_opts = bcc_opts
 
 		source.requiresBuild = opt_all
 
 		CalculateDependencies(source, False, opt_all)
-		
+
+		bcc_opts :+ " -t " + opt_apptype
+	
 		' create bmx stages :
 		Local gen:TSourceFile = CreateGenStage(source)
 		Local link:TSourceFile = CreateLinkStage(gen)
