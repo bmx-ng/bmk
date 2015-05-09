@@ -34,7 +34,7 @@
 		cmd = cmd .. bmk.Quote(src) .. " " .. bmk.Quote(obj)
 	end
 
-	if bmk.Sys(cmd) ~= 0 then
+	if bmk.MultiSys(cmd, src) ~= 0 then
 		bmk.ThrowNew("Build Error: Failed to assemble " .. src)
 	end
 @end
