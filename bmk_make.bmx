@@ -182,7 +182,7 @@ Type TBuildManager
 
 		CalculateDependencies(source, False, opt_all)
 
-		bcc_opts :+ " -t " + opt_apptype
+		source.bcc_opts :+ " -t " + opt_apptype
 	
 		' create bmx stages :
 		Local gen:TSourceFile = CreateGenStage(source)
@@ -191,6 +191,8 @@ Type TBuildManager
 	End Method
 	
 	Method DoBuild(app_build:Int = False)
+		Local arc_order:TList = New TList
+	
 		Local files:TList = New TList
 		For Local file:TSourceFile = EachIn sources.Values()
 			files.AddLast(file)
@@ -206,6 +208,13 @@ Type TBuildManager
 		For Local batch:TList = EachIn batches
 			Local s:String
 			For Local m:TSourceFile = EachIn batch
+
+				' sort archives for app linkage
+				If m.modid Then
+					If Not arc_order.Contains(m.arc_path) Then
+						arc_order.AddFirst(m.arc_path)
+					End If
+				End If
 
 				Local build_path:String = ExtractDir(m.path) + "/.bmx"
 				
@@ -246,7 +255,16 @@ Type TBuildManager
 									CompileC csrc_path,cobj_path, m.cc_opts
 								Else
 									' asm compilation
-									' TODO
+
+									Local src_path:String = StripExt(m.obj_path) + ".s"
+									Local obj_path:String = StripExt(m.obj_path) + ".o"
+
+									If Not opt_quiet Then
+										Print "Compiling:" + StripDir(src_path)
+									End If
+
+									Assemble src_path, obj_path
+
 								End If
 							Case STAGE_LINK
 
@@ -276,7 +294,17 @@ Type TBuildManager
 										End If
 										
 										Local links:TList = New TList
-										m.GetLinks(links)
+										Local opts:TList = New TList
+										m.GetLinks(links, opts)
+
+										For Local arc:String = EachIn arc_order
+											links.AddLast(arc)
+										Next
+										
+										For Local o:String = EachIn opts
+											links.AddLast(o)
+										Next
+
 										LinkApp opt_outfile, links, False, globals.Get("ld_opts")
 									End If
 
@@ -482,6 +510,11 @@ Type TBuildManager
 	End Method
 	
 	Method GetMod:TSourceFile(m:String, rebuild:Int = False)
+	
+		If opt_all And ((opt_modfilter And ((m).Find(opt_modfilter) = 0)) Or (Not opt_modfilter)) And Not app_main Then
+			rebuild = True
+		End If
+	
 		Local path:String = ModulePath(m)
 		Local id:String = ModuleIdent(m)
 		Local src_path:String = path + "/" + id + ".bmx"

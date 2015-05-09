@@ -124,18 +124,13 @@ Type TSourceFile
 		Return t
 	End Method
 
-	Method GetLinks(list:TList, modsOnly:Int = False)
+	Method GetLinks(list:TList, opts:TList, modsOnly:Int = False)
 
 		If list And stage = STAGE_LINK Then
-			Local p:String
-			If modid Then
-				p = arc_path
-			Else
-				p = obj_path
-			End If
-
-			If Not list.Contains(p) Then
-				list.AddLast(p)
+			If Not modid Then
+				If Not list.Contains(obj_path) Then
+					list.AddLast(obj_path)
+				End If
 			End If
 		End If
 
@@ -143,11 +138,7 @@ Type TSourceFile
 			For Local s:TSourceFile = EachIn depsList
 				If Not modsOnly Or (modsOnly And s.modid) Then
 					If Not stage Then
-						If s.modid Then
-							If Not list.Contains(s.arc_path) Then
-								list.AddLast(s.arc_path)
-							End If
-						Else
+						If Not s.modid Then
 							If Not list.Contains(s.obj_path) Then
 								list.AddLast(s.obj_path)
 							End If
@@ -155,7 +146,7 @@ Type TSourceFile
 					End If
 				End If
 				
-				s.GetLinks(list, modsOnly)
+				s.GetLinks(list, opts, modsOnly)
 
 			Next
 		End If
@@ -163,7 +154,7 @@ Type TSourceFile
 		If moddeps Then
 
 			For Local s:TSourceFile = EachIn moddeps.Values()
-				s.GetLinks(list, True)
+				s.GetLinks(list, opts, True)
 			Next
 		End If
 
@@ -178,8 +169,8 @@ Type TSourceFile
 
 		If ext_files Then
 			For Local f:String = EachIn ext_files
-				If Not list.Contains(f) Then
-					list.AddLast(f)
+				If Not opts.Contains(f) Then
+					opts.AddLast(f)
 				End If
 			Next
 		End If
