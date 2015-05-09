@@ -104,11 +104,9 @@ Type TSourceFile
 		End If
 		If depsList Then
 			For Local s:TSourceFile = EachIn depsList
-				If Not modsOnly Or (modsOnly And s.modid) Then
-					Local st:Int = s.MaxLinkTime(modsOnly)
-					If st > t Then
-						t = st
-					End If
+				Local st:Int = s.MaxLinkTime(modsOnly)
+				If st > t Then
+					t = st
 				End If
 			Next
 		End If
@@ -175,6 +173,19 @@ Type TSourceFile
 			Next
 		End If
 
+	End Method
+
+	Method MaxIfaceTime:Int()
+		Local t:Int = iface_time
+		If depsList Then
+			For Local s:TSourceFile = EachIn depsList
+				Local st:Int = s.MaxIFaceTime()
+				If st > t Then
+					t = st
+				End If
+			Next
+		End If
+		Return t
 	End Method
 
 	Method CopyInfo(source:TSourceFile)

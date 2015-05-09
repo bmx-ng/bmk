@@ -138,6 +138,8 @@ Type TBuildManager
 
 		source.obj_path = build_path + "/" + StripDir( main_path ) + "." + opt_apptype + opt_configmung + processor.CPU() + ".o"
 		source.obj_time = FileTime(source.obj_path)
+		source.iface_path = StripExt(source.obj_path) + ".o"
+		source.iface_time = FileTime(source.iface_path)
 	
 		Local cc_opts:String = " -I" + CQuote(ModulePath(""))
 		If opt_release Then
@@ -228,21 +230,30 @@ Type TBuildManager
 
 				' bmx file
 				If Match(m.ext, "bmx") Then
-					If m.time > m.obj_time Or m.time > m.iface_time Then
-						m.requiresBuild = True
-					End If
+				
+					Select m.stage
+						Case STAGE_GENERATE
+						
+							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
+							
+								m.requiresBuild = True
 
-					If m.requiresBuild Then
-
-						Select m.stage
-							Case STAGE_GENERATE
 								If Not opt_quiet Then
 									Print "Processing:" + StripDir(m.path)
 								End If
 								
 								CompileBMX m.path, m.obj_path, m.bcc_opts
+	
+								m.iface_time = time_(0)
+					
+							End If
+							
+						Case STAGE_OBJECT
+						
+							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
+							
+								m.requiresBuild = True
 								
-							Case STAGE_OBJECT
 								If processor.BCCVersion() <> "BlitzMax" Then
 
 									Local csrc_path:String = StripExt(m.obj_path) + ".c"
@@ -266,56 +277,60 @@ Type TBuildManager
 									Assemble src_path, obj_path
 
 								End If
-							Case STAGE_LINK
-
-								' a module?
-								If m.modid Then
-									Local max_obj_time:Int = m.MaxObjTime()
-
-									If max_obj_time > m.arc_time Then
-										Local objs:TList = New TList
-										m.GetObjs(objs)
-			
-										If Not opt_quiet Then
-											Print "Archiving:" + StripDir(m.arc_path)
-										End If
-
-										CreateArc m.arc_path, objs
-										m.arc_time = FileTime(m.arc_path)
-										
-									End If
-								Else
-									' an app!
-									Local max_lnk_time:Int = m.MaxLinkTime()
 								
-									If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
-										If Not opt_quiet Then
-											Print "Linking:" + StripDir(opt_outfile)
-										End If
-										
-										Local links:TList = New TList
-										Local opts:TList = New TList
-										m.GetLinks(links, opts)
+								m.obj_time = time_(0)
 
-										For Local arc:String = EachIn arc_order
-											links.AddLast(arc)
-										Next
-										
-										For Local o:String = EachIn opts
-											links.AddLast(o)
-										Next
+							End If
+						Case STAGE_LINK
 
-										LinkApp opt_outfile, links, False, globals.Get("ld_opts")
+							' a module?
+							If m.modid Then
+								Local max_obj_time:Int = m.MaxObjTime()
+
+								If max_obj_time > m.arc_time Then
+									Local objs:TList = New TList
+									m.GetObjs(objs)
+		
+									If Not opt_quiet Then
+										Print "Archiving:" + StripDir(m.arc_path)
 									End If
 
+									CreateArc m.arc_path, objs
+									m.arc_time = FileTime(m.arc_path)
+									
+									m.obj_time = time_(0)
+					
+								End If
+							Else
+								' an app!
+								Local max_lnk_time:Int = m.MaxLinkTime()
+							
+								If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
+									If Not opt_quiet Then
+										Print "Linking:" + StripDir(opt_outfile)
+									End If
+									
+									Local links:TList = New TList
+									Local opts:TList = New TList
+									m.GetLinks(links, opts)
+
+									For Local arc:String = EachIn arc_order
+										links.AddLast(arc)
+									Next
+									
+									For Local o:String = EachIn opts
+										links.AddLast(o)
+									Next
+
+									LinkApp opt_outfile, links, False, globals.Get("ld_opts")
+
+									m.obj_time = time_(0)
 								End If
 
-						End Select
+							End If
 
-						m.obj_time = time_(0)
+					End Select
 
-					End If
-					
 				Else
 					' c/c++ source
 					If m.time > m.obj_time Then ' object is older or doesn't exist
