@@ -431,7 +431,7 @@ Function MakeApplication( args$[],makelib )
 	Local buildManager:TBuildManager = New TBuildManager
 
 	buildManager.MakeApp(Main, makelib)
-	buildManager.DoBuild()
+	buildManager.DoBuild(True)
 
 Rem
 	If opt_universal
