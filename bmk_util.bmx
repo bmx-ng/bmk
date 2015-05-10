@@ -90,6 +90,10 @@ Function Assemble( src$,obj$ )
 	processor.RunCommand("assemble", [src, obj])
 End Function
 
+Function Fasm2As( src$,obj$ )
+	processor.RunCommand("fasm2as", [src, obj])
+End Function
+
 Function CompileC( src$,obj$,opts$ )
 	processor.RunCommand("CompileC", [src, obj, opts])
 End Function
@@ -110,10 +114,10 @@ Function CompileBMX( src$,obj$,opts$ )
 ?			
 	processor.RunCommand("CompileBMX", [src, azm, opts])
 
-	If processor.BCCVersion() = "BlitzMax" Then
+	'If processor.BCCVersion() = "BlitzMax" Then
 		' it would be nice to be able to call this from the script... but we need more refactoring first :-p
-		Assemble azm,obj
-	End If
+	'	Assemble azm,obj
+	'End If
 End Function
 
 Function CreateArc( path$ , oobjs:TList )
@@ -159,7 +163,7 @@ Function CreateArc( path$ , oobjs:TList )
 		Next
 	End If
 
-	If cmd And Sys( cmd )
+	If cmd And processor.MultiSys( cmd, path )
 		DeleteFile path
 		Throw "Build Error: Failed to create archive "+path
 	EndIf

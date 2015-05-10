@@ -72,16 +72,31 @@
 		bmk.ThrowNew("Build Error: failed to compile " .. src)
 	end
 
-	if bmk.Platform() == "macos" and bmk.CPU() == "x86" and bmk.BCCVersion() == "BlitzMax" then
-		cmd = bmk.Quote(utils.BlitzMaxPath() .. "/bin/fasm2as") .. " " .. bmk.Quote(azm)
-			if bmk.Sys( cmd ) ~= 0 then
-				bmk.ThrowNew("Fasm2as failed - please contact BRL!")
-		end
-	end
+	#if bmk.Platform() == "macos" and bmk.CPU() == "x86" and bmk.BCCVersion() == "BlitzMax" then
+	#	cmd = bmk.Quote(utils.BlitzMaxPath() .. "/bin/fasm2as") .. " " .. bmk.Quote(azm)
+	#		if bmk.Sys( cmd ) ~= 0 then
+	#			bmk.ThrowNew("Fasm2as failed - please contact BRL!")
+	#	end
+	#end
 
 	# TODO : we can't call another generated function from here... so we'd need to make sure this is called elsewhere.
 	#assemble(nil, azm, obj)
 @end
+
+@define fasm2as
+	local src = nvl(arg1, %infile%)
+	local obj = nvl(arg2, %outfile%)
+
+	local azm = sys.StripExt(obj) .. ".s"
+
+	if bmk.Platform() == "macos" and bmk.CPU() == "x86" and bmk.BCCVersion() == "BlitzMax" then
+		cmd = bmk.Quote(utils.BlitzMaxPath() .. "/bin/fasm2as") .. " " .. bmk.Quote(azm)
+		if bmk.MultiSys( cmd ) ~= 0 then
+			bmk.ThrowNew("Fasm2as failed - please contact BRL!")
+		end
+	end
+
+@end 
 
 @define compileC
 	local src = nvl(arg1, %infile%)

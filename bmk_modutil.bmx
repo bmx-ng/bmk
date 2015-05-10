@@ -18,8 +18,9 @@ Const SOURCE_ASM:Int = $10
 ' etc ?
 
 Const STAGE_GENERATE:Int = 0
-Const STAGE_OBJECT:Int = 1
-Const STAGE_LINK:Int = 2
+Const STAGE_FASM2AS:Int = 1
+Const STAGE_OBJECT:Int = 2
+Const STAGE_LINK:Int = 3
 
 Type TSourceFile
 	Field ext$		'one of: "bmx", "i", "c", "cpp", "m", "s", "h"
@@ -46,6 +47,7 @@ Type TSourceFile
 	Field time:Int
 	Field obj_time:Int
 	Field arc_time:Int
+	Field asm_time:Int
 	Field iface_time:Int
 	Field requiresBuild:Int
 	Field didBuild:Int
@@ -213,6 +215,8 @@ Type TSourceFile
 		Select stage
 			Case STAGE_GENERATE
 				p = path
+			Case STAGE_FASM2AS
+				p = StripExt(obj_path) + ".s"
 			Case STAGE_OBJECT
 				p = StripExt(obj_path) + ".c"
 			Case STAGE_LINK

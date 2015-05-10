@@ -187,7 +187,14 @@ Type TBuildManager
 		source.bcc_opts :+ " -t " + opt_apptype
 	
 		' create bmx stages :
-		Local gen:TSourceFile = CreateGenStage(source)
+		Local gen:TSourceFile
+		' for osx x86 on legacy, we need to convert asm
+		If processor.BCCVersion() = "BlitzMax" And processor.CPU() = "x86" And processor.Platform() = "macos" Then
+			Local fasm2as:TSourceFile = CreateFasm2AsStage(source)
+			gen = CreateGenStage(fasm2as)
+		Else
+			gen = CreateGenStage(source)
+		End If
 		Local link:TSourceFile = CreateLinkStage(gen)
 
 	End Method
@@ -245,6 +252,29 @@ Type TBuildManager
 								CompileBMX m.path, m.obj_path, m.bcc_opts
 	
 								m.iface_time = time_(0)
+					
+							End If
+
+						Case STAGE_FASM2AS
+
+							For Local s:TSourceFile = EachIn m.depsList
+								If s.requiresBuild Then
+									m.requiresBuild = True
+									Exit
+								End If
+							Next
+
+							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
+							
+								m.requiresBuild = True
+
+								If Not opt_quiet Then
+									Print "Converting:" + StripDir(StripExt(m.obj_path) + ".s")
+								End If
+								
+								Fasm2As m.path, m.obj_path
+	
+								m.asm_time = time_(0)
 					
 							End If
 							
@@ -451,9 +481,17 @@ Type TBuildManager
 							
 							CalculateDependencies(s, isMod, rebuildImports)
 							
-							Local gen:TSourceFile = CreateGenStage(s)
-	
+							Local gen:TSourceFile
+							
+							' for osx x86 on legacy, we need to convert asm
+							If processor.BCCVersion() = "BlitzMax" And processor.CPU() = "x86" And processor.Platform() = "macos" Then
+								Local fasm2as:TSourceFile = CreateFasm2AsStage(s)
+								gen = CreateGenStage(fasm2as)
+							Else
+								gen = CreateGenStage(s)
+							End If
 							source.deps.Insert(gen.GetSourcePath(), gen)
+	
 							If Not source.depsList Then
 								source.depsList = New TList
 							End If
@@ -584,7 +622,16 @@ Type TBuildManager
 			CalculateDependencies(source, True, rebuild)
 			
 			' create bmx stages :
-			Local gen:TSourceFile = CreateGenStage(source)
+			Local gen:TSourceFile
+			
+			' for osx x86 on legacy, we need to convert asm
+			If processor.BCCVersion() = "BlitzMax" And processor.CPU() = "x86" And processor.Platform() = "macos" Then
+				Local fasm2as:TSourceFile = CreateFasm2AsStage(source)
+				gen = CreateGenStage(fasm2as)
+			Else
+				gen = CreateGenStage(source)
+			End If
+			
 			link = CreateLinkStage(gen)
 		Else
 			link = TSourceFile(sources.ValueForKey(source.arc_path))
@@ -595,13 +642,34 @@ Type TBuildManager
 		
 		Return link
 	End Method
+
+	Method CreateFasm2AsStage:TSourceFile(source:TSourceFile)
+		Local fasm:TSourceFile = New TSourceFile
+		
+		source.CopyInfo(fasm)
+		
+		fasm.deps.Insert(source.path, source)
+		fasm.stage = STAGE_FASM2AS
+		fasm.processed = True
+		fasm.depsList = New TList
+		fasm.depsList.AddLast(source)		
+
+		sources.Insert(StripExt(fasm.obj_path) + ".s", fasm)
+
+		Return fasm
+	End Method
 	
 	Method CreateGenStage:TSourceFile(source:TSourceFile)
 		Local gen:TSourceFile = New TSourceFile
 		
 		source.CopyInfo(gen)
 		
-		gen.deps.Insert(source.path, source)
+		If processor.BCCVersion() = "BlitzMax" And processor.CPU() = "x86" And processor.Platform() = "macos" Then
+			gen.deps.Insert(StripExt(source.obj_path) + ".s", source)
+		Else
+			gen.deps.Insert(source.path, source)
+		End If
+		
 		gen.stage = STAGE_OBJECT
 		gen.processed = True
 		gen.depsList = New TList
