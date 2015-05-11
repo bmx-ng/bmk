@@ -127,7 +127,7 @@ Function CreateArc( path$ , oobjs:TList )
 	If processor.Platform() = "win32"
 		For t$=EachIn oobjs
 			If Len(cmd)+Len(t)>1000
-				If Sys( cmd )
+				If processor.Sys( cmd )
 					DeleteFile path
 					Throw "Build Error: Failed to create archive "+path
 				EndIf

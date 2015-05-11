@@ -340,7 +340,6 @@ Type TBMK
 			Local t$="mkdir "
 			If cmd.StartsWith( t ) And FileType( cmd[t.length..] ) Return False
 		EndIf
-		
 ?threaded
 		processManager.DoSystem(cmd, src)
 ?Not threaded

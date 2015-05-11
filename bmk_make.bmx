@@ -251,7 +251,7 @@ Type TBuildManager
 								
 								CompileBMX m.path, m.obj_path, m.bcc_opts
 	
-								m.iface_time = time_(0)
+								m.iface_time = time_(Null)
 					
 							End If
 
@@ -274,7 +274,7 @@ Type TBuildManager
 								
 								Fasm2As m.path, m.obj_path
 	
-								m.asm_time = time_(0)
+								m.asm_time = time_(Null)
 					
 							End If
 							
@@ -308,7 +308,7 @@ Type TBuildManager
 
 								End If
 								
-								m.obj_time = time_(0)
+								m.obj_time = time_(Null)
 
 							End If
 						Case STAGE_LINK
@@ -326,9 +326,9 @@ Type TBuildManager
 									End If
 
 									CreateArc m.arc_path, objs
-									m.arc_time = FileTime(m.arc_path)
-									
-									m.obj_time = time_(0)
+
+									m.arc_time = time_(Null)
+									m.obj_time = time_(Null)
 					
 								End If
 							Else
@@ -354,13 +354,29 @@ Type TBuildManager
 
 									LinkApp opt_outfile, links, False, globals.Get("ld_opts")
 
-									m.obj_time = time_(0)
+									m.obj_time = time_(Null)
 								End If
 
 							End If
 
 					End Select
 
+				Else If Match(m.ext, "s") Then
+
+					If m.time > m.obj_time Then ' object is older or doesn't exist
+						m.requiresBuild = True
+					End If
+
+					If m.requiresBuild Then
+					
+						If processor.BCCVersion() = "BlitzMax" Then
+							Assemble m.path, m.obj_path
+						Else
+							CompileC m.path, m.obj_path, m.cc_opts
+						End If
+						
+					End If
+			
 				Else
 					' c/c++ source
 					If m.time > m.obj_time Then ' object is older or doesn't exist
@@ -375,7 +391,7 @@ Type TBuildManager
 
 						CompileC m.path, m.obj_path, m.cc_opts
 						
-						m.obj_time = time_(0)
+						m.obj_time = time_(Null)
 					End If
 				End If
 				
@@ -386,7 +402,7 @@ Type TBuildManager
 ?
 
 		Next
-		
+	
 		If app_build Then
 		
 			' post process
