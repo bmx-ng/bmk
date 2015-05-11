@@ -81,7 +81,7 @@ Type TSourceFile
 	End Method
 	
 	Method GetObjs(list:TList)
-		If list And obj_time Then
+		If list Then
 			If Not stage Then
 				If Not list.Contains(obj_path) Then
 					list.AddLast(obj_path)
