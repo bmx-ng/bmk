@@ -732,7 +732,8 @@ Type TBuildManager
 		Next
 		
 		Local pct:Float = 100.0 / count
-		Local total:Float = pct
+		Local total:Float
+		Local num:Int
 		
 		While Not dependencies.IsEmpty()
 			
@@ -766,7 +767,12 @@ Type TBuildManager
 				Local m:TSourceFile = TSourceFile(instances.ValueForKey(name))
 				list.AddLast(m)
 				total :+ pct
-				m.pct = total
+				num :+ 1
+				If num = count Then
+					m.pct = 100
+				Else
+					m.pct = total
+				End If
 			Next 
 
 			batches.AddLast(list)
