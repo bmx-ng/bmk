@@ -59,6 +59,8 @@ Type TSourceFile
 	
 	Field mod_opts:TModOpt
 	
+	Field pct:Int
+	
 	' add cc_opts or ld_opts
 	Method AddModOpt(opt:String)
 		If Not mod_opts Then

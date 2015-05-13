@@ -2,6 +2,7 @@
 ' Change History :
 ' 3.00 05/05/2015 - "Chirpy Chipmunk"
 '                 - Redesign of dependency processing - parallel build!
+'                 - Added progress information.
 ' 2.25 15/02/2015 - Fix for preprocessor bmxng version check.
 '                   Fixed Win32 pthread link order issue.
 '                   Use Win32 pthread link for GCC 4.8+

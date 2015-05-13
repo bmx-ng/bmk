@@ -246,7 +246,7 @@ Type TBuildManager
 								m.requiresBuild = True
 
 								If Not opt_quiet Then
-									Print "Processing:" + StripDir(m.path)
+									Print ShowPct(m.pct) + "Processing:" + StripDir(m.path)
 								End If
 								
 								CompileBMX m.path, m.obj_path, m.bcc_opts
@@ -269,7 +269,7 @@ Type TBuildManager
 								m.requiresBuild = True
 
 								If Not opt_quiet Then
-									Print "Converting:" + StripDir(StripExt(m.obj_path) + ".s")
+									Print ShowPct(m.pct) + "Converting:" + StripDir(StripExt(m.obj_path) + ".s")
 								End If
 								
 								Fasm2As m.path, m.obj_path
@@ -290,7 +290,7 @@ Type TBuildManager
 									Local cobj_path:String = StripExt(m.obj_path) + ".o"
 
 									If Not opt_quiet Then
-										Print "Compiling:" + StripDir(csrc_path)
+										Print ShowPct(m.pct) + "Compiling:" + StripDir(csrc_path)
 									End If
 
 									CompileC csrc_path,cobj_path, m.cc_opts
@@ -301,7 +301,7 @@ Type TBuildManager
 									Local obj_path:String = StripExt(m.obj_path) + ".o"
 
 									If Not opt_quiet Then
-										Print "Compiling:" + StripDir(src_path)
+										Print ShowPct(m.pct) + "Compiling:" + StripDir(src_path)
 									End If
 
 									Assemble src_path, obj_path
@@ -322,7 +322,7 @@ Type TBuildManager
 									m.GetObjs(objs)
 		
 									If Not opt_quiet Then
-										Print "Archiving:" + StripDir(m.arc_path)
+										Print ShowPct(m.pct) + "Archiving:" + StripDir(m.arc_path)
 									End If
 
 									CreateArc m.arc_path, objs
@@ -337,7 +337,7 @@ Type TBuildManager
 							
 								If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
 									If Not opt_quiet Then
-										Print "Linking:" + StripDir(opt_outfile)
+										Print ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
 									End If
 									
 									Local links:TList = New TList
@@ -368,6 +368,10 @@ Type TBuildManager
 					End If
 
 					If m.requiresBuild Then
+
+						If Not opt_quiet Then
+							Print ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+						End If
 					
 						If processor.BCCVersion() = "BlitzMax" Then
 							Assemble m.path, m.obj_path
@@ -386,7 +390,7 @@ Type TBuildManager
 					If m.requiresBuild Then
 
 						If Not opt_quiet Then
-							Print "Compiling:" + StripDir(m.path)
+							Print ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
 						End If
 
 						CompileC m.path, m.obj_path, m.cc_opts
@@ -715,15 +719,20 @@ Type TBuildManager
 	Method CalculateBatches:TList(files:TList)
 		Local batches:TList = New TList
 	
+		Local count:Int
 		Local instances:TMap = New TMap
 		For Local m:TSourceFile = EachIn files
 			instances.Insert(m.GetSourcePath(), m)
+			count :+ 1
 		Next
 		
 		Local dependencies:TMap = New TMap
 		For Local m:TSourceFile = EachIn files
 			dependencies.Insert(m.GetSourcePath(), m.deps)
 		Next
+		
+		Local pct:Float = 100.0 / count
+		Local total:Float = pct
 		
 		While Not dependencies.IsEmpty()
 			
@@ -754,7 +763,10 @@ Type TBuildManager
 		
 			Local list:TList = New TList
 			For Local name:String = EachIn noDeps
-				list.AddLast(instances.ValueForKey(name))
+				Local m:TSourceFile = TSourceFile(instances.ValueForKey(name))
+				list.AddLast(m)
+				total :+ pct
+				m.pct = total
 			Next 
 
 			batches.AddLast(list)
@@ -763,6 +775,18 @@ Type TBuildManager
 		
 		Return batches
 		
+	End Method
+	
+	Method ShowPct:String(pct:Int)
+		Local s:String = "["
+		Local p:String = String.FromInt(pct)
+		Select p.length
+			Case 1
+				s :+ "  "
+			Case 2
+				s :+ " "
+		End Select
+		Return s + p + "%] "
 	End Method
 
 End Type
