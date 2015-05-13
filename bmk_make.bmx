@@ -114,6 +114,8 @@ Type TBuildManager
 	Field sources:TMap = New TMap
 	
 	Field buildAll:Int
+	
+	Field framework_mods:TList
 
 	Method MakeMods(mods:TList, rebuild:Int = False)
 
@@ -169,10 +171,12 @@ Type TBuildManager
 			bcc_opts :+" -f " + opt_framework
 			source.modimports.AddLast(opt_framework)
 		Else
+			framework_mods = New TList
 			For Local t:String = EachIn EnumModules()
 				If t.Find("brl.") = 0 Or t.Find("pub.") = 0 Then
 					If t <> "brl.blitz" And t <> opt_appstub Then
 						source.modimports.AddLast(t)
+						framework_mods.AddLast(t)
 					End If
 				End If
 			Next
@@ -495,6 +499,21 @@ Type TBuildManager
 	
 						If Match(s.ext, "bmx") Then
 							s.modimports.AddLast("brl.blitz")
+							
+							' app source files need framework/mod dependencies applied
+							If Not isMod Then
+								If opt_framework Then
+									' add framework as dependency
+									s.modimports.AddLast(opt_framework)
+								Else
+									' add all pub/brl mods as dependency
+									If framework_mods Then
+										For Local m:String = EachIn framework_mods
+											s.modimports.AddLast(m)
+										Next
+									End If
+								End If
+							End If
 	
 							s.bcc_opts :+ source.bcc_opts
 							s.cc_opts :+ source.cc_opts
