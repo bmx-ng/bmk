@@ -57,19 +57,9 @@ opt_arch="x64"
 
 ?win32x64
 opt_arch="x64"
-
-Local mingw$=getenv_( "MINGW" )
-If mingw
-	Local path$=getenv_( "PATH" )
-	If path
-		path=mingw+"\bin;"+path
-		putenv_ "PATH="+path
-	EndIf
-EndIf
-
-?Win32
+?Win32x86
 opt_arch="x86"
-
+?Win32
 'Fudge PATH so exec sees our MinGW first!
 Local mingw$=getenv_( "MINGW" )
 If mingw
@@ -79,7 +69,6 @@ If mingw
 		putenv_ "PATH="+path
 	EndIf
 EndIf
-
 ?Linuxx86
 opt_arch="x86"
 ?linuxx64
