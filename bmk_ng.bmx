@@ -1285,7 +1285,6 @@ Type TProcessTask
 ?
 		If res Then
 			Local s:String = "Build Error: failed to compile (" + res + ") " + source
-			Print s + "~n"
 			Throw s
 		End If
 	End Method
