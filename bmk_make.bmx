@@ -464,7 +464,7 @@ Type TBuildManager
 
 	End Method
 	
-	Method CalculateDependencies(source:TSourceFile, isMod:Int = False, rebuildImports:Int = False)
+	Method CalculateDependencies(source:TSourceFile, isMod:Int = False, rebuildImports:Int = False, isInclude:Int = False)
 		If source And Not source.processed Then
 			source.processed = True
 
@@ -563,6 +563,35 @@ Type TBuildManager
 					
 				End If
 			Next
+			
+			For Local f:String = EachIn source.includes
+				Local path:String = RealPath(ExtractDir(source.path) + "/" + f)
+
+				Local s:TSourceFile = GetSourceFile(path, isMod, rebuildImports, True)
+				If s Then
+					' update our time to latest included time
+					If s.time > source.time Then
+						source.time = s.time
+					End If
+					
+					If Not source.depsList Then
+						source.depsList = New TList
+					End If
+					source.depsList.AddLast(s)
+				End If
+			Next
+
+			For Local f:String = EachIn source.incbins
+				Local path:String = RealPath(ExtractDir(source.path) + "/" + f)
+
+				Local time:Int = FileTime(path)
+				
+				' update our time to the latest incbin time
+				If time > source.time Then
+					source.time = time
+				End If
+					
+			Next
 
 			If source.depsList Then			
 				For Local s:TSourceFile = EachIn source.depsList
@@ -575,7 +604,7 @@ Type TBuildManager
 		End If
 	End Method
 	
-	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False)
+	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False, isInclude:Int = False)
 		Local source:TSourceFile = TSourceFile(sources.ValueForKey(source_path))
 
 		If Not source Then
@@ -585,14 +614,16 @@ Type TBuildManager
 				Local ext:String = ExtractExt(source_path)
 				If Match(ext, ALL_SRC_EXTS) Then
 
-					sources.Insert(source_path, source)
-					
-					source.obj_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".o"
-					source.obj_time = FileTime(source.obj_path)
-					
-					If Match(ext, "bmx") Then
-						source.iface_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".i"
-						source.iface_time = FileTime(source.iface_path)
+					If Not isInclude Then
+						sources.Insert(source_path, source)
+						
+						source.obj_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".o"
+						source.obj_time = FileTime(source.obj_path)
+						
+						If Match(ext, "bmx") Then
+							source.iface_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".i"
+							source.iface_time = FileTime(source.iface_path)
+						End If
 					End If
 				End If
 			End If
