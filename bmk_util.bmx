@@ -109,15 +109,8 @@ Function CompileBMX( src$,obj$,opts$ )
 		opts :+ " -p " + processor.Platform()
 	End If
 	
-?threaded
-		processManager.WaitForThreads()
-?			
 	processor.RunCommand("CompileBMX", [src, azm, opts])
 
-	'If processor.BCCVersion() = "BlitzMax" Then
-		' it would be nice to be able to call this from the script... but we need more refactoring first :-p
-	'	Assemble azm,obj
-	'End If
 End Function
 
 Function CreateArc( path$ , oobjs:TList )

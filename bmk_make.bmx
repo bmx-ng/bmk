@@ -406,7 +406,7 @@ Type TBuildManager
 			Next
 
 ?threaded
-		processManager.WaitForThreads()
+		processManager.WaitForTasks()
 ?
 
 		Next
