@@ -488,7 +488,7 @@ Type TBuildManager
 
 			For Local f:String = EachIn source.imports
 				If f[0] <> Asc("-") Then
-					Local path:String = RealPath(ExtractDir(source.path) + "/" + f)
+					Local path:String = CheckPath(ExtractDir(source.path), f)
 
 					Local s:TSourceFile = GetSourceFile(path, isMod)
 					If s Then
@@ -546,11 +546,32 @@ Type TBuildManager
 						End If
 						
 	
-					Else ' header?
+					Else
 
 						Local ext:String = ExtractExt(path)
-						If Match(ext, "h;hpp;hxx") Then
+						
+						If Match(ext, "h;hpp;hxx") Then ' header?
+						
 							source.cc_opts :+ " -I" + CQuote(ExtractDir(path))
+							
+						Else If Match(ext, "o") Then ' object?
+						
+							Local s:TSourceFile = New TSourceFile
+							s.time = FileTime(path)
+							s.obj_time = s.time
+							s.path = path
+							s.obj_path = path
+							s.modid = source.modid
+
+							If s.time > source.time Then
+								source.time = s.time
+							End If
+							
+							If Not source.depsList Then
+								source.depsList = New TList
+							End If
+							source.depsList.AddLast(s)
+						
 						End If
 						
 					End If
@@ -565,7 +586,7 @@ Type TBuildManager
 			Next
 			
 			For Local f:String = EachIn source.includes
-				Local path:String = RealPath(ExtractDir(source.path) + "/" + f)
+				Local path:String = CheckPath(ExtractDir(source.path), f)
 
 				Local s:TSourceFile = GetSourceFile(path, isMod, rebuildImports, True)
 				If s Then
@@ -582,7 +603,7 @@ Type TBuildManager
 			Next
 
 			For Local f:String = EachIn source.incbins
-				Local path:String = RealPath(ExtractDir(source.path) + "/" + f)
+				Local path:String = CheckPath(ExtractDir(source.path), f)
 
 				Local time:Int = FileTime(path)
 				
@@ -845,4 +866,17 @@ Type TBuildManager
 		Return s + p + "%] "
 	End Method
 
+	Method CheckPath:String(basePath:String, path:String)
+		Local p:String = RealPath(basePath + "/" + path)
+		If Not FileType(p) Then
+			' maybe path is a full path already?
+			p = RealPath(path)
+			If Not FileType(p) Then
+				' meh... fallback to original
+				p = RealPath(basePath + "/" + path)
+			End If
+		End If
+		Return p	
+	End Method
+	
 End Type
