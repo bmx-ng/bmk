@@ -573,21 +573,21 @@ Type TBMK
 		
 		If Not _links Then
 			If processor.BCCVersion() = "BlitzMax" Then
-				_links = "-L" + CQuote(BlitzMaxPath() + "/lib")
+				_links = "-L" + CQuote(RealPath(BlitzMaxPath() + "/lib"))
 			Else
 				Local links:String
 				
 				If processor.HasTarget("x86_64") Then
 					If processor.CPU()="x86" Then
-						links :+ " -L" +  CQuote( MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True) + "/32")
-						links :+ " -L" +  CQuote( MinGWPath() + "/x86_64-w64-mingw32/lib32")
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True) + "/32"))
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib32"))
 					Else
-						links :+ " -L" +  CQuote( MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True))
-						links :+ " -L" +  CQuote( MinGWPath() + "/x86_64-w64-mingw32/lib")
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True)))
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib"))
 					End If
 				Else
-					links :+ " -L" + CQuote(MinGWPath() + "/lib")
-					links :+ " -L" + CQuote(MinGWPath() +"/lib/gcc/mingw32/" + GCCVersion(True, True))
+					links :+ " -L" + CQuote(RealPath(MinGWPath() + "/lib"))
+					links :+ " -L" + CQuote(RealPath(MinGWPath() +"/lib/gcc/mingw32/" + GCCVersion(True, True)))
 				End If
 				
 				_links = links
@@ -634,7 +634,7 @@ Type TBMK
 			End If
 		End If
 		
-		Return _path
+		Return RealPath(_path)
 	End Method
 	
 	' the path where crtbegin.o resides
@@ -674,7 +674,7 @@ Type TBMK
 			End If
 		End If
 		
-		Return _path
+		Return RealPath(_path)
 	End Method
 	
 	Method IsDebugBuild:Int()

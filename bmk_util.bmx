@@ -263,13 +263,13 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			End If
 
 			If globals.Get("path_to_mingw_lib") Then
-				cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") ) )
+				cmd:+" "+CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") ) ) )
 			End If
 			If globals.Get("path_to_mingw_lib2") Then
-				cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") ) )
+				cmd:+" "+CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") ) ) )
 			End If
 			If globals.Get("path_to_mingw_lib3") Then
-				cmd:+" "+CQuote( "-L"+CQuote( processor.Option("path_to_mingw_lib3", BlitzMaxPath()+"/lib") ) )
+				cmd:+" "+CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib3", BlitzMaxPath()+"/lib") ) ) )
 			End If
 		End If
 	
@@ -280,12 +280,12 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			cmd:+" "+def
 			cmd:+" --out-implib "+imp
 			If usingLD Then
-				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" )
+				files:+"~n"+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) )
 			End If
 		Else
 			If usingLD
-				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtbegin.o" )
-				files:+"~n"+CQuote( processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/crt2.o" )
+				files:+"~n"+CQuote( RealPath(processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtbegin.o" ) )
+				files:+"~n"+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/crt2.o" ) )
 			End If
 		EndIf
 	
