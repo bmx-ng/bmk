@@ -341,7 +341,7 @@ Type TBuildManager
 								If Not opt_outfile Then
 									Throw "Build Error: Did not expect to link against " + m.path
 								End If
-
+							
 								' an app!
 								Local max_lnk_time:Int = m.MaxLinkTime()
 							
@@ -672,6 +672,11 @@ Type TBuildManager
 		Local link:TSourceFile
 
 		If Not source Then
+			Return Null
+		End If
+		
+		' main module file without "Module" line?
+		If Not source.modid Then
 			Return Null
 		End If
 		
