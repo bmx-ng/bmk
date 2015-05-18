@@ -336,6 +336,12 @@ Type TBuildManager
 					
 								End If
 							Else
+								' this probably should never happen.
+								' may be a bad module?
+								If Not opt_outfile Then
+									Throw "Build Error: Did not expect to link against " + m.path
+								End If
+
 								' an app!
 								Local max_lnk_time:Int = m.MaxLinkTime()
 							
