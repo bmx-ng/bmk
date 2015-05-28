@@ -197,7 +197,7 @@ Function CheckAndroidPaths()
 			Local antDir:String = RealPath(BlitzMaxPath() + "/resources/android/apache-ant")
 			
 			If FileType(antDir) <> FILETYPE_DIR Then
-				Throw "ANT_HOME or 'ant.home' config option not set"
+				Throw "ANT_HOME or 'ant.home' config option not set, and resources missing apache-ant."
 			Else
 				antHome = antDir
 				globals.SetVar("ant.home", antHome)
