@@ -31,6 +31,102 @@ Function BeginMake()
 	opt_framework=""
 End Function
 
+Function ConfigureAndroidPaths()
+	CheckAndroidPaths()
+	
+	Local toolchain:String
+	Local arch:String
+	Local abi:String
+	
+	Select processor.CPU()
+		Case "x86"
+			toolchain = "x86-"
+			arch = "arch-x86"
+			abi = "x86"
+		Case "x64"
+			toolchain = "x86_64-"
+			arch = "arch-x86_64"
+			abi = "x86_64"
+		Case "arm", "armeabi", "armeabiv7a"
+			toolchain = "arm-linux-androideabi-"
+			arch = "arch-arm"
+			If processor.CPU() = "armeabi" Then
+				abi = "armeabi"
+			Else
+				abi = "armeabi-v7a"
+			End If
+		Case "arm64v8a"
+			toolchain = "aarch64-linux-android-"
+			arch = "arch-arm64"
+			abi = "arm64-v8a"
+	End Select
+	
+	Local native:String
+?macos
+	native = "darwin"
+?linux
+	native = "linux"
+?win32
+	native = "windows"
+?
+
+	Local toolchainDir:String = processor.Option("android.ndk", "") + "/toolchains/" + ..
+			toolchain + processor.Option("android.toolchain.version", "") + "/prebuilt/" + native
+	
+	' look for 64 bit build first, then x86
+	If FileType(toolchainDir + "-x86_64") = FILETYPE_DIR Then
+		toolchainDir :+ "-x86_64"
+	Else If FileType(toolchainDir + "-x86") = FILETYPE_DIR Then
+		toolchainDir :+ "-x86"
+	Else
+		Throw "Cannot determine toolchain dir for '" + native + "', at '" + toolchainDir + "'"
+	End If
+
+	Local exe:String	
+?win32
+	exe = ".exe"
+?
+	
+	Local gccPath:String = toolchainDir + "/bin/" + toolchain + "gcc" + exe
+	Local gppPath:String = toolchainDir + "/bin/" + toolchain + "g++" + exe
+	Local arPath:String = toolchainDir + "/bin/" + toolchain + "ar" + exe
+	Local libPath:String = toolchainDir + "/lib"
+
+	' check paths
+	If Not FileType(RealPath(gccPath)) Then
+		Throw "gcc not found at '" + gccPath + "'"
+	End If
+
+	If Not FileType(RealPath(gppPath)) Then
+		Throw "g++ not found at '" + gppPath + "'"
+	End If
+
+	If Not FileType(RealPath(gccPath)) Then
+		Throw "ar not found at '" + arPath + "'"
+	End If
+	
+	globals.SetVar("android." + processor.CPU() + ".gcc", gccPath)
+	globals.SetVar("android." + processor.CPU() + ".gpp", gppPath)
+	globals.SetVar("android." + processor.CPU() + ".ar", arPath)
+	globals.SetVar("android." + processor.CPU() + ".lib", "-L" + libPath)
+
+	' platform
+	Local platformDir:String = processor.Option("android.ndk", "") + "/platforms/android-" + ..
+			processor.Option("android.platform", "") + "/" + arch
+
+	If Not FileType(platformDir)Then
+		Throw "Cannot determine platform dir for '" + arch + "' at '" + platformDir + "'"
+	End If
+	
+	' platform sysroot
+	globals.SetVar("android.platform.sysroot", "--sysroot " + platformDir)
+	globals.AddOption("cc_opts", "android.platform.sysroot", "--sysroot " + platformDir)
+	
+	' abi
+	globals.SetVar("android.abi", abi)
+
+End Function
+
 Function CheckAndroidPaths()
 	' check envs and paths
 	Local androidHome:String = getenv_("ANDROID_HOME")
@@ -41,6 +137,8 @@ Function CheckAndroidPaths()
 		End If
 		
 		putenv_("ANDROID_HOME=" + androidHome.Trim())
+	Else
+		globals.SetVar("android.home", androidHome)
 	End If
 	
 	Local androidSDK:String = getenv_("ANDROID_SDK")
@@ -51,6 +149,8 @@ Function CheckAndroidPaths()
 		End If
 		
 		putenv_("ANDROID_SDK=" + androidSDK.Trim())
+	Else
+		globals.SetVar("android.sdk", androidSDK)
 	End If
 
 	Local androidNDK:String = getenv_("ANDROID_NDK")
@@ -61,16 +161,8 @@ Function CheckAndroidPaths()
 		End If
 		
 		putenv_("ANDROID_NDK=" + androidNDK.Trim())
-	End If
-
-	Local androidABI:String = getenv_("ANDROID_ABI")
-	If Not androidABI Then
-		androidABI = processor.Option(processor.BuildName("abi"), "")
-		If Not androidABI Then
-			Throw "ANDROID_ABI or '" + processor.BuildName("abi") + "' config option not set"
-		End If
-		
-		putenv_("ANDROID_ABI=" + androidABI.Trim())
+	Else
+		globals.SetVar("android.ndk", androidNDK)
 	End If
 
 	Local androidToolchainVersion:String = getenv_("ANDROID_TOOLCHAIN_VERSION")
@@ -81,16 +173,40 @@ Function CheckAndroidPaths()
 		End If
 		
 		putenv_("ANDROID_TOOLCHAIN_VERSION=" + androidToolchainVersion.Trim())
+	Else
+		globals.SetVar("android.toolchain.version", androidToolchainVersion)
+	End If
+
+	Local androidPlatform:String = getenv_("ANDROID_PLATFORM")
+	If Not androidPlatform Then
+		androidPlatform = processor.Option("android.platform", "")
+		If Not androidPlatform Then
+			Throw "ANDROID_PLATFORM or 'android.platform' config option not set"
+		End If
+		
+		putenv_("ANDROID_PLATFORM=" + androidPlatform.Trim())
+	Else
+		globals.SetVar("android.platform", androidPlatform)
 	End If
 
 	Local antHome:String = getenv_("ANT_HOME")
 	If Not antHome Then
 		antHome = processor.Option("ant.home", "")
-		If Not androidToolchainVersion Then
-			Throw "ANT_HOME or 'ant.home' config option not set"
+		If Not antHome Then
+			' as a further fallback, we can use the one from resources folder if it exists.
+			Local antDir:String = RealPath(BlitzMaxPath() + "/resources/android/apache-ant")
+			
+			If FileType(antDir) <> FILETYPE_DIR Then
+				Throw "ANT_HOME or 'ant.home' config option not set"
+			Else
+				antHome = antDir
+				globals.SetVar("ant.home", antHome)
+			End If
 		End If
 		
 		putenv_("ANT_HOME=" + antHome.Trim())
+	Else
+		globals.SetVar("ant.home", antHome)
 	End If
 
 ?Not win32	
@@ -116,6 +232,13 @@ Type TBuildManager
 	Field buildAll:Int
 	
 	Field framework_mods:TList
+	
+	Method New()
+		' pre build checks
+		If processor.Platform() = "android" Then
+			ConfigureAndroidPaths()
+		End If
+	End Method
 
 	Method MakeMods(mods:TList, rebuild:Int = False)
 
@@ -425,11 +548,8 @@ Type TBuildManager
 			If processor.Platform() = "android"
 				' create the apk
 				
-				' setup environment
-				CheckAndroidPaths()
-				
 				' copy shared object
-				Local androidABI:String = getenv_("ANDROID_ABI")
+				Local androidABI:String = processor.Option("android.abi", "")
 				
 				Local appId:String = StripDir(StripExt(opt_outfile))
 				Local buildDir:String = ExtractDir(opt_outfile)
@@ -442,7 +562,7 @@ Type TBuildManager
 				CopyFile(buildDir + "/" + sharedObject, abiPath + "/" + sharedObject)
 		
 				' build the apk :
-				Local antHome:String = getenv_("ANT_HOME").Trim()
+				Local antHome:String = processor.Option("ant.home", "").Trim()
 				Local cmd:String = "~q" + antHome + "/bin/ant"
 ?win32
 				cmd :+ ".bat"

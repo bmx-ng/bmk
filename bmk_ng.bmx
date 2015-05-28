@@ -802,7 +802,11 @@ Type TBMKGlobals
 
 		Local v:Object = vars.ValueForKey(variable)
 		If Not TOptionVariable(v) Then
-			SetVar(variable, String(v) + " " + value)
+			If v Then
+				SetVar(variable, String(v) + " " + value)
+			Else
+				SetVar(variable, value)
+			End If
 		End If
 
 	End Method
@@ -1004,10 +1008,12 @@ Type TBMKCommand
 			
 			If c = "~q" Then
 				If inString Then
-					If Not inArray Then
-						argArray:+ [ arg ]
-					Else
-						arr:+ [ arg ]
+					If arg Then
+						If Not inArray Then
+							argArray:+ [ arg ]
+						Else
+							arr:+ [ arg ]
+						End If
 					End If
 
 					arg = ""

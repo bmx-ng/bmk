@@ -397,23 +397,8 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		cmd :+ " -Wl,--export-dynamic -rdynamic "
 		cmd:+" -o "+CQuote( ExtractDir(path) + "/lib" + libso + ".so" )
 		cmd:+" "+CQuote( tmpfile )
-		cmd:+" -L"+CQuote( BlitzMaxPath()+"/lib" )
+		cmd:+" " + processor.Option("android.platform.sysroot", "")
 		
-		Rem
-		'cmd:+" -m32 -s -Os -pthread"
-		If processor.CPU() = "x86" Then
-			cmd:+" -m32"
-		End If
-		cmd:+" -pthread"
-		cmd:+" -o "+CQuote( path )
-		cmd:+" "+CQuote( tmpfile )
-		If processor.CPU() = "x86" Then
-			cmd:+ " -L" + processor.Option(processor.BuildName("lib32"), "/usr/lib32")
-		End If
-		cmd:+" -L" + processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib")
-		cmd:+" -L" + processor.Option(processor.BuildName("lib"), "/usr/lib")
-		cmd:+" -L"+CQuote( BlitzMaxPath()+"/lib" )
-	End Rem
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
@@ -593,7 +578,7 @@ Function ParseIniFile:TMap()
 	Local settings:TMap = New TMap
 	
 	If Not FileType(path) Then
-		Print "Not Found : application settings file '" + appId + ".android'"
+		Print "Not Found : application settings file '" + appId + ".android'. Using defaults..."
 		Return DefaultAndroidSettings()
 	End If
 

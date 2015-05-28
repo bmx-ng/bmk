@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.01 28/05/2015 - Reworked android stuff to work with standard setup.
 ' 3.00 05/05/2015 - "Chirpy Chipmunk"
 '                 - Redesign of dependency processing - parallel build!
 '                 - Added progress information.
