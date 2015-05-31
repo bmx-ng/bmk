@@ -92,11 +92,11 @@
 	if bmk.Platform() == "macos" and bmk.CPU() == "x86" and bmk.BCCVersion() == "BlitzMax" then
 		cmd = bmk.Quote(utils.BlitzMaxPath() .. "/bin/fasm2as") .. " " .. bmk.Quote(azm)
 		if bmk.MultiSys( cmd ) ~= 0 then
-			bmk.ThrowNew("Fasm2as failed - please contact BRL!")
+				bmk.ThrowNew("Fasm2as failed - please contact BRL!")
 		end
 	end
 
-@end 
+@end
 
 @define compileC
 	local src = nvl(arg1, %infile%)
@@ -293,6 +293,30 @@
 	end
 @end
 
+@define setmacldopt
+	if bmk.Platform() == "macos" then
+		globals.SetOption("ld_opts", arg1, arg2)
+	end
+@end
+
+@define setwin32ldopt
+	if bmk.Platform() == "win32" then
+		globals.SetOption("ld_opts", arg1, arg2)
+	end
+@end
+
+@define setlinuxldopt
+	if bmk.Platform() == "linux" then
+		globals.SetOption("ld_opts", arg1, arg2)
+	end
+@end
+
+@define setraspberrypildopt
+	if bmk.Platform() == "raspberrypi" then
+		globals.SetOption("ld_opts", arg1, arg2)
+	end
+@end
+
 # compiles the specified file, using the current options.
 @define make
 	make.Make(arg1)
@@ -329,14 +353,17 @@
 	if bmk.Platform() == "macos" then
 		
 		# compile for 10.3 ?
-		# macos version >= 0x1050 ?
-		if tonumber(%macos_version%) >= 4208 then
+		if tonumber(%macos_version%) >= 4224 then
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.5")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.5")
+		elseif tonumber(%macos_version%) >= 4208 then
+			# macos version >= 0x1070 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.4")
-			if tonumber(%macos_version%) >= 4224 then
-				globals.SetOption("cc_opts", "isysroot", "-isysroot /Developer/SDKs/MacOSX10.6.sdk")
-			end
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.4")
 		elseif tonumber(%macos_version%) >= 4176 then
+		# macos version >= 0x1050 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.3")
 		end
 	elseif bmk.Platform() == "win32" then
 	
