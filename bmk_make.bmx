@@ -646,6 +646,17 @@ Type TBuildManager
 							
 							CalculateDependencies(s, isMod, rebuildImports)
 							
+							' if file that we generate is missing, we need to rebuild
+							If processor.BCCVersion() = "BlitzMax" Then
+								If Not FileType(StripExt(s.obj_path) + ".s") Then
+									s.requiresBuild = True
+								End If
+							Else
+								If Not FileType(StripExt(s.obj_path) + ".c") Then
+									s.requiresBuild = True
+								End If
+							End If
+							
 							Local gen:TSourceFile
 							
 							' for osx x86 on legacy, we need to convert asm

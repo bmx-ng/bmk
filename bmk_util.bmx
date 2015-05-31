@@ -104,8 +104,14 @@ Function CompileBMX( src$,obj$,opts$ )
 	Local azm$=StripExt(obj)
 	
 	If processor.BCCVersion() = "BlitzMax" Then
+		' remove any "NG" generated source.
+		DeleteFile azm + ".c"
+		
 		azm :+ ".s"
 	Else
+		' remove any "legacy" generated source.
+		DeleteFile azm + ".s"
+	
 		opts :+ " -p " + processor.Platform()
 	End If
 	
