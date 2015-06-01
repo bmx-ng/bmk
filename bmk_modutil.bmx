@@ -141,7 +141,7 @@ Type TSourceFile
 				If Not modsOnly Or (modsOnly And s.modid) Then
 					If Not stage Then
 						If Not s.modid Then
-							If Not list.Contains(s.obj_path) Then
+							If s.obj_path And Not list.Contains(s.obj_path) Then
 								list.AddLast(s.obj_path)
 							End If
 						End If
