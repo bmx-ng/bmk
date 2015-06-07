@@ -727,6 +727,9 @@ Type TBuildManager
 
 				Local s:TSourceFile = GetSourceFile(path, isMod, rebuildImports, True)
 				If s Then
+					' calculate included file dependencies
+					CalculateDependencies(s, isMod, rebuildImports)
+
 					' update our time to latest included time
 					If s.time > source.time Then
 						source.time = s.time
