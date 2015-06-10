@@ -1,6 +1,6 @@
 '
 ' Change History :
-' 3.02 09/06/2015 - Added standalone app build generation. Generates source and build script for bmk/bcc-less compile.
+' 3.02 10/06/2015 - Added standalone app build generation. Generates source and build script for bmk/bcc-less compile.
 ' 3.01 28/05/2015 - Reworked android stuff to work with standard setup.
 '                   Fixed OS X sysroot issue, and enhanced OS X configuration.
 '                   Improved support for mixed builds (compiling between legacy and ng)
@@ -464,8 +464,13 @@ End Rem
 		
 		stream.WriteString("echo ~qBuilding " + globals.GetRawVar("OUTFILE") + "...~q~n~n")
 		
-		stream.WriteString("APP_ROOT=" + globals.GetRawVar("EXEPATH") + "~n")
-		stream.WriteString("BMX_ROOT=" + BlitzMaxPath() + "~n")
+		stream.WriteString("if [ -z ~q${APP_ROOT}~q ]; then~n")
+		stream.WriteString("~tAPP_ROOT=" + globals.GetRawVar("EXEPATH") + "~n")
+		stream.WriteString("fi~n~n")
+
+		stream.WriteString("if [ -z ~q${BMX_ROOT}~q ]; then~n")
+		stream.WriteString("~tBMX_ROOT=" + BlitzMaxPath() + "~n")
+		stream.WriteString("fi~n")
 		stream.WriteString("~n~n")
 		
 		stream.WriteString("cp " + ldScript + " " + ldScript + ".tmp~n")
