@@ -115,7 +115,11 @@ Function CompileBMX( src$,obj$,opts$ )
 		opts :+ " -p " + processor.Platform()
 	End If
 	
+	If opt_standalone opt_nolog = True
+	
 	processor.RunCommand("CompileBMX", [src, azm, opts])
+
+	If opt_standalone opt_nolog = False
 
 End Function
 
@@ -147,7 +151,7 @@ Function CreateArc( path$ , oobjs:TList )
 	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten"
 		For Local t$=EachIn oobjs
 			If Len(cmd)+Len(t)>1000
-				If Sys( cmd )
+				If processor.Sys( cmd )
 					DeleteFile path
 					Throw "Build Error: Failed to create archive "+path
 				EndIf
@@ -174,6 +178,8 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	Local cmd$
 	Local files$
 	Local tmpfile$=BlitzMaxPath()+"/tmp/ld.tmp"
+	
+	If opt_standalone tmpfile = globals.GetRawVar("EXEPATH") + "/ld." + processor.AppDet() + ".txt.tmp"
 	
 	If processor.Platform() = "macos"
 		cmd="g++"
@@ -441,12 +447,20 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		cmd:+" "+t
 	EndIf
 
-	Local stream:TStream=WriteStream( tmpfile )
-	stream.WriteBytes files.ToCString(),files.length
-	stream.Close
+	If Not opt_standalone Then
+		Local stream:TStream=WriteStream( tmpfile )
+		stream.WriteBytes files.ToCString(),files.length
+		stream.Close
+	End If
 
-	If Sys( cmd ) Throw "Build Error: Failed to link "+path
+	If processor.Sys( cmd ) Throw "Build Error: Failed to link "+path
 
+	If opt_standalone
+		Local stream:TStream=WriteStream( StripExt(tmpfile) )
+		Local f:String = processor.FixPaths(files)
+		stream.WriteBytes f.ToCString(),f.length
+		stream.Close
+	End If
 End Function
 
 Function MergeApp(fromFile:String, toFile:String)
@@ -455,7 +469,7 @@ Function MergeApp(fromFile:String, toFile:String)
 
 	Local cmd:String = "lipo -create ~q" + fromFile + "~q ~q" + toFile + "~q -output ~q" + toFile + "~q"
 	
-	If Sys( cmd ) Throw "Merge Error: Failed to merge " + toFile
+	If processor.Sys( cmd ) Throw "Merge Error: Failed to merge " + toFile
 	
 	DeleteFile fromFile
 

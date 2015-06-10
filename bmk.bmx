@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.02 09/06/2015 - Added standalone app build generation. Generates source and build script for bmk/bcc-less compile.
 ' 3.01 28/05/2015 - Reworked android stuff to work with standard setup.
 '                   Fixed OS X sysroot issue, and enhanced OS X configuration.
 '                   Improved support for mixed builds (compiling between legacy and ng)
@@ -193,6 +194,8 @@ End Function
 
 Function MakeModules( args$[] )
 
+	If opt_standalone CmdError "Standalone build not available for makemods"
+
 	If args.length>1 CmdError "Expecting only 1 argument for makemods"
 	
 	Local mods:TList
@@ -216,15 +219,9 @@ Function MakeModules( args$[] )
 	BeginMake
 
 	Local buildManager:TBuildManager = New TBuildManager
-	'mods.AddLast("brl.blitz")
+
 	buildManager.MakeMods(mods, opt_all)
 	buildManager.DoBuild()
-'End
-'	MakeMod "brl.blitz"
-	
-'	For Local name$=EachIn mods
-'		MakeMod name
-'	Next
 	
 End Function
 
@@ -291,7 +288,11 @@ Function MakeApplication( args$[],makelib )
 
 	If FileType(Main)<>FILETYPE_FILE Throw "Unable to open source file '"+Main+"'"
 	
-	If Not opt_outfile opt_outfile=StripExt( Main )
+	If Not opt_outfile Then
+		opt_outfile = StripExt( Main )
+	Else
+		opt_outfile = RealPath(opt_outfile)
+	End If
 
 	' set some useful global variables
 	globals.SetVar("BUILDPATH", ExtractDir(opt_outfile))
@@ -455,6 +456,38 @@ Rem
 		opt_outfile = previousOutfile
 	End If
 End Rem
+	If opt_standalone
+		Local buildScript:String = globals.GetRawVar("EXEPATH") + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + ".build"
+		Local ldScript:String = "$APP_ROOT/ld." + processor.AppDet() + ".txt"
+		
+		Local stream:TStream = WriteStream(buildScript)
+		
+		stream.WriteString("echo ~qBuilding " + globals.GetRawVar("OUTFILE") + "...~q~n~n")
+		
+		stream.WriteString("APP_ROOT=" + globals.GetRawVar("EXEPATH") + "~n")
+		stream.WriteString("BMX_ROOT=" + BlitzMaxPath() + "~n")
+		stream.WriteString("~n~n")
+		
+		stream.WriteString("cp " + ldScript + " " + ldScript + ".tmp~n")
+		
+		stream.WriteString("sed -i -- 's=\$BMX_ROOT='$BMX_ROOT'=g' " + ldScript + ".tmp~n")
+		stream.WriteString("sed -i -- 's=\$APP_ROOT='$APP_ROOT'=g' " + ldScript + ".tmp~n")
+		
+		stream.WriteString("~n~n")
+
+		If processor.buildLog Then
+			For Local s:String = EachIn processor.buildLog
+				stream.WriteString(s + "~n")
+			Next
+		End If
+		
+		stream.WriteString("~n")
+		stream.WriteString("echo ~qFinished.~q~n")
+		
+		stream.Close()
+		
+	End If
+
 	If opt_execute
 
 ?Not android

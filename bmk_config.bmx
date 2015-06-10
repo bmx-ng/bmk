@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.01"
+Const BMK_VERSION:String = "3.02"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -35,11 +35,16 @@ Global opt_appstub$="brl.appstub" ' BaH 28/9/2007
 Global opt_universal=False
 Global opt_target_platform:String
 Global opt_gdbdebug=False
+Global opt_standalone=False
+Global opt_nolog
 
 Global opt_dumpbuild
 
 'Global cfg_platform$
 Global macos_version
+
+Global app_main$
+Global app_type$
 
 ?MacOS
 
@@ -202,6 +207,8 @@ Function ParseConfigArgs$[]( args$[] )
 			End Select
 		Case "gdb"
 			opt_gdbdebug = True
+		Case "standalone"
+			opt_standalone = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select

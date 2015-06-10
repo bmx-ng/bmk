@@ -44,6 +44,8 @@ Type TBMK
 
 	Field commands:TMap = New TMap
 
+	Field buildLog:TList
+
 	Method New()
 		LuaRegisterObject Self,"bmk"
 	End Method
@@ -327,7 +329,12 @@ Type TBMK
 			Local t$="mkdir "
 			If cmd.StartsWith( t ) And FileType( cmd[t.length..] ) Return False
 		EndIf
-		Return system_( cmd )
+
+		If opt_standalone And Not opt_nolog PushLog(cmd)
+
+		If Not opt_standalone Or (opt_standalone And opt_nolog) Then
+			Return system_( cmd )
+		End If
 	End Method
 
 	Method MultiSys:Int(cmd:String, src:String)
@@ -340,11 +347,16 @@ Type TBMK
 			Local t$="mkdir "
 			If cmd.StartsWith( t ) And FileType( cmd[t.length..] ) Return False
 		EndIf
+
+		If opt_standalone And Not opt_nolog PushLog(cmd)
+		
+		If Not opt_standalone Or (opt_standalone And opt_nolog) Then
 ?threaded
 		processManager.DoSystem(cmd, src)
 ?Not threaded
 		Return system_( cmd )
 ?
+		End If
 	End Method
 
 	Method ThrowNew(e:String)
@@ -696,6 +708,27 @@ Type TBMK
 		End If
 	End Method
 
+	Method PushLog(cmd:String)
+		If Not buildLog Then
+			buildLog = New TList
+		End If
+
+		Local p:String = FixPaths(cmd)
+
+		buildLog.AddLast(p)
+	End Method
+	
+	Method FixPaths:String(text:String)
+		Local p:String = text
+		p = p.Replace(BlitzMaxPath()+"/","$BMX_ROOT/")
+		p = p.Replace(globals.GetRawVar("EXEPATH"), "$APP_ROOT")
+		Return p
+	End Method
+	
+	Method AppDet:String()
+		Return StripExt(StripDir(app_main)) + "." + opt_apptype + opt_configmung + processor.CPU()
+	End Method
+	
 End Type
 
 ?win32

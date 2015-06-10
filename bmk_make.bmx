@@ -21,8 +21,6 @@ If t EXPERIMENTAL_SPEEDUP=True
 
 Global cc_opts$
 Global bcc_opts$
-Global app_main$
-Global app_type$
 
 Function BeginMake()
 	cc_opts=Null
@@ -795,7 +793,7 @@ Type TBuildManager
 	
 	Method GetMod:TSourceFile(m:String, rebuild:Int = False)
 	
-		If opt_all And ((opt_modfilter And ((m).Find(opt_modfilter) = 0)) Or (Not opt_modfilter)) And Not app_main Then
+		If (opt_all And ((opt_modfilter And ((m).Find(opt_modfilter) = 0)) Or (Not opt_modfilter)) And Not app_main) Or (app_main And opt_standalone) Then
 			rebuild = True
 		End If
 	
