@@ -721,7 +721,7 @@ Type TBMK
 	Method FixPaths:String(text:String)
 		Local p:String = text
 		p = p.Replace(BlitzMaxPath()+"/","$BMX_ROOT/")
-		p = p.Replace(globals.GetRawVar("EXEPATH"), "$APP_ROOT")
+		p = p.Replace(string(globals.GetRawVar("EXEPATH")), "$APP_ROOT")
 		Return p
 	End Method
 	

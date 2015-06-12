@@ -179,7 +179,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	Local files$
 	Local tmpfile$=BlitzMaxPath()+"/tmp/ld.tmp"
 	
-	If opt_standalone tmpfile = globals.GetRawVar("EXEPATH") + "/ld." + processor.AppDet() + ".txt.tmp"
+	If opt_standalone tmpfile = string(globals.GetRawVar("EXEPATH")) + "/ld." + processor.AppDet() + ".txt.tmp"
 	
 	If processor.Platform() = "macos"
 		cmd="g++"
