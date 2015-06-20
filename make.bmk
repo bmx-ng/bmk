@@ -132,16 +132,9 @@
 		end
 		
 	elseif bmk.Platform() == "win32" then
-		if bmk.BCCVersion() == "BlitzMax" then
-			cmd = bmk.Option("path_to_gcc", "gcc.exe")
-			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-				cmd = bmk.Option("path_to_gpp", "g++.exe")
-			end
-		else
-			cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/gcc.exe")
-			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-				cmd = bmk.Option("path_to_gpp", bmk.MinGWBinPath() .. "/g++.exe")
-			end
+		cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/gcc.exe")
+		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
+			cmd = bmk.Option("path_to_gpp", bmk.MinGWBinPath() .. "/g++.exe")
 		end
 		
 	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then

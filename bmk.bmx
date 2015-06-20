@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.03 20/06/2015 - Legacy bcc installations can now use local MinGW32 dir.
 ' 3.02 10/06/2015 - Added standalone app build generation. Generates source and build script for bmk/bcc-less compile.
 ' 3.01 28/05/2015 - Reworked android stuff to work with standard setup.
 '                   Fixed OS X sysroot issue, and enhanced OS X configuration.
@@ -457,15 +458,15 @@ Rem
 	End If
 End Rem
 	If opt_standalone
-		Local buildScript:String = string(globals.GetRawVar("EXEPATH")) + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + ".build"
+		Local buildScript:String = String(globals.GetRawVar("EXEPATH")) + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + ".build"
 		Local ldScript:String = "$APP_ROOT/ld." + processor.AppDet() + ".txt"
 		
 		Local stream:TStream = WriteStream(buildScript)
 		
-		stream.WriteString("echo ~qBuilding " + string(globals.GetRawVar("OUTFILE")) + "...~q~n~n")
+		stream.WriteString("echo ~qBuilding " + String(globals.GetRawVar("OUTFILE")) + "...~q~n~n")
 		
 		stream.WriteString("if [ -z ~q${APP_ROOT}~q ]; then~n")
-		stream.WriteString("~tAPP_ROOT=" + string(globals.GetRawVar("EXEPATH")) + "~n")
+		stream.WriteString("~tAPP_ROOT=" + String(globals.GetRawVar("EXEPATH")) + "~n")
 		stream.WriteString("fi~n~n")
 
 		stream.WriteString("if [ -z ~q${BMX_ROOT}~q ]; then~n")

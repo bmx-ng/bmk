@@ -406,11 +406,7 @@ Type TBMK
 
 		Local process:TProcess
 		If Platform() = "win32" Then
-			If processor.BCCVersion() = "BlitzMax" Then
-				process = CreateProcess("gcc -v")
-			Else
-				process = CreateProcess(MinGWBinPath() + "/gcc.exe -v")
-			End If
+			process = CreateProcess(MinGWBinPath() + "/gcc.exe -v")
 		Else	
 			process = CreateProcess("gcc -v")
 		End If
@@ -530,16 +526,12 @@ Type TBMK
 		Global _path:String
 
 		If Not _path Then
-			If processor.BCCVersion() = "BlitzMax" Then
-				_path = BlitzMaxPath() + "/bin"
-			Else
-				_path = MinGWPath() + "/bin"
+			_path = MinGWPath() + "/bin"
 ?win32
-				Local PATH:String = _wgetenv("PATH")
-				PATH = _path + ";" + PATH
-				_wputenv("PATH=" + PATH)
+			Local PATH:String = _wgetenv("PATH")
+			PATH = _path + ";" + PATH
+			_wputenv("PATH=" + PATH)
 ?
-			End If
 		End If
 		
 		Return _path
@@ -549,32 +541,28 @@ Type TBMK
 		Global _path:String
 
 		If Not _path Then
-			If processor.BCCVersion() = "BlitzMax" Then
-				_path = getenv_("MINGW")
-			Else
-				Local path:String
-				' look for local MinGW32 dir
-				path = BlitzMaxPath() + "/MinGW32/bin"
-				If FileType(path) = FILETYPE_DIR Then
-					' bin dir exists, go with that
-					_path = BlitzMaxPath() + "/MinGW32"
+			Local path:String
+			' look for local MinGW32 dir
+			path = BlitzMaxPath() + "/MinGW32/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_path = BlitzMaxPath() + "/MinGW32"
+				Return _path
+			End If
+
+			' try MINGW environment variable
+			path = getenv_("MINGW")
+			If path And FileType(path) = FILETYPE_DIR Then
+				' check for bin dir
+				If FileType(path + "/bin") = FILETYPE_DIR Then
+					' go with that
+					_path = path
 					Return _path
 				End If
-
-				' try MINGW environment variable
-				path = getenv_("MINGW")
-				If path And FileType(path) = FILETYPE_DIR Then
-					' check for bin dir
-					If FileType(path + "/bin") = FILETYPE_DIR Then
-						' go with that
-						_path = path
-						Return _path
-					End If
-				End If
-
-				' none of the above? fallback to BlitzMax dir (for bin and lib)
-				_path = BlitzMaxPath()
 			End If
+
+			' none of the above? fallback to BlitzMax dir (for bin and lib)
+			_path = BlitzMaxPath()
 		End If
 		
 		Return _path
@@ -584,26 +572,22 @@ Type TBMK
 		Global _links:String
 		
 		If Not _links Then
-			If processor.BCCVersion() = "BlitzMax" Then
-				_links = "-L" + CQuote(RealPath(BlitzMaxPath() + "/lib"))
-			Else
-				Local links:String
-				
-				If processor.HasTarget("x86_64") Then
-					If processor.CPU()="x86" Then
-						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True) + "/32"))
-						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib32"))
-					Else
-						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True)))
-						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib"))
-					End If
+			Local links:String
+			
+			If processor.HasTarget("x86_64") Then
+				If processor.CPU()="x86" Then
+					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True) + "/32"))
+					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib32"))
 				Else
-					links :+ " -L" + CQuote(RealPath(MinGWPath() + "/lib"))
-					links :+ " -L" + CQuote(RealPath(MinGWPath() +"/lib/gcc/mingw32/" + GCCVersion(True, True)))
+					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True)))
+					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib"))
 				End If
-				
-				_links = links
+			Else
+				links :+ " -L" + CQuote(RealPath(MinGWPath() + "/lib"))
+				links :+ " -L" + CQuote(RealPath(MinGWPath() +"/lib/gcc/mingw32/" + GCCVersion(True, True)))
 			End If
+			
+			_links = links
 		End If
 		
 		Return _links
@@ -614,35 +598,31 @@ Type TBMK
 		Global _path:String
 		
 		If Not _path Then
-			If processor.BCCVersion() = "BlitzMax" Then
-				_path = BlitzMaxPath() + "/lib"
-			Else
-				' mingw64 ?
-				Local path:String = MinGWPath() + "/"
-				If processor.HasTarget("x86_64") Then
-					
-					path :+ "x86_64-w64-mingw32/"
-					
-					If processor.CPU()="x86" Then
-						path :+ "lib32"
-					Else
-						path :+ "lib"
-					End If
-					
-					If FileType(path) = 0 Then
-						Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
-					End If
-					
-					_path = path
+			' mingw64 ?
+			Local path:String = MinGWPath() + "/"
+			If processor.HasTarget("x86_64") Then
+				
+				path :+ "x86_64-w64-mingw32/"
+				
+				If processor.CPU()="x86" Then
+					path :+ "lib32"
 				Else
 					path :+ "lib"
-
-					If FileType(path) = 0 Then
-						Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
-					End If
-					
-					_path = path
 				End If
+				
+				If FileType(path) = 0 Then
+					Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
+				End If
+				
+				_path = path
+			Else
+				path :+ "lib"
+
+				If FileType(path) = 0 Then
+					Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
+				End If
+				
+				_path = path
 			End If
 		End If
 		
@@ -654,35 +634,31 @@ Type TBMK
 		Global _path:String
 		
 		If Not _path Then
-			If processor.BCCVersion() = "BlitzMax" Then
-				_path = BlitzMaxPath() + "/lib"
-			Else
-				' mingw64 ?
-				Local path:String = MinGWPath() + "/"
-				If processor.HasTarget("x86_64") Then
-					
-					path :+ "x86_64-w64-mingw32/"
-					
-					If processor.CPU()="x86" Then
-						path :+ "lib32"
-					Else
-						path :+ "lib"
-					End If
-					
-					If FileType(path) = 0 Then
-						Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
-					End If
-					
-					_path = path
+			' mingw64 ?
+			Local path:String = MinGWPath() + "/"
+			If processor.HasTarget("x86_64") Then
+				
+				path :+ "x86_64-w64-mingw32/"
+				
+				If processor.CPU()="x86" Then
+					path :+ "lib32"
 				Else
-					path :+ "lib/gcc/mingw32/" + GCCVersion(True, True)
-
-					If FileType(path) = 0 Then
-						Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
-					End If
-					
-					_path = path
+					path :+ "lib"
 				End If
+				
+				If FileType(path) = 0 Then
+					Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
+				End If
+				
+				_path = path
+			Else
+				path :+ "lib/gcc/mingw32/" + GCCVersion(True, True)
+
+				If FileType(path) = 0 Then
+					Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
+				End If
+				
+				_path = path
 			End If
 		End If
 		
@@ -721,7 +697,7 @@ Type TBMK
 	Method FixPaths:String(text:String)
 		Local p:String = text
 		p = p.Replace(BlitzMaxPath()+"/","$BMX_ROOT/")
-		p = p.Replace(string(globals.GetRawVar("EXEPATH")), "$APP_ROOT")
+		p = p.Replace(String(globals.GetRawVar("EXEPATH")), "$APP_ROOT")
 		Return p
 	End Method
 	
