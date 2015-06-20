@@ -179,7 +179,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	Local files$
 	Local tmpfile$=BlitzMaxPath()+"/tmp/ld.tmp"
 	
-	If opt_standalone tmpfile = string(globals.GetRawVar("EXEPATH")) + "/ld." + processor.AppDet() + ".txt.tmp"
+	If opt_standalone tmpfile = String(globals.GetRawVar("EXEPATH")) + "/ld." + processor.AppDet() + ".txt.tmp"
 	
 	If processor.Platform() = "macos"
 		cmd="g++"
@@ -261,7 +261,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 				cmd:+" "+ processor.MinGWLinkPaths() ' the BlitzMax lib folder
 				
 				' linking for x86 when using mingw64 binaries
-				If processor.HasTarget("x86_64") And processor.BCCVersion() <> "BlitzMax" Then
+				If processor.HasTarget("x86_64") Then
 					cmd:+" -mi386pe"
 				End If
 			Else
@@ -335,7 +335,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			End If
 
 			' if using 4.8+ or mingw64, we need to link to pthreads
-			If version >= 40800 Or (processor.HasTarget("x86_64") And processor.BCCVersion() <> "BlitzMax") Then
+			If version >= 40800 Or processor.HasTarget("x86_64") Then
 				files :+ " -lwinpthread "
 			End If
 			
