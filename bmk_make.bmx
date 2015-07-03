@@ -404,7 +404,7 @@ Type TBuildManager
 							End If
 							
 						Case STAGE_OBJECT
-						
+
 							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
 							
 								m.requiresBuild = True
@@ -442,7 +442,7 @@ Type TBuildManager
 							If m.modid Then
 								Local max_obj_time:Int = m.MaxObjTime()
 
-								If max_obj_time > m.arc_time Then
+								If max_obj_time > m.arc_time And Not m.dontbuild Then
 									Local objs:TList = New TList
 									m.GetObjs(objs)
 		
@@ -513,20 +513,23 @@ Type TBuildManager
 					End If
 			
 				Else
-					' c/c++ source
-					If m.time > m.obj_time Then ' object is older or doesn't exist
-						m.requiresBuild = True
-					End If
-					
-					If m.requiresBuild Then
-
-						If Not opt_quiet Then
-							Print ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+				
+					If Not m.dontbuild Then
+						' c/c++ source
+						If m.time > m.obj_time Then ' object is older or doesn't exist
+							m.requiresBuild = True
 						End If
-
-						CompileC m.path, m.obj_path, m.cc_opts
 						
-						m.obj_time = time_(Null)
+						If m.requiresBuild Then
+	
+							If Not opt_quiet Then
+								Print ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+							End If
+	
+							CompileC m.path, m.obj_path, m.cc_opts
+							
+							m.obj_time = time_(Null)
+						End If
 					End If
 				End If
 				
@@ -761,6 +764,7 @@ Type TBuildManager
 			End If
 			
 		End If
+
 	End Method
 	
 	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False, isInclude:Int = False)
@@ -790,6 +794,25 @@ Type TBuildManager
 		
 		Return source
 	End Method
+
+	Method GetISourceFile:TSourceFile(arc_path:String, arc_time:Int, iface_path:String, iface_time:Int)
+		Local source:TSourceFile = TSourceFile(sources.ValueForKey(arc_path))
+
+		If Not source Then
+			source = ParseISourceFile(iface_path)
+			
+			If source Then
+				source.arc_path = arc_path
+				source.arc_time = arc_time
+				source.iface_path = iface_path
+				source.iface_time = iface_time
+
+				sources.Insert(arc_path, source)
+			End If
+		End If
+		
+		Return source
+	End Method
 	
 	Method GetMod:TSourceFile(m:String, rebuild:Int = False)
 	
@@ -799,25 +822,63 @@ Type TBuildManager
 	
 		Local path:String = ModulePath(m)
 		Local id:String = ModuleIdent(m)
-		Local src_path:String = path + "/" + id + ".bmx"
-		Local source:TSourceFile = GetSourceFile(src_path, True, rebuild)
+
+		' get the module interface and lib details
+		Local arc_path:String = path + "/" + id + opt_configmung + processor.CPU() + ".a"
+		Local arc_time:Int = FileTime(arc_path)
+		Local iface_path:String = path + "/" + id + opt_configmung + processor.CPU() + ".i"
+		Local iface_time:Int = FileTime(iface_path)
+
+		Local source:TSourceFile
 		Local link:TSourceFile
 
-		If Not source Then
-			Return Null
-		End If
-		
-		' main module file without "Module" line?
-		If Not source.modid Then
-			Return Null
+		If arc_time And iface_time And opt_quickscan Then
+
+			source = GetISourceFile(arc_path, arc_time, iface_path, iface_time)
+			
+			If Not source Then
+				Return Null
+			End If
+			
+			If Not source.processed Then
+
+				source.modid = m
+				source.arc_path = arc_path
+				source.arc_time = arc_time
+				source.iface_path = iface_path
+				source.iface_time = iface_time
+				source.obj_path = arc_path
+				
+				CalculateDependencies(source, True, rebuild)
+
+				source.dontbuild = True
+				source.stage = STAGE_LINK
+				sources.Insert(source.arc_path, source)
+
+			End If
+			
+			link = source
+		Else
+
+			Local src_path:String = path + "/" + id + ".bmx"
+			source = GetSourceFile(src_path, True, rebuild)
+	
+			If Not source Then
+				Return Null
+			End If
+			
+			' main module file without "Module" line?
+			If Not source.modid Then
+				Return Null
+			End If
 		End If
 		
 		If Not source.processed Then
 
-			source.arc_path = path + "/" + id + opt_configmung + processor.CPU() + ".a"
-			source.arc_time = FileTime(source.arc_path)
-			source.iface_path = path + "/" + id + opt_configmung + processor.CPU() + ".i"
-			source.iface_time = FileTime(source.iface_path)
+			source.arc_path = arc_path
+			source.arc_time = arc_time
+			source.iface_path = iface_path
+			source.iface_time = iface_time
 			
 			Local cc_opts:String = " -I" + CQuote(path)
 			cc_opts :+ " -I" + CQuote(ModulePath(""))
@@ -849,9 +910,15 @@ Type TBuildManager
 			
 			source.requiresBuild = rebuild
 
+			' interface is REQUIRED for compilation
+			If Not iface_time Then
+				source.requiresBuild = True
+			End If
+
 			If m <> "brl.blitz" Then	
 				source.modimports.AddLast("brl.blitz")
 			End If
+			
 			
 			CalculateDependencies(source, True, rebuild)
 			

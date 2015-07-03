@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.03"
+Const BMK_VERSION:String = "3.04"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -37,6 +37,7 @@ Global opt_target_platform:String
 Global opt_gdbdebug=False
 Global opt_standalone=False
 Global opt_nolog
+Global opt_quickscan=False
 
 Global opt_dumpbuild
 
@@ -209,6 +210,8 @@ Function ParseConfigArgs$[]( args$[] )
 			opt_gdbdebug = True
 		Case "standalone"
 			opt_standalone = True
+		Case "quick"
+			opt_quickscan = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select

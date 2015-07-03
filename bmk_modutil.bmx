@@ -50,7 +50,7 @@ Type TSourceFile
 	Field asm_time:Int
 	Field iface_time:Int
 	Field requiresBuild:Int
-	Field didBuild:Int
+	Field dontBuild:Int
 	Field depsList:TList
 	Field ext_files:TList
 	
@@ -207,7 +207,7 @@ Type TSourceFile
 		source.arc_time = arc_time
 		source.iface_time = iface_time
 		source.requiresBuild = requiresBuild
-		source.didBuild = didBuild
+		source.dontBuild = dontBuild
 		source.cc_opts = cc_opts
 		source.bcc_opts = bcc_opts
 	End Method
@@ -510,6 +510,72 @@ Function ParseSourceFile:TSourceFile( path$ )
 			'		file.includes.AddLast qval
 			'	EndIf
 			'EndIf
+		End Select
+
+	Wend
+	
+	Return file
+
+End Function
+
+Function ParseISourceFile:TSourceFile( path$ )
+
+	If FileType(path)<>FILETYPE_FILE Return
+
+	Local file:TSourceFile=New TSourceFile
+	file.ext="i"
+	file.path=path
+	file.time = FileTime(path)
+	
+	Local str$=LoadText( path )
+
+	Local pos,in_rem,cc=True
+
+	While pos<Len(str)
+
+		Local eol=str.Find( "~n",pos )
+		If eol=-1 eol=Len(str)
+
+		Local line$=str[pos..eol].Trim()
+		pos=eol+1
+
+		Local lline$=line.Tolower()
+
+		Local i:Int
+
+		If lline.length And Not CharIsAlpha( lline[0] ) Continue
+
+		i=1
+		While i<lline.length And (CharIsAlpha(lline[i]) Or CharIsDigit(lline[i]))
+			i:+1
+		Wend
+		If i=lline.length Continue
+		
+		Local key$=lline[..i]
+		
+		Local val$=line[i..].Trim(),qval$,qext$
+		If val.length>1 And val[0]=34 And val[val.length-1]=34
+			qval=val[1..val.length-1]
+		EndIf
+
+		Select key
+		Case "module"
+			file.modid=val.ToLower()
+		Case "import"
+			If qval
+				Local q:String = ReQuote(qval)
+				If q.StartsWith("-") Then
+					file.imports.AddLast q
+				End If
+			Else
+				file.modimports.AddLast val.ToLower()
+			EndIf
+		Case "moduleinfo"
+			If qval
+				file.info.AddLast qval
+				file.AddModOpt(qval) ' bmk2
+				'If mod_opts mod_opts.addOption(qval) ' BaH
+			EndIf
 		End Select
 
 	Wend
