@@ -171,9 +171,11 @@ Type TSourceFile
 
 		If ext_files Then
 			For Local f:String = EachIn ext_files
-				If Not opts.Contains(f) Then
-					opts.AddLast(f)
+				' remove previous link, add latest to the end...
+				If opts.Contains(f) Then
+					opts.Remove(f)
 				End If
+				opts.AddLast(f)
 			Next
 		End If
 
