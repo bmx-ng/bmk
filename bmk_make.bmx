@@ -360,6 +360,10 @@ Type TBuildManager
 					Throw "Unable to create temporary directory"
 				End If
 
+				' change dir, so relative commands work as expected
+				' (eg. file processing in BMK-scripts called via pragma)
+				ChangeDir ExtractDir( m.path )
+
 				' bmx file
 				If Match(m.ext, "bmx") Then
 				
@@ -373,7 +377,14 @@ Type TBuildManager
 								If Not opt_quiet Then
 									Print ShowPct(m.pct) + "Processing:" + StripDir(m.path)
 								End If
-								
+
+								' process pragmas
+								Local pragma_inDefine:Int, pragma_text:String, pragma_name:String		
+								For Local pragma:String = EachIn m.pragmas
+									processor.ProcessPragma(pragma, pragma_inDefine, pragma_text, pragma_name)		
+									print "~nprocessing pragma: "+pragma+"  text: "+pragma_text +"  name: "+pragma_name
+								Next
+													
 								CompileBMX m.path, m.obj_path, m.bcc_opts
 	
 								m.iface_time = time_(Null)
