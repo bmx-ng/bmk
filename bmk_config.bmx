@@ -10,7 +10,6 @@ Const BMK_VERSION:String = "3.04"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
-Global opt_modbuild
 Global opt_arch$
 Global opt_server$
 Global opt_outfile$
