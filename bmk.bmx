@@ -108,7 +108,6 @@ Case "makelib"
 	MakeApplication args,True
 Case "makemods"
 	opt_quickscan = False
-	opt_modbuild = True
 	If opt_debug Or opt_release
 		SetConfigMung
 		MakeModules args
