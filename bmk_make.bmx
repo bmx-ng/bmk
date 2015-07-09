@@ -382,7 +382,6 @@ Type TBuildManager
 								Local pragma_inDefine:Int, pragma_text:String, pragma_name:String		
 								For Local pragma:String = EachIn m.pragmas
 									processor.ProcessPragma(pragma, pragma_inDefine, pragma_text, pragma_name)		
-									print "~nprocessing pragma: "+pragma+"  text: "+pragma_text +"  name: "+pragma_name
 								Next
 								
 								CompileBMX m.path, m.obj_path, m.bcc_opts
