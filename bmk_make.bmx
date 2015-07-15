@@ -652,7 +652,7 @@ Type TBuildManager
 								End If
 							End If
 	
-							s.bcc_opts :+ source.bcc_opts
+							s.bcc_opts = source.bcc_opts
 							s.cc_opts :+ source.cc_opts
 							
 							CalculateDependencies(s, isMod, rebuildImports)
