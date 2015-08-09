@@ -223,6 +223,21 @@ Function CheckAndroidPaths()
 
 End Function
 
+Function ConfigureIOSPaths()
+
+	Select processor.CPU() 
+		Case "x86"
+			Local path:String = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk"
+			globals.SetVar("ios.sysroot", path)
+			globals.SetVar("ios.syslibroot", path)
+		Case "armv7", "arm64"
+			Local path:String = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
+			globals.SetVar("ios.sysroot", path)
+			globals.SetVar("ios.syslibroot", path)
+	End Select
+
+End Function
+
 Type TBuildManager
 
 	Field sources:TMap = New TMap
@@ -235,6 +250,8 @@ Type TBuildManager
 		' pre build checks
 		If processor.Platform() = "android" Then
 			ConfigureAndroidPaths()
+		Else If processor.Platform() = "ios" Then
+			ConfigureIOSPaths()
 		End If
 	End Method
 
@@ -595,8 +612,13 @@ Type TBuildManager
 				ChangeDir(dir)
 		
 			End If
-			
 		
+		Else If processor.Platform() = "ios" Then
+		
+			Local iosSimulator:Int = (processor.CPU() = "x86")
+			
+			' TODO - other stuff ?
+			
 		End If
 
 	End Method

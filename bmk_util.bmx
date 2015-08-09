@@ -141,8 +141,21 @@ Function CreateArc( path$ , oobjs:TList )
 		Next
 	End If
 	
-	If processor.Platform() = "macos"
+	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
 		cmd="libtool -o "+CQuote(path)
+		For Local t$=EachIn oobjs
+			cmd:+" "+CQuote(t)
+		Next
+	End If
+
+	If processor.Platform() = "ios" Then
+		Local proc:String = processor.CPU()
+		Select proc
+			Case "x86"
+				proc = "i386"
+		End Select
+	
+		cmd="libtool -static -arch_only " + proc + " -o "+CQuote(path)
 		For Local t$=EachIn oobjs
 			cmd:+" "+CQuote(t)
 		Next
@@ -173,6 +186,12 @@ Function CreateArc( path$ , oobjs:TList )
 End Function
 
 Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
+
+	If processor.Platform() = "ios" Then
+		PackageIOSApp(path, lnk_files, opts)
+		Return
+	End If
+
 	DeleteFile path
 
 	Local cmd$
@@ -181,7 +200,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	
 	If opt_standalone tmpfile = String(globals.GetRawVar("EXEPATH")) + "/ld." + processor.AppDet() + ".txt.tmp"
 	
-	If processor.Platform() = "macos"
+	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
 		cmd="g++"
 
 		If processor.CPU()="ppc" 
@@ -715,6 +734,307 @@ Function ReplaceBlock:String( text:String,tag:String,repText:String,mark:String=
 	Return text[..i]+repText+text[i2..]
 End Function
 
+Function PackageIOSApp( path$, lnk_files:TList, opts$ )
+
+	Local templatePath:String = BlitzMaxPath() + "/resources/ios/template"
+	
+	If Not FileType(templatePath) Then
+		Throw "iOS template dir is missing."
+	End If
+	
+	Local appId:String = StripDir(StripExt(opt_outfile))
+	Local appPath:String = ExtractDir(opt_outfile)
+	
+	Local appProjectDir:String = appPath + "/" + appId + ".xcodeproj"
+
+	If opt_all Then
+		DeleteDir appProjectDir, True
+	End If
+
+	If Not FileType(appProjectDir) Then
+		CopyDir templatePath + "/project.xcodeproj", appProjectDir
+	End If
+	
+	
+	Local projectPath:String = appProjectDir + "/project.pbxproj"
+	
+	Local uuid:String = "5CABBIEFACE"
+
+	Local fileMap:TFileMap = New TFileMap
+
+	For Local f:String = EachIn lnk_files
+		fileMap.FileId(f, uuid)
+	Next
+
+	Local project:String = LoadString(projectPath)
+'Print project	
+	' clean project
+	project = iOSProjectClean(project, uuid)
+	
+	project = iOSProjectAppendFiles(project, uuid, fileMap)
+
+	project = project.Replace("${PROJECT}", appId)
+	
+	SaveString(project, projectPath)
+	
+	End
+End Function
+
+Function iOSProjectClean:String(text:String, uuid:String)
+	
+	Local stack:TStringStack = New TStringStack
+	
+	For Local line:String = EachIn text.Split("~n")
+	
+		If Not line.Trim().StartsWith(uuid) Then
+			stack.AddLast(line)
+		End If
+	
+	Next
+
+	Return stack.Join("~n")
+End Function
+
+Function iOSProjectAppendFiles:String(text:String, uuid:String, fileMap:TFileMap)
+	
+	Local offset:Int = -1
+	
+	offset = FindEol(text, "/* Begin PBXBuildFile section */")
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectBuildFiles(uuid, fileMap) + text[offset..]
+
+	offset = FindEol(text,"/* Begin PBXFileReference section */")
+	If offset  = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectFileRefs(uuid, fileMap) + text[offset..]
+	
+	offset = FindEol(text,"/* Begin PBXFrameworksBuildPhase section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* Frameworks */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"files = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectFrameworksBuildPhase(uuid, fileMap) + text[offset..]
+	
+	offset = FindEol(text,"/* Begin PBXGroup section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* Frameworks */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"children = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectFrameworksGroup(uuid, fileMap) + text[offset..]
+	
+	
+	offset = FindEol(text,"/* Begin PBXGroup section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* libs */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"children = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectLibsGroup(uuid, fileMap) + text[offset..]
+
+	offset = FindEol(text,"/* Begin PBXGroup section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* Objects */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"children = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectObjectsGroup(uuid, fileMap) + text[offset..]
+
+	offset = FindEol(text,"/* Begin XCBuildConfiguration section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* Debug */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"LIBRARY_SEARCH_PATHS = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectLibSearchPaths(uuid, fileMap) + text[offset..]
+
+	offset = FindEol(text,"/* Begin XCBuildConfiguration section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* Release */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"LIBRARY_SEARCH_PATHS = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectLibSearchPaths(uuid, fileMap) + text[offset..]
+
+	Return text
+End Function
+
+Function iOSProjectBuildFiles:String(uuid:String, fileMap:TFileMap)
+
+	Local stack:TStringStack = New TStringStack
+
+	For Local f:TFileId = EachIn fileMap.buildFiles
+		Local path:String = f.path
+		Local id:String = f.id
+		Local fileRef:String = fileMap.FileId(path, uuid, TFileMap.REF)
+		Local dir:String = ExtractDir(path)
+		Local name:String = StripDir(path)
+		
+		stack.AddLast "~t~t" + id + " = {isa = PBXBuildFile; fileRef = " + fileRef + "; };"
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join("~n")
+End Function
+
+Function iOSProjectFileRefs:String(uuid:String, fileMap:TFileMap)
+
+	Local stack:TStringStack = New TStringStack
+
+	For Local path:String = EachIn fileMap.refFiles.Keys()
+		Local id:String = String(fileMap.refFiles.ValueForKey(path))
+		Local dir:String = ExtractDir(path)
+		Local name:String = StripDir(path)
+		
+		Select ExtractExt(name)
+			Case "a"
+				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
+			Case "o"
+				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.objfile~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
+		End Select
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join("~n")
+End Function
+
+Function iOSProjectFrameworksBuildPhase:String(uuid:String, fileMap:TFileMap)
+	Local stack:TStringStack = New TStringStack
+
+	For Local f:TFileId = EachIn fileMap.buildFiles
+		Local path:String = f.path
+		Local id:String = f.id
+		Local dir:String = ExtractDir(path)
+		Local name:String = StripDir(path)
+		
+		Select ExtractExt(name)
+			Case "a", "o"
+				stack.AddLast "~t~t~t~t" + id + " /* " + name + " */"
+		End Select
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join(",~n")
+End Function
+
+Function iOSProjectFrameworksGroup:String(uuid:String, fileMap:TFileMap)
+End Function
+
+Function iOSProjectLibsGroup:String(uuid:String, fileMap:TFileMap)
+	Local stack:TStringStack = New TStringStack
+
+	For Local path:String = EachIn fileMap.refFiles.Keys()
+		Local id:String = String(fileMap.refFiles.ValueForKey(path))
+		Local dir:String = ExtractDir(path)
+		Local name:String = StripDir(path)
+		
+		Select ExtractExt(name)
+			Case "a"
+				stack.AddLast "~t~t~t~t" + id + " /* " + name + " */"
+		End Select
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join(",~n")
+End Function
+
+Function iOSProjectObjectsGroup:String(uuid:String, fileMap:TFileMap)
+	Local stack:TStringStack = New TStringStack
+
+	For Local path:String = EachIn fileMap.refFiles.Keys()
+		Local id:String = String(fileMap.refFiles.ValueForKey(path))
+		Local dir:String = ExtractDir(path)
+		Local name:String = StripDir(path)
+		
+		Select ExtractExt(name)
+			Case "o"
+				stack.AddLast "~t~t~t~t" + id + " /* " + name + " */"
+		End Select
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join(",~n")
+End Function
+
+Function iOSProjectLibSearchPaths:String(uuid:String, fileMap:TFileMap)
+
+	Local stack:TStringStack = New TStringStack
+
+	For Local f:TFileId = EachIn fileMap.buildFiles
+		Local path:String = f.path
+		Local dir:String = ExtractDir(path)
+		Local name:String = StripDir(path)
+
+		Select ExtractExt(name)
+			Case "a"
+				stack.AddLast "~t~t~t~t" + dir
+		End Select
+		
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join(",~n")
+End Function
+
+Function FindEOL:Int(text:String, substr:String, start:Int = 0)
+	Local i:Int = text.Find(substr, start)
+	If i = -1 Then
+		Return -1
+	End If
+	i :+ substr.Length
+	Local eol:Int = text.Find("~n", i) + 1
+	If eol = 0 Then
+		Return text.Length
+	End If
+	Return eol
+End Function
+
 Type TStringStack Extends TList
 
 	Method Join:String(s:String)
@@ -726,6 +1046,65 @@ Type TStringStack Extends TList
 		Next
 		
 		Return s.Join(arr)
+	End Method
+
+End Type
+
+Type TFileId
+	Field path:String
+	Field id:String
+End Type
+
+Type TFileMap
+
+	Const BUILD:Int = 0
+	Const REF:Int = 1
+
+	Field lastId:Int = 0
+
+	Field refFiles:TMap = New TMap
+	Field buildFiles:TList = New TList
+	
+	Method FileId:String(path:String, uuid:String, kind:Int = BUILD)
+	
+		Local id:String
+		If kind = BUILD Then
+			Local f:TFileId = GetBuildFileIdForPath(path)
+			If f Then
+				id = f.id
+			End If
+		Else
+			id = String(refFiles.ValueForKey(path))
+		End If
+		
+		If id Then 
+			Return id
+		End If
+		
+		Local file:String = "0000000000000" + lastId
+		
+		id = uuid + file[file.length - 12..]
+		
+		If kind = BUILD Then
+			Local f:TFileId = New TFileId
+			f.path = path
+			f.id = id
+			buildFiles.AddLast(f)
+		Else
+			refFiles.Insert(path, id)
+		End If
+		
+		lastId :+ 1
+		
+		Return id
+	End Method
+	
+	Method GetBuildFileIdForPath:TFileId(path:String)
+		For Local f:TFileId = EachIn buildFiles
+			If f.path = path Then
+				Return f
+			End If
+		Next
 	End Method
 
 End Type

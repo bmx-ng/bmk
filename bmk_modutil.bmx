@@ -319,6 +319,8 @@ Function ParseSourceFile:TSourceFile( path$ )
 				Case "armeabi" cc=processor.CPU()="armeabi"
 				Case "armeabiv7a" cc=processor.CPU()="armeabiv7a"
 				Case "arm64v8a" cc=processor.CPU()="arm64v8a"
+				Case "armv7" cc=processor.CPU()="armv7"
+				Case "arm64" cc=processor.CPU()="arm64"
 				Case "js" cc=processor.CPU()="js"
 '?
 				Case "win32" 
@@ -368,23 +370,58 @@ Function ParseSourceFile:TSourceFile( path$ )
 					End If
 				Case "macos"
 					cc=False
-					If processor.Platform() = "macos"
+					If processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios"
 						cc=True
 					End If
 				Case "macosx86"
 					cc=False
-					If processor.Platform() = "macos"
+					If processor.Platform() = "macos"Or processor.Platform() = "osx" Or processor.Platform() = "ios"
 						 cc=processor.CPU()="x86"
 					End If
 				Case "macosppc"
 					cc=False
-					If processor.Platform() = "macos"
+					If processor.Platform() = "macos" Or processor.Platform() = "osx"
 						 cc=processor.CPU()="ppc"
 					End If
 				Case "macosx64"
 					cc=False
-					If processor.Platform() = "macos"
+					If processor.Platform() = "macos" Or processor.Platform() = "osx"
 						 cc=processor.CPU()="x64"
+					End If
+				Case "osx"
+					cc=False
+					If processor.Platform() = "macos" Or processor.Platform() = "osx"
+						cc=True
+					End If
+				Case "osxx86"
+					cc=False
+					If processor.Platform() = "macos"Or processor.Platform() = "osx"
+						 cc=processor.CPU()="x86"
+					End If
+				Case "osxx64"
+					cc=False
+					If processor.Platform() = "macos" Or processor.Platform() = "osx"
+						 cc=processor.CPU()="x64"
+					End If
+				Case "ios"
+					cc=False
+					If processor.Platform() = "ios"
+						cc=True
+					End If
+				Case "iosx86"
+					cc=False
+					If processor.Platform() = "ios"
+						 cc=processor.CPU()="x86"
+					End If
+				Case "iosarmv7"
+					cc=False
+					If processor.Platform() = "ios"
+						 cc=processor.CPU()="armv7"
+					End If
+				Case "iosarm64"
+					cc=False
+					If processor.Platform() = "ios"
+						 cc=processor.CPU()="arm64"
 					End If
 				Case "android"
 					cc=False
@@ -433,7 +470,7 @@ Function ParseSourceFile:TSourceFile( path$ )
 					End If
 				Case "opengles"
 					cc=False
-					If processor.Platform() = "android" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "emscripten"
+					If processor.Platform() = "android" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "emscripten" Or processor.Platform() = "ios" 
 						 cc=True
 					End If
 				Case "bmxng"
@@ -601,8 +638,12 @@ Function ValidatePlatformArchitecture()
 			If arch = "x86" Or arch = "x64" Then
 				valid = True
 			End If
-		Case "macos"
+		Case "macos", "osx"
 			If arch = "x86" Or arch = "x64" Or arch = "ppc" Then
+				valid = True
+			End If
+		Case "ios"
+			If arch = "x86" Or arch = "armv7" Or arch = "arm64" Then
 				valid = True
 			End If
 		Case "android"

@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.04"
+Const BMK_VERSION:String = "3.05"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -152,6 +152,8 @@ Function ParseConfigArgs$[]( args$[] )
 				Case "armeabi"
 				Case "armeabiv7a"
 				Case "arm64v8a"
+				Case "armv7"
+				Case "arm64"
 				Case "js"
 				Default
 					' oops
@@ -197,6 +199,8 @@ Function ParseConfigArgs$[]( args$[] )
 			Select opt_target_platform
 				Case "win32"
 				Case "macos"
+				Case "osx"
+				Case "ios"
 				Case "linux"
 				Case "android"
 				Case "raspberrypi"
@@ -300,6 +304,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~t~tMacOS : x86, x64~n"
 		s:+ "~t~t~tWin32 : x86, x64~n"
 		s:+ "~t~t~tLinux : x86, x64~n"
+		s:+ "~t~t~tiOS : x86 (simulator), armv7, arm64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm~n"
 		s:+ "~t~t~tEmscripten : js~n"
@@ -313,7 +318,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-l <target platfom>~n"
 		s:+ "~t~tCross-compiles to the specific target platform.~n"
-		s:+ "~t~tValid targets are win32, linux, macos, android, raspberrypi and emscripten.~n"
+		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and emscripten.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
 		s:+ "~n~n"
 		s:+ "~t-o <output file>~n"
@@ -354,6 +359,10 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "linux"
 ?macos
 	s:+ "macos"
+?osx
+	s:+ "-osx"
+?ios
+	s:+ "-ios"
 ?android
 	s:+ "-android"
 ?raspberrypi

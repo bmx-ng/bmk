@@ -109,11 +109,20 @@
 	
 	local ext = sys.ExtractExt(src)
 
-	if bmk.Platform() == "macos" then
-		cmd = "gcc"
+	if bmk.Platform() == "macos" or bmk.Platform() == "osx" or bmk.Platform() == "ios" then
+	
+		if bmk.Platform() == "macos" or bmk.Platform() == "osx" then
+			cmd = "gcc"
 		
-		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-			cmd = "g++"
+			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
+				cmd = "g++"
+			end
+		else
+			cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
+			
+			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
+				cmd = bmk.Option(bmk.BuildName("g++"), "g++")
+			end
 		end
 		
 		# need to use gcc, not llvm...
@@ -123,12 +132,20 @@
 			cmd = cmd .. "-4.2"
 		end
 
-		if bmk.CPU() == "ppc" then
+		if bmk.CPU() == "ppc" and (bmk.Platform() == "macos" or bmk.Platform() == "osx") then
 			cmd = cmd .. " -arch ppc "
 		elseif bmk.CPU() == "x86" then
 			cmd = cmd .. " -arch i386 "
-		else
+		elseif bmk.CPU() == "x64" then
 			cmd = cmd .. " -arch x86_64 "
+		elseif bmk.CPU() == "armv7" and bmk.Platform() == "ios" then
+			cmd = cmd .. " -arch armv7 "
+		elseif bmk.CPU() == "arm64" and bmk.Platform() == "ios" then
+			cmd = cmd .. " -arch arm64 "
+		end
+		
+		if bmk.Platform() == "ios" then
+			cmd = cmd .. " -isysroot " .. bmk.Option("ios.sysroot", "")
 		end
 		
 	elseif bmk.Platform() == "win32" then
@@ -343,7 +360,7 @@
 
 	globals.Clear("cc_opts")
 
-	if bmk.Platform() == "macos" then
+	if bmk.Platform() == "macos" or bmk.Platform() == "osx" then
 		
 		# compile for 10.3 ?
 		if tonumber(%macos_version%) >= 4224 then
@@ -358,6 +375,11 @@
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
 			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.3")
 		end
+		
+	elseif bmk.Platform() == "ios" then
+	
+		globals.SetOption("cc_opts", "osversion", "-miphoneos-version-min=7.1")
+		
 	elseif bmk.Platform() == "win32" then
 	
 		if bmk.hasTarget("x86_64") then
