@@ -385,7 +385,7 @@ Function ParseSourceFile:TSourceFile( path$ )
 					End If
 				Case "macosx64"
 					cc=False
-					If processor.Platform() = "macos" Or processor.Platform() = "osx"
+					If processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios"
 						 cc=processor.CPU()="x64"
 					End If
 				Case "osx"
@@ -412,6 +412,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					cc=False
 					If processor.Platform() = "ios"
 						 cc=processor.CPU()="x86"
+					End If
+				Case "iosx64"
+					cc=False
+					If processor.Platform() = "ios"
+						 cc=processor.CPU()="x64"
 					End If
 				Case "iosarmv7"
 					cc=False
@@ -643,7 +648,7 @@ Function ValidatePlatformArchitecture()
 				valid = True
 			End If
 		Case "ios"
-			If arch = "x86" Or arch = "armv7" Or arch = "arm64" Then
+			If arch = "x86" Or arch = "x64" Or arch = "armv7" Or arch = "arm64" Then
 				valid = True
 			End If
 		Case "android"

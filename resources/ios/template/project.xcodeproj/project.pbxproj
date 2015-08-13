@@ -18,6 +18,10 @@
 		7CD6ED101294B9D9005678BB /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 7CD6ED0E1294B9D9005678BB /* assets */; };
 		7CF9539A1311FB37005295F9 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CF953991311FB37005295F9 /* OpenAL.framework */; };
 		7CFC10BD139C4FF8006BABB6 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CFC10BC139C4FF8006BABB6 /* AVFoundation.framework */; };
+		FD787AA10E22A5CC003E8E36 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = FD787AA00E22A5CC003E8E36 /* Default.png */; };
+		FD787AAA0E22A5CC003E8E36 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FD787AAB0E22A5CC003E8E36 /* Default-568h@2x.png */; };
+		FD925B190E0F276600E92347 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = FD925B180E0F276600E92347 /* Icon.png */; };
+		02BBB1361B7D42DC00BCA3AC /* libstdc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 02BBB1351B7D42DC00BCA3AC /* libstdc++.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +37,10 @@
 		7CD6ED0E1294B9D9005678BB /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 		7CF953991311FB37005295F9 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		7CFC10BC139C4FF8006BABB6 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		FD787AA00E22A5CC003E8E36 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		FD787AAB0E22A5CC003E8E36 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		FD925B180E0F276600E92347 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		02BBB1351B7D42DC00BCA3AC /* libstdc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libstdc++.dylib"; path = "usr/lib/libstdc++.dylib"; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +58,7 @@
 				7C1E9972134A88FD00674C9B /* AudioToolbox.framework in Frameworks */,
 				7CFC10BD139C4FF8006BABB6 /* AVFoundation.framework in Frameworks */,
 				FA8B4B97196703B400F8EB7C /* CoreMotion.framework in Frameworks */,
+				02BBB1361B7D42DC00BCA3AC /* libstdc++.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +114,7 @@
 				7C8210781294A24C002C4212 /* QuartzCore.framework */,
 				7CF953991311FB37005295F9 /* OpenAL.framework */,
 				7C1E9971134A88FD00674C9B /* AudioToolbox.framework */,
+				02BBB1351B7D42DC00BCA3AC /* libstdc++.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -176,6 +186,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				7CD6ED101294B9D9005678BB /* assets in Resources */,
+				FD787AA10E22A5CC003E8E36 /* Default.png in Resources */,
+				FD787AAA0E22A5CC003E8E36 /* Default-568h@2x.png in Resources */,
+				FD925B190E0F276600E92347 /* Icon.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

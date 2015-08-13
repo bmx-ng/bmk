@@ -153,6 +153,8 @@ Function CreateArc( path$ , oobjs:TList )
 		Select proc
 			Case "x86"
 				proc = "i386"
+			Case "x64"
+				proc = "x86_64"
 		End Select
 	
 		cmd="libtool -static -arch_only " + proc + " -o "+CQuote(path)
@@ -761,13 +763,13 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	Local uuid:String = "5CABBIEFACE"
 
 	Local fileMap:TFileMap = New TFileMap
-
+	
 	For Local f:String = EachIn lnk_files
 		fileMap.FileId(f, uuid)
 	Next
 
 	Local project:String = LoadString(projectPath)
-'Print project	
+
 	' clean project
 	project = iOSProjectClean(project, uuid)
 	
@@ -777,7 +779,34 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	
 	SaveString(project, projectPath)
 	
+	iOSCopyDefaultFiles(templatePath, appPath)
+	
 	End
+End Function
+
+Function iOSCopyDefaultFiles(templatePath:String, appPath:String)
+
+	Local iconSrc:String = templatePath + "/Icon.png"
+	Local iconDest:String = appPath + "/Icon.png"
+	
+	Local defaultSrc:String = templatePath + "/Default.png"
+	Local defaultDest:String = appPath + "/Default.png"
+
+	Local default2Src:String = templatePath + "/Default-568h@2x.png"
+	Local default2Dest:String = appPath + "/Default-568h@2x.png"
+	
+	If opt_all Or Not FileType(iconDest) Then
+		CopyFile iconSrc, iconDest
+	End If
+
+	If opt_all Or Not FileType(defaultDest) Then
+		CopyFile defaultSrc, defaultDest
+	End If
+
+	If opt_all Or Not FileType(default2Dest) Then
+		CopyFile default2Src, default2Dest
+	End If
+
 End Function
 
 Function iOSProjectClean:String(text:String, uuid:String)
@@ -922,6 +951,8 @@ Function iOSProjectFileRefs:String(uuid:String, fileMap:TFileMap)
 				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
 			Case "o"
 				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.objfile~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
+			Case "dylib"
+				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.dylib~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
 		End Select
 	Next
 	

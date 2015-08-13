@@ -226,7 +226,7 @@ End Function
 Function ConfigureIOSPaths()
 
 	Select processor.CPU() 
-		Case "x86"
+		Case "x86", "x64"
 			Local path:String = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk"
 			globals.SetVar("ios.sysroot", path)
 			globals.SetVar("ios.syslibroot", path)
