@@ -807,6 +807,17 @@ Function iOSCopyDefaultFiles(templatePath:String, appPath:String)
 		CopyFile default2Src, default2Dest
 	End If
 
+	' create assets dir if missing
+	Local assetsDir:String = appPath + "/assets"
+	
+	If FileType(assetsDir) <> FILETYPE_DIR Then
+		CreateDir(assetsDir)
+
+		If FileType(assetsDir) <> FILETYPE_DIR Then
+			Throw "Error creating assests dir '" + assetsDir + "'"
+		End If
+	End If
+
 End Function
 
 Function iOSProjectClean:String(text:String, uuid:String)
@@ -954,6 +965,30 @@ Function iOSProjectFileRefs:String(uuid:String, fileMap:TFileMap)
 			Case "dylib"
 				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.dylib~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
 		End Select
+		
+		If path.StartsWith("-l") Then
+			name = "lib" + path[2..] + ".a"
+			Local found:Int = False
+			' path should be provided as a -L...
+			For Local p:String = EachIn fileMap.refFiles.Keys()
+				If p.StartsWith("-L") Then
+					Local libPath:String = p[2..].Replace("~q", "") + "/" + name
+					If FileType(libPath) Then
+						found = True
+						stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + libPath + "~q; sourceTree = ~q<absolute>~q; };"
+						Exit
+					End If
+				End If
+			Next
+			If Not found Then
+				Print "WARNING : could not find file for library import '" + path + "'. Maybe LD_OPTS: -L...  was not defined?"
+			End If
+		End If
+		
+		If path.StartsWith("-framework") Then
+			name = path[11..]
+			stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = " + name + ".framework; path = System/Library/Frameworks/" + name + ".framework; sourceTree = SDKROOT; };"
+		End If
 	Next
 	
 	If stack.Count() Then
@@ -976,6 +1011,16 @@ Function iOSProjectFrameworksBuildPhase:String(uuid:String, fileMap:TFileMap)
 			Case "a", "o"
 				stack.AddLast "~t~t~t~t" + id + " /* " + name + " */"
 		End Select
+		
+		If path.StartsWith("-l") Then
+			name = "lib" + path[2..] + ".a"
+			stack.AddLast "~t~t~t~t" + id + " /* " + name + " */"
+		End If
+
+		If path.StartsWith("-framework") Then
+			name = path[11..]
+			stack.AddLast "~t~t~t~t" + id + " /* " + name + ".framework in Frameworks */"
+		End If
 	Next
 	
 	If stack.Count() Then
@@ -986,6 +1031,22 @@ Function iOSProjectFrameworksBuildPhase:String(uuid:String, fileMap:TFileMap)
 End Function
 
 Function iOSProjectFrameworksGroup:String(uuid:String, fileMap:TFileMap)
+	Local stack:TStringStack = New TStringStack
+
+	For Local path:String = EachIn fileMap.refFiles.Keys()
+		Local id:String = String(fileMap.refFiles.ValueForKey(path))
+		
+		If path.StartsWith("-framework") Then
+			Local name:String = path[11..]
+			stack.AddLast "~t~t~t~t" + id + " /* " + name + ".framework in Frameworks */"
+		End If
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join(",~n")
 End Function
 
 Function iOSProjectLibsGroup:String(uuid:String, fileMap:TFileMap)
@@ -1000,6 +1061,11 @@ Function iOSProjectLibsGroup:String(uuid:String, fileMap:TFileMap)
 			Case "a"
 				stack.AddLast "~t~t~t~t" + id + " /* " + name + " */"
 		End Select
+
+		If path.StartsWith("-l") Then
+			name = "lib" + path[2..] + ".a"
+			stack.AddLast "~t~t~t~t" + id + " /* " + name + " */"
+		End If
 	Next
 	
 	If stack.Count() Then
@@ -1043,6 +1109,10 @@ Function iOSProjectLibSearchPaths:String(uuid:String, fileMap:TFileMap)
 			Case "a"
 				stack.AddLast "~t~t~t~t" + dir
 		End Select
+		
+		If path.StartsWith("-L") Then
+			stack.AddLast("~t~t~t~t" + path[2..])
+		End If
 		
 	Next
 	
@@ -1114,7 +1184,7 @@ Type TFileMap
 		
 		Local file:String = "0000000000000" + lastId
 		
-		id = uuid + file[file.length - 12..]
+		id = uuid + file[file.length - 13..]
 		
 		If kind = BUILD Then
 			Local f:TFileId = New TFileId
