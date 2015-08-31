@@ -359,7 +359,10 @@ Function ParseSourceFile:TSourceFile( path$ )
 				Case "armv7" cc=processor.CPU()="armv7"
 				Case "arm64" cc=processor.CPU()="arm64"
 				Case "js" cc=processor.CPU()="js"
-'?
+
+				Case "ptr32" cc=(processor.CPU()="x86" Or processor.CPU()="ppc" Or processor.CPU()="arm" Or processor.CPU()="armeabi" Or processor.CPU()="armeabiv7a" Or processor.CPU()="armv7" Or processor.CPU()="js")
+				Case "ptr64" cc=(processor.CPU()="x64" Or processor.CPU()="arm64v8a" Or processor.CPU()="arm64")
+''?
 				Case "win32" 
 					cc=False
 					If processor.Platform() = "win32"

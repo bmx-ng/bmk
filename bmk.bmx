@@ -1,6 +1,7 @@
 '
 ' Change History :
 ' 3.06 31/08/2015 - Added universal ios builds (x86+x64, armv7+arm64).
+'                   Added ?ptr32 and ?ptr64 compiler definitions.
 ' 3.05 04/08/2015 - Added support for ios target.
 ' 3.04 03/07/2015 - Added -quick app build option - skips building/checking required module if .a and .i present.
 ' 3.03 20/06/2015 - Legacy bcc installations can now use local MinGW32 dir.
