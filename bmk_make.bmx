@@ -362,8 +362,13 @@ Type TBuildManager
 
 				' sort archives for app linkage
 				If m.modid Then
-					If Not arc_order.Contains(m.arc_path) Then
-						arc_order.AddFirst(m.arc_path)
+					Local path:String = m.arc_path
+					If processor.Platform() = "ios" Then
+						path = m.merge_path
+					End If
+					
+					If Not arc_order.Contains(path) Then
+						arc_order.AddFirst(path)
 					End If
 				End If
 
@@ -481,7 +486,7 @@ Type TBuildManager
 
 									m.arc_time = time_(Null)
 									m.obj_time = time_(Null)
-					
+									
 								End If
 							Else
 								' this probably should never happen.
@@ -497,7 +502,7 @@ Type TBuildManager
 									If Not opt_quiet Then
 										Print ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
 									End If
-									
+
 									Local links:TList = New TList
 									Local opts:TList = New TList
 									m.GetLinks(links, opts)
@@ -517,6 +522,24 @@ Type TBuildManager
 
 							End If
 
+						Case STAGE_MERGE
+
+							' a module?
+							If m.modid Then
+								Local max_obj_time:Int = m.MaxObjTime()
+
+								If max_obj_time > m.merge_time And Not m.dontbuild Then
+		
+									If Not opt_quiet Then
+										Print ShowPct(m.pct) + "Merging:" + StripDir(m.merge_path)
+									End If
+
+									CreateMergeArc m.merge_path, m.arc_path
+
+									m.merge_time = time_(Null)
+									
+								End If
+							End If
 					End Select
 
 				Else If Match(m.ext, "s") Then
@@ -569,10 +592,10 @@ Type TBuildManager
 		Next
 	
 		If app_build Then
-		
+
 			' post process
 			LoadBMK(ExtractDir(app_main) + "/post.bmk")
-		
+
 			If processor.Platform() = "android"
 				' create the apk
 				
@@ -827,8 +850,14 @@ Type TBuildManager
 		Return source
 	End Method
 
-	Method GetISourceFile:TSourceFile(arc_path:String, arc_time:Int, iface_path:String, iface_time:Int)
-		Local source:TSourceFile = TSourceFile(sources.ValueForKey(arc_path))
+	Method GetISourceFile:TSourceFile(arc_path:String, arc_time:Int, iface_path:String, iface_time:Int, merge_path:String, merge_time:Int)
+		Local source:TSourceFile
+		
+		If processor.Platform() = "ios" Then
+			source = TSourceFile(sources.ValueForKey(merge_path))
+		Else 
+			source = TSourceFile(sources.ValueForKey(arc_path))
+		End If
 
 		If Not source Then
 			source = ParseISourceFile(iface_path)
@@ -838,8 +867,13 @@ Type TBuildManager
 				source.arc_time = arc_time
 				source.iface_path = iface_path
 				source.iface_time = iface_time
+				source.merge_time = merge_time
 
-				sources.Insert(arc_path, source)
+				If processor.Platform() = "ios" Then
+					sources.Insert(merge_path, source)
+				Else
+					sources.Insert(arc_path, source)
+				End If
 			End If
 		End If
 		
@@ -847,7 +881,7 @@ Type TBuildManager
 	End Method
 	
 	Method GetMod:TSourceFile(m:String, rebuild:Int = False)
-	
+
 		If (opt_all And ((opt_modfilter And ((m).Find(opt_modfilter) = 0)) Or (Not opt_modfilter)) And Not app_main) Or (app_main And opt_standalone) Then
 			rebuild = True
 		End If
@@ -860,13 +894,24 @@ Type TBuildManager
 		Local arc_time:Int = FileTime(arc_path)
 		Local iface_path:String = path + "/" + id + opt_configmung + processor.CPU() + ".i"
 		Local iface_time:Int = FileTime(iface_path)
+		Local merge_path:String
+		Local merge_time:Int
+		
+		If processor.Platform() = "ios" Then
+			If processor.CPU() = "x86" Or processor.CPU() = "x64" Then
+				merge_path = path + "/" + id + opt_configmung + "sim.a"
+			Else
+				merge_path = path + "/" + id + opt_configmung + "dev.a"
+			End If
+			merge_time = FileTime(merge_path)
+		End If
 
 		Local source:TSourceFile
 		Local link:TSourceFile
 
 		If arc_time And iface_time And opt_quickscan Then
 
-			source = GetISourceFile(arc_path, arc_time, iface_path, iface_time)
+			source = GetISourceFile(arc_path, arc_time, iface_path, iface_time, merge_path, merge_time)
 			
 			If Not source Then
 				Return Null
@@ -880,12 +925,19 @@ Type TBuildManager
 				source.iface_path = iface_path
 				source.iface_time = iface_time
 				source.obj_path = arc_path
+				source.merge_path = merge_path
+				source.merge_time = merge_time
 				
 				CalculateDependencies(source, True, rebuild)
 
 				source.dontbuild = True
-				source.stage = STAGE_LINK
-				sources.Insert(source.arc_path, source)
+				If processor.Platform() = "ios" Then
+					source.stage = STAGE_MERGE
+					sources.Insert(source.merge_path, source)
+				Else
+					source.stage = STAGE_LINK
+					sources.Insert(source.arc_path, source)
+				End If
 
 			End If
 			
@@ -911,6 +963,8 @@ Type TBuildManager
 			source.arc_time = arc_time
 			source.iface_path = iface_path
 			source.iface_time = iface_time
+			source.merge_path = merge_path
+			source.merge_time = merge_time
 			
 			Local cc_opts:String = " -I" + CQuote(path)
 			cc_opts :+ " -I" + CQuote(ModulePath(""))
@@ -965,9 +1019,20 @@ Type TBuildManager
 				gen = CreateGenStage(source)
 			End If
 			
-			link = CreateLinkStage(gen)
+			If processor.Platform() <> "ios" Then
+				link = CreateLinkStage(gen)
+			Else
+				Local realLink:TSourceFile = CreateLinkStage(gen)
+				
+				' create a fat archive
+				link = CreateMergeStage(realLink)
+			End If
 		Else
-			link = TSourceFile(sources.ValueForKey(source.arc_path))
+			If processor.Platform() = "ios" Then
+				link = TSourceFile(sources.ValueForKey(source.merge_path))
+			Else
+				link = TSourceFile(sources.ValueForKey(source.arc_path))
+			End If
 			If Not link Then
 				Throw "Can't find link for : " + source.path
 			End If
@@ -1024,12 +1089,34 @@ Type TBuildManager
 		link.depsList = New TList
 		link.depsList.AddLast(source)		
 
-		sources.Insert(link.arc_path, link)
+		If processor.Platform() = "ios" Then
+			sources.Insert(link.obj_path, link)
+		Else
+			sources.Insert(link.arc_path, link)
+		End If
 
 		Return link
 	End Method
 	
+	Method CreateMergeStage:TSourceFile(source:TSourceFile)
+
+		Local merge:TSourceFile = New TSourceFile
+		
+		source.CopyInfo(merge)
+		
+		merge.deps.Insert(merge.obj_path, source)
+		merge.stage = STAGE_MERGE
+		merge.processed = True
+		merge.depsList = New TList
+		merge.depsList.AddLast(source)		
+
+		sources.Insert(merge.merge_path, merge)
+
+		Return merge
+	End Method
+	
 	Method CalculateBatches:TList(files:TList)
+
 		Local batches:TList = New TList
 	
 		Local count:Int
@@ -1061,6 +1148,10 @@ Type TBuildManager
 			If noDeps.IsEmpty() Then
 				' circular dependency!
 				' TODO : dump current list for user to work out?
+				Print "REMAINING :"
+				For Local depName:String = EachIn dependencies.Keys()
+					Print "  " + depName
+				Next
 				Throw "circular dependency!"
 			End If
 		

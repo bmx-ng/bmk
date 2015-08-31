@@ -123,6 +123,46 @@ Function CompileBMX( src$,obj$,opts$ )
 
 End Function
 
+Function CreateMergeArc( path$ , arc_path:String )
+	Local cmd$
+
+	If processor.Platform() = "ios" Then
+		Local proc:String = processor.CPU()
+		Local opp:String
+		Select proc
+			Case "x86"
+				proc = "i386"
+				opp = "x86_64"
+			Case "x64"
+				proc = "x86_64"
+				opp = "i386"
+			Case "armv7"
+				opp = "arm64"
+			Case "arm64"
+				opp = "armv7"
+		End Select
+		
+		cmd = "lipo "
+
+		If Not FileType(path) Then
+			cmd :+ "-create -arch_blank " + opp + " -arch "
+		Else
+			cmd :+ CQuote(path)
+			cmd :+ " -replace "
+		End If
+	
+		cmd :+ proc + " " + CQuote(arc_path)
+	
+		cmd :+ " -output " + CQuote(path)
+	End If
+
+	If cmd And processor.MultiSys( cmd, path )
+		DeleteFile path
+		Throw "Build Error: Failed to merge archive " + path
+	EndIf
+
+End Function
+
 Function CreateArc( path$ , oobjs:TList )
 	DeleteFile path
 	Local cmd$,t$
@@ -190,7 +230,9 @@ End Function
 Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 
 	If processor.Platform() = "ios" Then
+
 		PackageIOSApp(path, lnk_files, opts)
+
 		Return
 	End If
 
@@ -781,7 +823,6 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	
 	iOSCopyDefaultFiles(templatePath, appPath)
 	
-	End
 End Function
 
 Function iOSCopyDefaultFiles(templatePath:String, appPath:String)

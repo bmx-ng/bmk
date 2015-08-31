@@ -21,6 +21,7 @@ Const STAGE_GENERATE:Int = 0
 Const STAGE_FASM2AS:Int = 1
 Const STAGE_OBJECT:Int = 2
 Const STAGE_LINK:Int = 3
+Const STAGE_MERGE:Int = 4
 
 Type TSourceFile
 	Field ext$		'one of: "bmx", "i", "c", "cpp", "m", "s", "h"
@@ -53,6 +54,9 @@ Type TSourceFile
 	Field dontBuild:Int
 	Field depsList:TList
 	Field ext_files:TList
+	
+	Field merge_path:String
+	Field merge_time:Int
 	
 	Field cc_opts:String
 	Field bcc_opts:String
@@ -125,6 +129,27 @@ Type TSourceFile
 
 		Return t
 	End Method
+	
+	Method MakeFatter(list:TList, o_path:String)
+		Local ext:String = ExtractExt(o_path)
+		If ext = "o" Then
+			Local file:String = StripExt(o_path)
+			Local fp:String = StripExt(file)
+			Select file.ExtractExt(file)
+				Case "arm64"
+					fp :+ ".armv7.o"
+				Case "armv7"
+					fp :+ ".arm64.o"
+				Case "x86"
+					fp :+ ".x64.o"
+				Case "x64"
+					fp :+ ".x86.o"
+			End Select
+			If Not list.Contains(fp) Then
+				list.AddLast(fp)
+			End If
+		End If
+	End Method
 
 	Method GetLinks(list:TList, opts:TList, modsOnly:Int = False)
 
@@ -132,6 +157,10 @@ Type TSourceFile
 			If Not modid Then
 				If Not list.Contains(obj_path) Then
 					list.AddLast(obj_path)
+					
+					If opt_universal And processor.Platform() = "ios" Then
+						MakeFatter(list, obj_path)
+					End If
 				End If
 			End If
 		End If
@@ -143,6 +172,10 @@ Type TSourceFile
 						If Not s.modid Then
 							If s.obj_path And Not list.Contains(s.obj_path) Then
 								list.AddLast(s.obj_path)
+								
+								If opt_universal And processor.Platform() = "ios" Then
+									MakeFatter(list, s.obj_path)
+								End If
 							End If
 						End If
 					End If
@@ -212,6 +245,8 @@ Type TSourceFile
 		source.dontBuild = dontBuild
 		source.cc_opts = cc_opts
 		source.bcc_opts = bcc_opts
+		source.merge_path = merge_path
+		source.merge_time = merge_time
 	End Method
 	
 	Method GetSourcePath:String()
@@ -225,6 +260,8 @@ Type TSourceFile
 				p = StripExt(obj_path) + ".c"
 			Case STAGE_LINK
 				p = obj_path
+			Case STAGE_MERGE
+				p = arc_path
 		End Select
 		Return p
 	End Method

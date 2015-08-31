@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.06 31/08/2015 - Added universal ios builds (x86+x64, armv7+arm64).
 ' 3.05 04/08/2015 - Added support for ios target.
 ' 3.04 03/07/2015 - Added -quick app build option - skips building/checking required module if .a and .i present.
 ' 3.03 20/06/2015 - Legacy bcc installations can now use local MinGW32 dir.
@@ -357,7 +358,7 @@ Function MakeApplication( args$[],makelib )
 		EndIf
 	EndIf
 
-	If processor.Platform() = "macos" Then
+	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
 		If opt_apptype="gui"
 	
 			'Local appId$=StripDir( opt_outfile )
@@ -441,6 +442,21 @@ Function MakeApplication( args$[],makelib )
 
 	buildManager.MakeApp(Main, makelib)
 	buildManager.DoBuild(True)
+
+	If opt_universal And processor.Platform() = "ios" Then
+
+		processor.ToggleCPU()
+		LoadOptions(True) ' reload options for PPC
+
+		BeginMake
+
+		Local buildManager:TBuildManager = New TBuildManager
+		buildManager.MakeApp(Main, makelib)
+		buildManager.DoBuild(True)
+
+		processor.ToggleCPU()
+		LoadOptions(True)
+	End If
 
 Rem
 	If opt_universal

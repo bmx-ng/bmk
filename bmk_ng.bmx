@@ -306,11 +306,25 @@ Type TBMK
 	
 	Method ToggleCPU()
 		If opt_universal Then
-			If opt_arch = "ppc" Then
-				opt_arch = "x86"
-			Else
-				opt_arch = "ppc"
-			End If
+			Select Platform()
+				Case "macos"
+					If opt_arch = "ppc" Then
+						opt_arch = "x86"
+					Else
+						opt_arch = "ppc"
+					End If
+				Case "ios"
+					Select CPU()
+						Case "x86"
+							opt_arch = "x64"
+						Case "x64"
+							opt_arch = "x86"
+						Case "armv7"
+							opt_arch = "arm64"
+						Case "arm64"
+							opt_arch = "armv7"
+					End Select
+			End Select
 		End If
 	End Method
 	

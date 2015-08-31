@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.05"
+Const BMK_VERSION:String = "3.06"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -189,7 +189,7 @@ Function ParseConfigArgs$[]( args$[] )
 			opt_appstub=args[n]
 		Case "i"
 ?macos
-			' this is mac only... pah!
+			' this is mac/ios only... pah!
 			opt_universal = True
 ?
 		Case "l"
@@ -304,7 +304,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~t~tMacOS : x86, x64~n"
 		s:+ "~t~t~tWin32 : x86, x64~n"
 		s:+ "~t~t~tLinux : x86, x64~n"
-		s:+ "~t~t~tiOS : x86 (simulator), armv7, arm64~n"
+		s:+ "~t~t~tiOS : x86, x64 (simulator), armv7, arm64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm~n"
 		s:+ "~t~t~tEmscripten : js~n"
