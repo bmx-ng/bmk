@@ -15,7 +15,6 @@
 		FA8B4B97196703B400F8EB7C /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8B4B96196703B400F8EB7C /* CoreMotion.framework */; };
 		FD779EDE0E26BA1200F39101 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FD779EDD0E26BA1200F39101 /* CoreAudio.framework */; };
 		7C8210791294A24C002C4212 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8210781294A24C002C4212 /* QuartzCore.framework */; };
-		7CD6ED101294B9D9005678BB /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 7CD6ED0E1294B9D9005678BB /* assets */; };
 		7CF9539A1311FB37005295F9 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CF953991311FB37005295F9 /* OpenAL.framework */; };
 		7CFC10BD139C4FF8006BABB6 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CFC10BC139C4FF8006BABB6 /* AVFoundation.framework */; };
 		FD787AA10E22A5CC003E8E36 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = FD787AA00E22A5CC003E8E36 /* Default.png */; };
@@ -34,7 +33,6 @@
 		FD779EDD0E26BA1200F39101 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		7C8210781294A24C002C4212 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		7CBDF49E1295F5B6001F0D79 /* ${PROJECT}.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ${PROJECT}.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		7CD6ED0E1294B9D9005678BB /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 		7CF953991311FB37005295F9 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		7CFC10BC139C4FF8006BABB6 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		FD787AA00E22A5CC003E8E36 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
@@ -96,7 +94,6 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				7CD6ED0E1294B9D9005678BB /* assets */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -185,7 +182,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7CD6ED101294B9D9005678BB /* assets in Resources */,
 				FD787AA10E22A5CC003E8E36 /* Default.png in Resources */,
 				FD787AAA0E22A5CC003E8E36 /* Default-568h@2x.png in Resources */,
 				FD925B190E0F276600E92347 /* Icon.png in Resources */,

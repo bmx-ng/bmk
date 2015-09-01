@@ -195,6 +195,10 @@
 
 @end
 
+@define addresourcepath
+	globals.Add("resource_path", arg1)
+@end
+
 @define addlib
 	globals.Add("libs", arg1)
 @end

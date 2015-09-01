@@ -778,6 +778,34 @@ Function ReplaceBlock:String( text:String,tag:String,repText:String,mark:String=
 	Return text[..i]+repText+text[i2..]
 End Function
 
+Function SplitPaths:String[](paths:String)
+	Local split:String[] = New String[0]
+	
+	Local inQuote:Int
+	Local token:String
+	For Local i:Int = 0 Until paths.length
+		Local char:Int = paths[i]
+		If char = Asc("~q") Then
+			inQuote = Not inQuote
+		Else If char = Asc(" ") And Not inQuote Then
+			token = token.Trim()
+			If token Then
+				split :+ [token]
+			End If
+			token = Null
+		Else
+			token :+ Chr(char)
+		End If
+	Next
+	
+	token = token.Trim()
+	If token Then
+		split :+ [token]
+	End If
+	
+	Return split
+End Function
+
 Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 
 	Local templatePath:String = BlitzMaxPath() + "/resources/ios/template"
@@ -807,8 +835,32 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	Local fileMap:TFileMap = New TFileMap
 	
 	For Local f:String = EachIn lnk_files
-		fileMap.FileId(f, uuid)
+		Local kind:Int
+		Select ExtractExt(f)
+			Case "a"
+				kind = TFileID.TYPE_ARC
+			Case "o"
+				kind = TFileID.TYPE_OBJ
+			Case "dylib"
+				kind = TFileID.TYPE_DYL
+		Default
+			If f.StartsWith("-l") Then
+				kind = TFileID.TYPE_DYL
+			End If
+			If f.StartsWith("-framework") Then
+				kind = TFileID.TYPE_FRM
+			End If
+		End Select
+		fileMap.FileId(f, uuid, TFileMap.BUILD, kind)
 	Next
+	
+	' add project-specific resource paths?
+	Local paths:String[] = SplitPaths(String(globals.GetRawVar("resource_path")))
+	If paths Then
+		For Local f:String = EachIn paths
+			fileMap.FileId(f, uuid, TFileMap.BUILD, TFileID.TYPE_DIR)
+		Next
+	End If
 
 	Local project:String = LoadString(projectPath)
 
@@ -849,15 +901,15 @@ Function iOSCopyDefaultFiles(templatePath:String, appPath:String)
 	End If
 
 	' create assets dir if missing
-	Local assetsDir:String = appPath + "/assets"
-	
-	If FileType(assetsDir) <> FILETYPE_DIR Then
-		CreateDir(assetsDir)
-
-		If FileType(assetsDir) <> FILETYPE_DIR Then
-			Throw "Error creating assests dir '" + assetsDir + "'"
-		End If
-	End If
+	'Local assetsDir:String = appPath + "/assets"
+	'
+	'If FileType(assetsDir) <> FILETYPE_DIR Then
+	'	CreateDir(assetsDir)
+'
+'		If FileType(assetsDir) <> FILETYPE_DIR Then
+'			Throw "Error creating assests dir '" + assetsDir + "'"
+'		End If
+'	End If
 
 End Function
 
@@ -904,6 +956,30 @@ Function iOSProjectAppendFiles:String(text:String, uuid:String, fileMap:TFileMap
 	End If
 	text = text[..offset] + iOSProjectFrameworksBuildPhase(uuid, fileMap) + text[offset..]
 	
+	offset = FindEol(text,"/* Begin PBXResourcesBuildPhase section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* Resources */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"files = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectResourcesBuildPhase(uuid, fileMap) + text[offset..]
+	
+	offset = FindEol(text,"/* Begin PBXGroup section */")
+	If offset <> -1 Then
+		offset = FindEol(text,"/* Resources */ = {",offset)
+	End If
+	If offset <> -1 Then
+		offset = FindEol(text,"children = (",offset)
+	End If
+	If offset = -1 Then
+		Return ""
+	End If
+	text = text[..offset] + iOSProjectResourcesGroup(uuid, fileMap) + text[offset..]
+
 	offset = FindEol(text,"/* Begin PBXGroup section */")
 	If offset <> -1 Then
 		offset = FindEol(text,"/* Frameworks */ = {",offset)
@@ -915,7 +991,6 @@ Function iOSProjectAppendFiles:String(text:String, uuid:String, fileMap:TFileMap
 		Return ""
 	End If
 	text = text[..offset] + iOSProjectFrameworksGroup(uuid, fileMap) + text[offset..]
-	
 	
 	offset = FindEol(text,"/* Begin PBXGroup section */")
 	If offset <> -1 Then
@@ -975,11 +1050,18 @@ Function iOSProjectBuildFiles:String(uuid:String, fileMap:TFileMap)
 	For Local f:TFileId = EachIn fileMap.buildFiles
 		Local path:String = f.path
 		Local id:String = f.id
-		Local fileRef:String = fileMap.FileId(path, uuid, TFileMap.REF)
+		Local fileRef:String = fileMap.FileId(path, uuid, TFileMap.REF, f.kind)
 		Local dir:String = ExtractDir(path)
 		Local name:String = StripDir(path)
 		
-		stack.AddLast "~t~t" + id + " = {isa = PBXBuildFile; fileRef = " + fileRef + "; };"
+		Select f.kind
+			Case TFileId.TYPE_ARC, TFileId.TYPE_OBJ, TFileId.TYPE_DYL
+				stack.AddLast "~t~t" + id + " /* " + name + " */ = {isa = PBXBuildFile; fileRef = " + fileRef + "; };"
+			Case TFileId.TYPE_DIR
+				stack.AddLast "~t~t" + id + " /* " + name + " in Resources */ = {isa = PBXBuildFile; fileRef = " + fileRef + "; };"
+			Case TFileId.TYPE_LIB, TFileId.TYPE_FRM
+				stack.AddLast "~t~t" + id + " /* " + name + " in Frameworks */ = {isa = PBXBuildFile; fileRef = " + fileRef + "; };"
+		End Select
 	Next
 	
 	If stack.Count() Then
@@ -998,38 +1080,41 @@ Function iOSProjectFileRefs:String(uuid:String, fileMap:TFileMap)
 		Local dir:String = ExtractDir(path)
 		Local name:String = StripDir(path)
 		
-		Select ExtractExt(name)
-			Case "a"
+		Local fid:TFileId = fileMap.GetBuildFileIdForPath(path)
+		
+		Select fid.kind
+			Case TFileId.TYPE_ARC
 				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
-			Case "o"
+			Case TFileId.TYPE_OBJ
 				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.objfile~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
-			Case "dylib"
+			Case TFileId.TYPE_DYL
 				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.dylib~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
-		End Select
-		
-		If path.StartsWith("-l") Then
-			name = "lib" + path[2..] + ".a"
-			Local found:Int = False
-			' path should be provided as a -L...
-			For Local p:String = EachIn fileMap.refFiles.Keys()
-				If p.StartsWith("-L") Then
-					Local libPath:String = p[2..].Replace("~q", "") + "/" + name
-					If FileType(libPath) Then
-						found = True
-						stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + libPath + "~q; sourceTree = ~q<absolute>~q; };"
-						Exit
+			Case TFileId.TYPE_DIR
+				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = folder; path = ~q" + path + "~q; sourceTree = SOURCE_ROOT; };"
+
+			Case TFileId.TYPE_LIB
+				name = "lib" + path[2..] + ".a"
+				Local found:Int = False
+				' path should be provided as a -L...
+				For Local p:String = EachIn fileMap.refFiles.Keys()
+					If p.StartsWith("-L") Then
+						Local libPath:String = p[2..].Replace("~q", "") + "/" + name
+						If FileType(libPath) Then
+							found = True
+							stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + libPath + "~q; sourceTree = ~q<absolute>~q; };"
+							Exit
+						End If
 					End If
+				Next
+				If Not found Then
+					Print "WARNING : could not find file for library import '" + path + "'. Maybe LD_OPTS: -L...  was not defined?"
 				End If
-			Next
-			If Not found Then
-				Print "WARNING : could not find file for library import '" + path + "'. Maybe LD_OPTS: -L...  was not defined?"
-			End If
-		End If
-		
-		If path.StartsWith("-framework") Then
-			name = path[11..]
-			stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = " + name + ".framework; path = System/Library/Frameworks/" + name + ".framework; sourceTree = SDKROOT; };"
-		End If
+
+			Case TFileId.TYPE_FRM
+				name = path[11..]
+				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = " + name + ".framework; path = System/Library/Frameworks/" + name + ".framework; sourceTree = SDKROOT; };"
+		End Select
+
 	Next
 	
 	If stack.Count() Then
@@ -1061,6 +1146,45 @@ Function iOSProjectFrameworksBuildPhase:String(uuid:String, fileMap:TFileMap)
 		If path.StartsWith("-framework") Then
 			name = path[11..]
 			stack.AddLast "~t~t~t~t" + id + " /* " + name + ".framework in Frameworks */"
+		End If
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join(",~n")
+End Function
+
+Function iOSProjectResourcesBuildPhase:String(uuid:String, fileMap:TFileMap)
+	Local stack:TStringStack = New TStringStack
+
+	For Local f:TFileId = EachIn fileMap.buildFiles
+		Local path:String = f.path
+		Local id:String = f.id
+		
+		If f.kind = TFileId.TYPE_DIR Then
+			stack.AddLast "~t~t~t~t" + id + " /* " + path + " in Resources */"
+		End If
+	Next
+	
+	If stack.Count() Then
+		stack.AddLast ""
+	End If
+	
+	Return stack.Join(",~n")
+End Function
+
+Function iOSProjectResourcesGroup:String(uuid:String, fileMap:TFileMap)
+	Local stack:TStringStack = New TStringStack
+
+	For Local path:String = EachIn fileMap.refFiles.Keys()
+		Local id:String = String(fileMap.refFiles.ValueForKey(path))
+		
+		Local fid:TFileId = fileMap.GetBuildFileIdForPath(path)
+		
+		If fid.kind = TFileId.TYPE_DIR Then
+			stack.AddLast "~t~t~t~t" + id + " /* " + path + " */"
 		End If
 	Next
 	
@@ -1193,8 +1317,18 @@ Type TStringStack Extends TList
 End Type
 
 Type TFileId
+
+	Const TYPE_OBJ:Int = 1
+	Const TYPE_ARC:Int = 2
+	Const TYPE_DYL:Int = 3
+	Const TYPE_LIB:Int = 4
+	Const TYPE_FRM:Int = 5
+	Const TYPE_DIR:Int = 6
+
 	Field path:String
 	Field id:String
+	
+	Field kind:Int
 End Type
 
 Type TFileMap
@@ -1207,7 +1341,7 @@ Type TFileMap
 	Field refFiles:TMap = New TMap
 	Field buildFiles:TList = New TList
 	
-	Method FileId:String(path:String, uuid:String, kind:Int = BUILD)
+	Method FileId:String(path:String, uuid:String, kind:Int = BUILD, fileKind:Int = 0)
 	
 		Local id:String
 		If kind = BUILD Then
@@ -1231,6 +1365,7 @@ Type TFileMap
 			Local f:TFileId = New TFileId
 			f.path = path
 			f.id = id
+			f.kind = fileKind
 			buildFiles.AddLast(f)
 		Else
 			refFiles.Insert(path, id)
