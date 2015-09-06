@@ -135,7 +135,7 @@ Type TSourceFile
 		If ext = "o" Then
 			Local file:String = StripExt(o_path)
 			Local fp:String = StripExt(file)
-			Select file.ExtractExt(file)
+			Select ExtractExt(file)
 				Case "arm64"
 					fp :+ ".armv7.o"
 				Case "armv7"
