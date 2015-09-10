@@ -565,6 +565,11 @@ Function DeployAndroidProject()
 	' create assets dir if missing
 	Local assetsDir:String = projectDir + "/assets"
 	
+	If opt_all Then
+		' remove assets if we are doing a full build
+		DeleteDir(assetsDir, True)
+	End If
+	
 	If FileType(assetsDir) <> FILETYPE_DIR Then
 		CreateDir(assetsDir)
 
@@ -609,7 +614,7 @@ Function DeployAndroidProject()
 		End If
 	End If
 	
-	Local projectSettings:TMap = ParseIniFile()
+	Local projectSettings:TMap = ParseAndroidIniFile()
 	
 	Local appPackage:String = String(projectSettings.ValueForKey("app.package"))
 	
@@ -653,9 +658,34 @@ Function DeployAndroidProject()
 	'     update build.xml
 	MergeFile(projectDir, "build.xml", projectSettings)
 
+	' copy resources to assets
+	CopyAndroidResources(buildDir, assetsDir)
 End Function
 
-Function ParseIniFile:TMap()
+Function CopyAndroidResources(buildDir:String, assetsDir:String)
+
+	Local paths:String[] = SplitPaths(String(globals.GetRawVar("resource_path")))
+	
+	If paths Then
+		For Local dir:String = EachIn paths
+			Local resourceDir:String = buildDir + "/" + dir
+			
+			If Not FileType(resourceDir) Then
+				Print "Warning : Defined resource_path '" + dir + "' not found"
+			End If
+			
+			If FileType(resourceDir) = FILETYPE_DIR Then
+				
+				CopyDir assetsDir + "/" + dir, resourceDir
+				
+			End If
+				
+		Next
+	End If
+
+End Function
+
+Function ParseAndroidIniFile:TMap()
 	Local appId:String = StripDir(StripExt(opt_outfile))
 	Local buildDir:String = ExtractDir(opt_outfile)
 
@@ -899,17 +929,6 @@ Function iOSCopyDefaultFiles(templatePath:String, appPath:String)
 	If opt_all Or Not FileType(default2Dest) Then
 		CopyFile default2Src, default2Dest
 	End If
-
-	' create assets dir if missing
-	'Local assetsDir:String = appPath + "/assets"
-	'
-	'If FileType(assetsDir) <> FILETYPE_DIR Then
-	'	CreateDir(assetsDir)
-'
-'		If FileType(assetsDir) <> FILETYPE_DIR Then
-'			Throw "Error creating assests dir '" + assetsDir + "'"
-'		End If
-'	End If
 
 End Function
 
