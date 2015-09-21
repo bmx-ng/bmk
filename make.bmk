@@ -366,8 +366,12 @@
 
 	if bmk.Platform() == "macos" or bmk.Platform() == "osx" then
 		
-		# compile for 10.3 ?
-		if tonumber(%macos_version%) >= 4224 then
+		if tonumber(%macos_version%) >= 4240 then
+			# macos version >= 0x1090 ?
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.6")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.6")
+		elseif tonumber(%macos_version%) >= 4224 then
+			# macos version >= 0x1080 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.5")
 			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.5")
 		elseif tonumber(%macos_version%) >= 4208 then
@@ -375,9 +379,13 @@
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.4")
 			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.4")
 		elseif tonumber(%macos_version%) >= 4176 then
-		# macos version >= 0x1050 ?
+			# macos version >= 0x1050 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.3")
 			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.3")
+		else
+			# otherwise, fallback on same as latest (10.6)
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.6")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.6")
 		end
 		
 	elseif bmk.Platform() == "ios" then
