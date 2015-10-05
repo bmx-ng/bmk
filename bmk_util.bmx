@@ -349,12 +349,12 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			cmd:+" "+def
 			cmd:+" --out-implib "+imp
 			If usingLD Then
-				files:+"~n"+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) )
+				files:+" "+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) )
 			End If
 		Else
 			If usingLD
-				files:+"~n"+CQuote( RealPath(processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtbegin.o" ) )
-				files:+"~n"+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/crt2.o" ) )
+				files:+" "+CQuote( RealPath(processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtbegin.o" ) )
+				files:+" "+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/crt2.o" ) )
 			End If
 		EndIf
 	
@@ -367,15 +367,15 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 				If f.EndsWith( "/win32maxguiex.mod/xpmanifest.o" )
 					xpmanifest=t
 				Else
-					files:+"~n"+t
+					files:+" "+t
 				EndIf
 			EndIf
 		Next
-		If xpmanifest files:+"~n"+xpmanifest
+		If xpmanifest files:+" "+xpmanifest
 		
 		cmd:+" "+CQuote( tmpfile )
 	
-		files:+"~n-lgdi32 -lwsock32 -lwinmm -ladvapi32"
+		files:+" -lgdi32 -lwsock32 -lwinmm -ladvapi32"
 
 		' add any user-defined linker options
 		files:+ " " + opts
