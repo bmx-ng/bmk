@@ -579,7 +579,7 @@ Function DeployAndroidProject()
 	End If
 
 	' create libs/abi dir if missing
-	Local abiDir:String = projectDir + "/libs/"
+	Local abiDir:String = projectDir + "/libs"
 
 	If FileType(abiDir) <> FILETYPE_DIR Then
 		CreateDir(abiDir)
@@ -588,6 +588,8 @@ Function DeployAndroidProject()
 			Throw "Error creating libs dir '" + abiDir + "'"
 		End If
 	End If
+	
+	abiDir :+ "/"
 
 	Select processor.CPU()
 		Case "x86"
