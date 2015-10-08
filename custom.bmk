@@ -21,6 +21,10 @@
 #addoption android.toolchain.version "4.9"
 #addoption android.platform "12"
 
+# ** Optional SDK target **
+#    Will try to determine valid target to update project.properties, if not set.
+#addoption android.sdk.target "23"
+
 # ** optional ant location **
 # ** defaults to resources/apache-ant **
 

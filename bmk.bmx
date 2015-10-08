@@ -426,11 +426,7 @@ Function MakeApplication( args$[],makelib )
 			
 		EndIf
 	End If
-	
-	' "android-project" check and copy
-	If processor.Platform() = "android" Then
-		DeployAndroidProject()
-	End If
+
 	
 	If processor.Platform() = "emscripten" Then
 		If ExtractExt(opt_outfile).ToLower()<>"html" opt_outfile:+".html"
@@ -441,6 +437,11 @@ Function MakeApplication( args$[],makelib )
 	'MakeApp Main,makelib
 
 	Local buildManager:TBuildManager = New TBuildManager
+
+	' "android-project" check and copy
+	If processor.Platform() = "android" Then
+		DeployAndroidProject()
+	End If
 
 	buildManager.MakeApp(Main, makelib)
 	buildManager.DoBuild(True)

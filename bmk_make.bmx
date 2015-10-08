@@ -71,12 +71,12 @@ Function ConfigureAndroidPaths()
 	Local toolchainDir:String = processor.Option("android.ndk", "") + "/toolchains/" + ..
 			toolchain + processor.Option("android.toolchain.version", "") + "/prebuilt/" + native
 	
-	' look for 64 bit build first, then x86
+	' look for 64 bit build first, then x86, then fallback to no architecture (generally on 32-bit dists)
 	If FileType(toolchainDir + "-x86_64") = FILETYPE_DIR Then
 		toolchainDir :+ "-x86_64"
 	Else If FileType(toolchainDir + "-x86") = FILETYPE_DIR Then
 		toolchainDir :+ "-x86"
-	Else
+	Else If FileType(toolchainDir) <> FILETYPE_DIR Then
 		Throw "Cannot determine toolchain dir for '" + native + "', at '" + toolchainDir + "'"
 	End If
 
@@ -112,7 +112,7 @@ Function ConfigureAndroidPaths()
 	Local platformDir:String = processor.Option("android.ndk", "") + "/platforms/android-" + ..
 			processor.Option("android.platform", "") + "/" + arch
 
-	If Not FileType(platformDir)Then
+	If Not FileType(platformDir) Then
 		Throw "Cannot determine platform dir for '" + arch + "' at '" + platformDir + "'"
 	End If
 	
@@ -122,6 +122,20 @@ Function ConfigureAndroidPaths()
 	
 	' abi
 	globals.SetVar("android.abi", abi)
+	
+	' sdk target
+	Local target:String = GetAndroidSDKTarget()
+
+	If Not target Or Not FileType(processor.Option("android.sdk", "") + "/platforms/android-" + target) Then
+		Local sdkPath:String = processor.Option("android.sdk.target", "")
+		If sdkPath Then
+			Throw "Cannot determine SDK target for '" + sdkPath + "'"
+		Else
+			Throw "Cannot determine SDK target dir. ANDROID_SDK_TARGET or android.sdk.target option is not set, and auto-lookup failed."
+		End If
+	End If
+
+	globals.SetVar("android.sdk.target", target)
 
 End Function
 
@@ -185,6 +199,19 @@ Function CheckAndroidPaths()
 		putenv_("ANDROID_PLATFORM=" + androidPlatform.Trim())
 	Else
 		globals.SetVar("android.platform", androidPlatform)
+	End If
+
+	Local androidSDKTarget:String = getenv_("ANDROID_SDK_TARGET")
+	If Not androidSDKTarget Then
+		androidSDKTarget = processor.Option("android.sdk.target", "")
+		
+		If androidSDKTarget Then
+			putenv_("ANDROID_SDK_TARGET=" + androidSDKTarget.Trim())
+		End If
+		
+		' NOTE : if not set, we'll try to determine the actual target later, and fail if required then.
+	Else
+		globals.SetVar("android.sdk.target", androidSDKTarget)
 	End If
 
 	Local antHome:String = getenv_("ANT_HOME")
@@ -265,7 +292,6 @@ Type TBuildManager
 	End Method
 
 	Method MakeApp(main_path:String, makelib:Int)
-
 		app_main = main_path
 
 		Local source:TSourceFile = GetSourceFile(app_main, False, opt_all)

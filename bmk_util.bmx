@@ -660,6 +660,12 @@ Function DeployAndroidProject()
 	'     update build.xml
 	MergeFile(projectDir, "build.xml", projectSettings)
 
+	' set the sdk target
+	Local projectPropertiesFile:String = projectDir + "/project.properties"
+	Local projectProperties:String = LoadString( projectPropertiesFile )
+	projectProperties = ReplaceBlock( projectProperties, "sdk.target","target=android-" + processor.option("android.sdk.target", ""), "~n#")
+	SaveString(projectProperties, projectPropertiesFile)
+
 	' copy resources to assets
 	CopyAndroidResources(buildDir, assetsDir)
 End Function
@@ -739,6 +745,42 @@ Function DefaultAndroidSettings:TMap()
 	settings.Insert("app.orientation", "landscape")
 	settings.Insert("app.id", StripDir(StripExt(opt_outfile)))
 	Return settings
+End Function
+
+Function GetAndroidSDKTarget:String()
+	Local sdkPath:String = processor.Option("android.sdk", "") + "/platforms"
+	Local target:String = processor.Option("android.sdk.target", "")
+	
+	Local targetPath:String
+	
+	If target Then
+		targetPath = sdkPath + "/android-" + target
+		
+		If FileType(targetPath) = FILETYPE_DIR Then
+			Return target
+		End If
+		
+	End If
+	
+	' find highest numbered target platform dir
+	Local dirs:String[] = LoadDir(sdkPath, True)
+	Local high:Int
+	
+	For Local dir:String = EachIn dirs
+	
+		Local index:Int = dir.Find("android-")
+		
+		If index >= 0 Then
+			Local value:Int = dir[index + 8..].ToInt()
+			high = Max(value, high)
+		End If
+	
+	Next
+	
+	If high > 0 Then
+		Return high
+	End If
+	
 End Function
 
 Function PathFromPackage:String(package:String)
@@ -862,7 +904,7 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	
 	Local projectPath:String = appProjectDir + "/project.pbxproj"
 	
-	Local uuid:String = "5CABBIEFACE"
+	Local uuid:String = "5CABB1EFACE"
 
 	Local fileMap:TFileMap = New TFileMap
 	
