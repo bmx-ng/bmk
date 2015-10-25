@@ -830,26 +830,26 @@ Function ReplaceEnv:String( str:String, settings:TMap )
 	Return bits.Join( "" )
 End Function
 
-Function ReplaceBlock:String( text:String,tag:String,repText:String,mark:String="~n//" )
+Function ReplaceBlock:String( Text:String,tag:String,repText:String,mark:String="~n//" )
 
 	'find begin tag
 	Local beginTag:String = mark+"${start."+tag+"}"
-	Local i:Int = text.Find( beginTag )
+	Local i:Int = Text.Find( beginTag )
 	If i=-1 Throw "Error updating target project - can't find block begin tag '"+tag+"'."
 	i :+ beginTag.Length
-	While i < text.Length And text[i-1]<>10
+	While i < Text.Length And Text[i-1]<>10
 		i :+ 1
 	Wend
 	
 	'find end tag
 	Local endTag:String = mark+"${end."+tag+"}"
-	Local i2:Int = text.Find( endTag,i-1 )
+	Local i2:Int = Text.Find( endTag,i-1 )
 	If i2=-1 Throw "Error updating target project - can't find block end tag '"+tag+"'."
 	If Not repText Or repText[repText.Length-1]=10 Then
 		i2 :+ 1
 	End If
 	
-	Return text[..i]+repText+text[i2..]
+	Return Text[..i]+repText+Text[i2..]
 End Function
 
 Function SplitPaths:String[](paths:String)
@@ -961,6 +961,9 @@ Function iOSCopyDefaultFiles(templatePath:String, appPath:String)
 
 	Local default2Src:String = templatePath + "/Default-568h@2x.png"
 	Local default2Dest:String = appPath + "/Default-568h@2x.png"
+
+	Local plistSrc:String = templatePath + "/Info.plist"
+	Local plistDest:String = appPath + "/Info.plist"
 	
 	If opt_all Or Not FileType(iconDest) Then
 		CopyFile iconSrc, iconDest
@@ -974,13 +977,17 @@ Function iOSCopyDefaultFiles(templatePath:String, appPath:String)
 		CopyFile default2Src, default2Dest
 	End If
 
+	If opt_all Or Not FileType(plistDest) Then
+		CopyFile plistSrc, plistDest
+	End If
+
 End Function
 
-Function iOSProjectClean:String(text:String, uuid:String)
+Function iOSProjectClean:String(Text:String, uuid:String)
 	
 	Local stack:TStringStack = New TStringStack
 	
-	For Local line:String = EachIn text.Split("~n")
+	For Local line:String = EachIn Text.Split("~n")
 	
 		If Not line.Trim().StartsWith(uuid) Then
 			stack.AddLast(line)
@@ -991,119 +998,119 @@ Function iOSProjectClean:String(text:String, uuid:String)
 	Return stack.Join("~n")
 End Function
 
-Function iOSProjectAppendFiles:String(text:String, uuid:String, fileMap:TFileMap)
+Function iOSProjectAppendFiles:String(Text:String, uuid:String, fileMap:TFileMap)
 	
 	Local offset:Int = -1
 	
-	offset = FindEol(text, "/* Begin PBXBuildFile section */")
+	offset = FindEol(Text, "/* Begin PBXBuildFile section */")
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectBuildFiles(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectBuildFiles(uuid, fileMap) + Text[offset..]
 
-	offset = FindEol(text,"/* Begin PBXFileReference section */")
+	offset = FindEol(Text,"/* Begin PBXFileReference section */")
 	If offset  = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectFileRefs(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectFileRefs(uuid, fileMap) + Text[offset..]
 	
-	offset = FindEol(text,"/* Begin PBXFrameworksBuildPhase section */")
+	offset = FindEol(Text,"/* Begin PBXFrameworksBuildPhase section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* Frameworks */ = {",offset)
+		offset = FindEol(Text,"/* Frameworks */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"files = (",offset)
+		offset = FindEol(Text,"files = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectFrameworksBuildPhase(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectFrameworksBuildPhase(uuid, fileMap) + Text[offset..]
 	
-	offset = FindEol(text,"/* Begin PBXResourcesBuildPhase section */")
+	offset = FindEol(Text,"/* Begin PBXResourcesBuildPhase section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* Resources */ = {",offset)
+		offset = FindEol(Text,"/* Resources */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"files = (",offset)
+		offset = FindEol(Text,"files = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectResourcesBuildPhase(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectResourcesBuildPhase(uuid, fileMap) + Text[offset..]
 	
-	offset = FindEol(text,"/* Begin PBXGroup section */")
+	offset = FindEol(Text,"/* Begin PBXGroup section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* Resources */ = {",offset)
+		offset = FindEol(Text,"/* Resources */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"children = (",offset)
+		offset = FindEol(Text,"children = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectResourcesGroup(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectResourcesGroup(uuid, fileMap) + Text[offset..]
 
-	offset = FindEol(text,"/* Begin PBXGroup section */")
+	offset = FindEol(Text,"/* Begin PBXGroup section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* Frameworks */ = {",offset)
+		offset = FindEol(Text,"/* Frameworks */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"children = (",offset)
+		offset = FindEol(Text,"children = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectFrameworksGroup(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectFrameworksGroup(uuid, fileMap) + Text[offset..]
 	
-	offset = FindEol(text,"/* Begin PBXGroup section */")
+	offset = FindEol(Text,"/* Begin PBXGroup section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* libs */ = {",offset)
+		offset = FindEol(Text,"/* libs */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"children = (",offset)
+		offset = FindEol(Text,"children = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectLibsGroup(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectLibsGroup(uuid, fileMap) + Text[offset..]
 
-	offset = FindEol(text,"/* Begin PBXGroup section */")
+	offset = FindEol(Text,"/* Begin PBXGroup section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* Objects */ = {",offset)
+		offset = FindEol(Text,"/* Objects */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"children = (",offset)
+		offset = FindEol(Text,"children = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectObjectsGroup(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectObjectsGroup(uuid, fileMap) + Text[offset..]
 
-	offset = FindEol(text,"/* Begin XCBuildConfiguration section */")
+	offset = FindEol(Text,"/* Begin XCBuildConfiguration section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* Debug */ = {",offset)
+		offset = FindEol(Text,"/* Debug */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"LIBRARY_SEARCH_PATHS = (",offset)
+		offset = FindEol(Text,"LIBRARY_SEARCH_PATHS = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectLibSearchPaths(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectLibSearchPaths(uuid, fileMap) + Text[offset..]
 
-	offset = FindEol(text,"/* Begin XCBuildConfiguration section */")
+	offset = FindEol(Text,"/* Begin XCBuildConfiguration section */")
 	If offset <> -1 Then
-		offset = FindEol(text,"/* Release */ = {",offset)
+		offset = FindEol(Text,"/* Release */ = {",offset)
 	End If
 	If offset <> -1 Then
-		offset = FindEol(text,"LIBRARY_SEARCH_PATHS = (",offset)
+		offset = FindEol(Text,"LIBRARY_SEARCH_PATHS = (",offset)
 	End If
 	If offset = -1 Then
 		Return ""
 	End If
-	text = text[..offset] + iOSProjectLibSearchPaths(uuid, fileMap) + text[offset..]
+	Text = Text[..offset] + iOSProjectLibSearchPaths(uuid, fileMap) + Text[offset..]
 
-	Return text
+	Return Text
 End Function
 
 Function iOSProjectBuildFiles:String(uuid:String, fileMap:TFileMap)
@@ -1351,15 +1358,15 @@ Function iOSProjectLibSearchPaths:String(uuid:String, fileMap:TFileMap)
 	Return stack.Join(",~n")
 End Function
 
-Function FindEOL:Int(text:String, substr:String, start:Int = 0)
-	Local i:Int = text.Find(substr, start)
+Function FindEOL:Int(Text:String, substr:String, start:Int = 0)
+	Local i:Int = Text.Find(substr, start)
 	If i = -1 Then
 		Return -1
 	End If
 	i :+ substr.Length
-	Local eol:Int = text.Find("~n", i) + 1
+	Local eol:Int = Text.Find("~n", i) + 1
 	If eol = 0 Then
-		Return text.Length
+		Return Text.Length
 	End If
 	Return eol
 End Function
