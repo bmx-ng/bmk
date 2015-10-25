@@ -212,6 +212,7 @@
 				HEADER_SEARCH_PATHS = libs;
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				ENABLE_BITCODE = NO; /* fixme : to be removed later */
 				LIBRARY_SEARCH_PATHS = (
 				);
 				OTHER_LDFLAGS = "-ObjC";
@@ -228,6 +229,7 @@
 				HEADER_SEARCH_PATHS = libs;
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				ENABLE_BITCODE = NO; /* fixme : to be removed later */
 				LIBRARY_SEARCH_PATHS = (
 				);
 				OTHER_LDFLAGS = "-ObjC";
@@ -245,6 +247,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				ENABLE_BITCODE = NO; /* fixme : to be removed later */
 				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
@@ -262,6 +265,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				ENABLE_BITCODE = NO; /* fixme : to be removed later */
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PREBINDING = NO;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
