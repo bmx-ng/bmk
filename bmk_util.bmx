@@ -540,6 +540,10 @@ End Function
 
 Function DeployAndroidProject()
 	Local appId:String = StripDir(StripExt(opt_outfile))
+	If opt_debug And opt_outfile.EndsWith(".debug") Then
+		appId :+ ".debug"
+	End If
+
 	Local buildDir:String = ExtractDir(opt_outfile)
 
 	' eg. android-project-test_01
@@ -730,8 +734,12 @@ Function ParseAndroidIniFile:TMap()
 	Wend
 
 	file.Close()
-	
-	settings.Insert("app.id", StripDir(StripExt(opt_outfile)))
+
+	Local id:String = StripDir(StripExt(opt_outfile))
+	If opt_debug And opt_outfile.EndsWith(".debug") Then
+		id :+ ".debug"
+	End If
+	settings.Insert("app.id", id)
 	
 	Return settings
 End Function
@@ -743,7 +751,12 @@ Function DefaultAndroidSettings:TMap()
 	settings.Insert("app.version.name", "1.0")
 	settings.Insert("app.name", "BlitzMax Application")
 	settings.Insert("app.orientation", "landscape")
-	settings.Insert("app.id", StripDir(StripExt(opt_outfile)))
+
+	Local appId:String = StripDir(StripExt(opt_outfile))
+	If opt_debug And opt_outfile.EndsWith(".debug") Then
+		appId :+ ".debug"
+	End If
+	settings.Insert("app.id", appId)
 	Return settings
 End Function
 

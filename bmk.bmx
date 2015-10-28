@@ -1,5 +1,7 @@
 '
 ' Change History :
+' 3.07 28/10/2015 - Fixed android debug builds.
+'                   Improved iOS 9 support.
 ' 3.06 31/08/2015 - Added universal ios builds (x86+x64, armv7+arm64).
 '                   Added ?ptr32 and ?ptr64 compiler definitions.
 '                   Copy android resources to apk.

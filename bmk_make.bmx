@@ -629,12 +629,17 @@ Type TBuildManager
 				Local androidABI:String = processor.Option("android.abi", "")
 				
 				Local appId:String = StripDir(StripExt(opt_outfile))
+				If opt_debug And opt_outfile.EndsWith(".debug") Then
+					appId :+ ".debug"
+				End If
 				Local buildDir:String = ExtractDir(opt_outfile)
 				Local projectDir:String = buildDir + "/android-project-" + appId
 		
 				Local abiPath:String = projectDir + "/libs/" + androidABI
 		
-				Local sharedObject:String = "lib" + appId + ".so"
+				Local sharedObject:String = "lib" + appId
+
+				sharedObject :+ ".so"
 				
 				CopyFile(buildDir + "/" + sharedObject, abiPath + "/" + sharedObject)
 		
