@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.08 01/11/2015 - Added new CPP_OPTS and C_OPTS options for C++ and C specific compiler options respectively.
 ' 3.07 28/10/2015 - Fixed android debug builds.
 '                   Improved iOS 9 support.
 ' 3.06 31/08/2015 - Added universal ios builds (x86+x64, armv7+arm64).

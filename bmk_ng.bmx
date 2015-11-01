@@ -33,6 +33,8 @@ If processor.Platform() = "macos"
 End If
 globals.SetVar("cc_opts", New TOptionVariable)
 globals.SetVar("ld_opts", New TOptionVariable)
+globals.SetVar("c_opts", New TOptionVariable)
+globals.SetVar("cpp_opts", New TOptionVariable)
 'globals.SetVar("gcc_version", String(processor.GCCVersion()))
 
 Function LoadBMK(path:String)
@@ -85,7 +87,7 @@ Type TBMK
 			End Try
 		End Try
 
-		Local pos:Int, inDefine:Int, text:String, name:String
+		Local pos:Int, inDefine:Int, Text:String, name:String
 	
 		While pos < str.length
 	
@@ -97,18 +99,18 @@ Type TBMK
 			Local line:String = str[pos..eol].Trim()
 			pos = eol+1
 			
-			ProcessLine(line, inDefine, text, name)
+			ProcessLine(line, inDefine, Text, name)
 
 			' anything else?
 		Wend
 	End Method
 	
 	' processes a pragma
-	Method ProcessPragma(line:String, inDefine:Int Var, text:String Var, name:String Var)
-		ProcessLine(line, inDefine, text, name)
+	Method ProcessPragma(line:String, inDefine:Int Var, Text:String Var, name:String Var)
+		ProcessLine(line, inDefine, Text, name)
 	End Method
 	
-	Method ProcessLine(line:String, inDefine:Int Var, text:String Var, name:String Var)
+	Method ProcessLine(line:String, inDefine:Int Var, Text:String Var, name:String Var)
 	
 		If line.StartsWith("#") Then
 			Return
@@ -134,9 +136,9 @@ Type TBMK
 			
 				If inDefine Then
 					Local cmd:TBMKCommand = TBMKCommand(commands.ValueForKey(name.ToLower()))
-					cmd.LoadCommand(text)
+					cmd.LoadCommand(Text)
 	
-					text = ""
+					Text = ""
 					inDefine = False
 				End If
 				
@@ -146,7 +148,7 @@ Type TBMK
 		End If
 	
 		If inDefine Then
-			text:+ line + "~n"
+			Text:+ line + "~n"
 			Return
 		End If
 		
@@ -708,8 +710,8 @@ Type TBMK
 		buildLog.AddLast(p)
 	End Method
 	
-	Method FixPaths:String(text:String)
-		Local p:String = text
+	Method FixPaths:String(Text:String)
+		Local p:String = Text
 		p = p.Replace(BlitzMaxPath()+"/","$BMX_ROOT/")
 		p = p.Replace(String(globals.GetRawVar("EXEPATH")), "$APP_ROOT")
 		Return p

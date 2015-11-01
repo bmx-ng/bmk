@@ -21,9 +21,13 @@ If t EXPERIMENTAL_SPEEDUP=True
 
 Global cc_opts$
 Global bcc_opts$
+Global cpp_opts$
+Global c_opts$
 
 Function BeginMake()
 	cc_opts=Null
+	cpp_opts=Null
+	c_opts=Null
 	bcc_opts=Null
 	app_main=Null
 	opt_framework=""
@@ -323,6 +327,8 @@ Type TBuildManager
 		End If
 
 		source.cc_opts :+ cc_opts
+		source.cpp_opts :+ cpp_opts
+		source.c_opts :+ c_opts
 
 		source.modimports.AddLast("brl.blitz")
 		source.modimports.AddLast(opt_appstub)
@@ -476,7 +482,7 @@ Type TBuildManager
 										Print ShowPct(m.pct) + "Compiling:" + StripDir(csrc_path)
 									End If
 
-									CompileC csrc_path,cobj_path, m.cc_opts
+									CompileC csrc_path,cobj_path, m.cc_opts + " " + m.c_opts
 								Else
 									' asm compilation
 
@@ -583,7 +589,7 @@ Type TBuildManager
 						If processor.BCCVersion() = "BlitzMax" Then
 							Assemble m.path, m.obj_path
 						Else
-							CompileC m.path, m.obj_path, m.cc_opts
+							CompileC m.path, m.obj_path, m.cc_opts + " " + m.c_opts
 						End If
 						
 					End If
@@ -601,8 +607,12 @@ Type TBuildManager
 							If Not opt_quiet Then
 								Print ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
 							End If
-	
-							CompileC m.path, m.obj_path, m.cc_opts
+
+							If m.path.EndsWith(".cpp") Or m.path.EndsWith("cc") Then
+								CompileC m.path, m.obj_path, m.cc_opts + " " + m.cpp_opts
+							Else
+								CompileC m.path, m.obj_path, m.cc_opts + " " + m.c_opts
+							End If
 							
 							m.obj_time = time_(Null)
 						End If
@@ -730,6 +740,8 @@ Type TBuildManager
 	
 							s.bcc_opts = source.bcc_opts
 							s.cc_opts :+ source.cc_opts
+							s.cpp_opts :+ source.cpp_opts
+							s.c_opts :+ source.c_opts
 							
 							CalculateDependencies(s, isMod, rebuildImports)
 							
@@ -761,6 +773,8 @@ Type TBuildManager
 							source.depsList.AddLast(gen)
 						Else
 							s.cc_opts = source.cc_opts
+							s.cpp_opts = source.cpp_opts
+							s.c_opts = source.c_opts
 							
 							source.deps.Insert(s.GetSourcePath(), s)
 							If Not source.depsList Then
@@ -845,6 +859,8 @@ Type TBuildManager
 				For Local s:TSourceFile = EachIn source.depsList
 					If Not Match(s.ext, "bmx") Then
 						s.cc_opts = source.cc_opts
+						s.cpp_opts = source.cpp_opts
+						s.c_opts = source.c_opts
 					End If
 				Next
 			End If
@@ -1009,8 +1025,12 @@ Type TBuildManager
 			source.cc_opts = ""
 			If source.mod_opts Then
 				source.cc_opts :+ source.mod_opts.cc_opts
+				source.cpp_opts :+ source.mod_opts.cpp_opts
+				source.c_opts :+ source.mod_opts.c_opts
 			End If
 			source.cc_opts :+ cc_opts
+			source.cpp_opts :+ cpp_opts
+			source.c_opts :+ c_opts
 	
 			' Module BCC opts
 			Local bcc_opts:String = " -g "+processor.CPU()

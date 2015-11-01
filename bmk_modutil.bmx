@@ -60,6 +60,8 @@ Type TSourceFile
 	
 	Field cc_opts:String
 	Field bcc_opts:String
+	Field cpp_opts:String
+	Field c_opts:String
 	
 	Field mod_opts:TModOpt
 	
@@ -247,6 +249,8 @@ Type TSourceFile
 		source.bcc_opts = bcc_opts
 		source.merge_path = merge_path
 		source.merge_time = merge_time
+		source.cpp_opts = cpp_opts
+		source.c_opts = c_opts
 	End Method
 	
 	Method GetSourcePath:String()

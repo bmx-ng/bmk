@@ -12,10 +12,16 @@ Const CC_WARNINGS=False'True
 Type TModOpt ' BaH
 	Field cc_opts:String = ""
 	Field ld_opts:TList = New TList
+	Field cpp_opts:String = ""
+	Field c_opts:String = ""
 	
 	Method addOption(qval:String)
 		If qval.startswith("CC_OPTS") Then
 			cc_opts:+ " " + ReQuote(qval[qval.find(":") + 1..].Trim())
+		ElseIf qval.startswith("CPP_OPTS") Then
+			cpp_opts:+ " " + ReQuote(qval[qval.find(":") + 1..].Trim())
+		ElseIf qval.startswith("C_OPTS") Then
+			c_opts:+ " " + ReQuote(qval[qval.find(":") + 1..].Trim())
 		ElseIf qval.startswith("LD_OPTS") Then
 			Local opt:String = ReQuote(qval[qval.find(":") + 1..].Trim())
 			
@@ -28,6 +34,14 @@ Type TModOpt ' BaH
 	
 	Method hasCCopt:Int(value:String)
 		Return cc_opts.find(value) >= 0
+	End Method
+
+	Method hasCPPopt:Int(value:String)
+		Return cpp_opts.find(value) >= 0
+	End Method
+
+	Method hasCopt:Int(value:String)
+		Return c_opts.find(value) >= 0
 	End Method
 
 	Method hasLDopt:Int(value:String)
