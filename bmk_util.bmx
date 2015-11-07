@@ -476,6 +476,9 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		Local libso:String = StripDir(path)
 		cmd :+ " -fPIC -shared "
 		
+		' for stlport shared lib
+		cmd :+ " -L" + AndroidSTLPortDir()
+		
 		cmd :+ " -Wl,-soname,lib" + libso + ".so "
 		cmd :+ " -Wl,--export-dynamic -rdynamic "
 		cmd:+" -o "+CQuote( ExtractDir(path) + "/lib" + libso + ".so" )
@@ -492,6 +495,8 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		Next
 	
 		cmd :+ " -Wl,-Bdynamic -lGLESv2 -lGLESv1_CM "
+		' libstlport
+		cmd :+ " -lstlport_shared"
 		cmd :+ " -llog -ldl -landroid "
 	
 		files="INPUT("+files+")"
@@ -607,30 +612,26 @@ Function DeployAndroidProject()
 		End If
 	End If
 	
-	abiDir :+ "/"
+	abiDir :+ "/" + GetAndroidArch()
 
-	Select processor.CPU()
-		Case "x86"
-			abiDir :+ "x86"
-		Case "x64"
-			abiDir :+ "x86_64"
-		Case "arm"
-			abiDir :+ "armeabi-v7a"
-		Case "armeabi"
-			abiDir :+ "armeabi"
-		Case "armeabiv7a"
-			abiDir :+ "armeabi-v7a"
-		Case "arm64v8a"
-			abiDir :+ "arm64-v8a"
-		Default
-			Throw "Not a valid architecture '" + processor.CPU() + "'"
-	End Select
-	
 	If FileType(abiDir) <> FILETYPE_DIR Then
 		CreateDir(abiDir)
 
 		If FileType(abiDir) <> FILETYPE_DIR Then
 			Throw "Error creating libs abi dir '" + abiDir + "'"
+		End If
+	End If
+	
+	' copy stlport
+	Local stlportDest:String = abiDir + "/libstlport_shared.so"
+	
+	If opt_all Or Not FileType(stlportDest) Then
+		Local stlportSrc:String = AndroidSTLPortDir() + "/libstlport_shared.so"
+		
+		CopyFile(stlportSrc, stlportDest)
+		
+		If Not FileType(stlportDest) Then
+			Throw "Error copying libstlport_shared.so from '" + stlportSrc + "'"
 		End If
 	End If
 	
@@ -686,6 +687,31 @@ Function DeployAndroidProject()
 
 	' copy resources to assets
 	CopyAndroidResources(buildDir, assetsDir)
+End Function
+
+Function GetAndroidArch:String()
+	Local arch:String
+	Select processor.CPU()
+		Case "x86"
+			arch = "x86"
+		Case "x64"
+			arch = "x86_64"
+		Case "arm"
+			arch = "armeabi-v7a"
+		Case "armeabi"
+			arch = "armeabi"
+		Case "armeabiv7a"
+			arch = "armeabi-v7a"
+		Case "arm64v8a"
+			arch = "arm64-v8a"
+		Default
+			Throw "Not a valid architecture '" + processor.CPU() + "'"
+	End Select
+	Return arch
+End Function
+
+Function AndroidSTLPortDir:String()
+	Return processor.Option("android.ndk", "") + "/sources/cxx-stl/stlport/libs/" + GetAndroidArch()
 End Function
 
 Function CopyAndroidResources(buildDir:String, assetsDir:String)
