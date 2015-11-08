@@ -668,9 +668,11 @@ Function DeployAndroidProject()
 	'     update BlitzMaxApp.java
 	MergeFile(packagePath, "BlitzMaxApp.java", projectSettings)
 	
-	' set the package
 	Local javaApp:String = LoadString( gameClassFile )
+	' set the package
 	javaApp = ReplaceBlock( javaApp, "app.package","package " + appPackage + ";" )
+	' lib imports
+	javaApp = ReplaceBlock( javaApp, "lib.imports", GetAndroidLibImports() )
 	SaveString(javaApp, gameClassFile)
 
 	'     update strings.xml
@@ -687,6 +689,16 @@ Function DeployAndroidProject()
 
 	' copy resources to assets
 	CopyAndroidResources(buildDir, assetsDir)
+End Function
+
+Function GetAndroidLibImports:String()
+	Local imports:String
+	
+	imports = "System.loadLibrary( ~qstlport_shared~q);~n"
+	
+	' TODO : others imported via project...
+	
+	Return imports
 End Function
 
 Function GetAndroidArch:String()
