@@ -1,6 +1,7 @@
 '
 ' Change History :
 ' 3.09 07/11/2015 - Android now links to (and includes) stlport_shared.
+'                   Fixed android x86/x64 tool paths.
 ' 3.08 01/11/2015 - Added new CPP_OPTS and C_OPTS options for C++ and C specific compiler options respectively.
 ' 3.07 28/10/2015 - Fixed android debug builds.
 '                   Improved iOS 9 support.

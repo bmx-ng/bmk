@@ -37,20 +37,24 @@ Function ConfigureAndroidPaths()
 	CheckAndroidPaths()
 	
 	Local toolchain:String
+	Local toolchainBin:String
 	Local arch:String
 	Local abi:String
 	
 	Select processor.CPU()
 		Case "x86"
 			toolchain = "x86-"
+			toolchainBin = "i686-linux-android-"
 			arch = "arch-x86"
 			abi = "x86"
 		Case "x64"
 			toolchain = "x86_64-"
+			toolchainBin = "x86_64-linux-android-"
 			arch = "arch-x86_64"
 			abi = "x86_64"
 		Case "arm", "armeabi", "armeabiv7a"
 			toolchain = "arm-linux-androideabi-"
+			toolchainBin = "arm-linux-androideabi-"
 			arch = "arch-arm"
 			If processor.CPU() = "armeabi" Then
 				abi = "armeabi"
@@ -59,6 +63,7 @@ Function ConfigureAndroidPaths()
 			End If
 		Case "arm64v8a"
 			toolchain = "aarch64-linux-android-"
+			toolchainBin = "aarch64-linux-android-"
 			arch = "arch-arm64"
 			abi = "arm64-v8a"
 	End Select
@@ -89,9 +94,9 @@ Function ConfigureAndroidPaths()
 	exe = ".exe"
 ?
 	
-	Local gccPath:String = toolchainDir + "/bin/" + toolchain + "gcc" + exe
-	Local gppPath:String = toolchainDir + "/bin/" + toolchain + "g++" + exe
-	Local arPath:String = toolchainDir + "/bin/" + toolchain + "ar" + exe
+	Local gccPath:String = toolchainDir + "/bin/" + toolchainBin + "gcc" + exe
+	Local gppPath:String = toolchainDir + "/bin/" + toolchainBin + "g++" + exe
+	Local arPath:String = toolchainDir + "/bin/" + toolchainBin + "ar" + exe
 	Local libPath:String = toolchainDir + "/lib"
 
 	' check paths
@@ -956,7 +961,8 @@ Type TBuildManager
 		Local source:TSourceFile
 		Local link:TSourceFile
 
-		If arc_time And iface_time And opt_quickscan Then
+		' do a quick scan only when building apps. For module builds we want to check required modules.
+		If arc_time And iface_time And opt_quickscan And app_main Then
 
 			source = GetISourceFile(arc_path, arc_time, iface_path, iface_time, merge_path, merge_time)
 			
