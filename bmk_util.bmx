@@ -950,7 +950,7 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	Local templatePath:String = BlitzMaxPath() + "/resources/ios/template"
 	
 	If Not FileType(templatePath) Then
-		Throw "iOS template dir is missing."
+		Throw "iOS template dir is missing. Expecting it at '" + templatePath + "'"
 	End If
 	
 	Local appId:String = StripDir(StripExt(opt_outfile))
@@ -1009,6 +1009,7 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	project = iOSProjectAppendFiles(project, uuid, fileMap)
 
 	project = project.Replace("${PROJECT}", appId)
+	project = project.Replace("${COMPANY_IDENTIFIER}", processor.option("company_identifier", "com.mycompany"))
 	
 	SaveString(project, projectPath)
 	
