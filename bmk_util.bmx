@@ -1408,11 +1408,11 @@ Function iOSProjectLibSearchPaths:String(uuid:String, fileMap:TFileMap)
 
 		Select ExtractExt(name)
 			Case "a"
-				stack.AddLast "~t~t~t~t" + dir
+				stack.AddLast "~t~t~t~t~q" + dir + "~q"
 		End Select
 		
 		If path.StartsWith("-L") Then
-			stack.AddLast("~t~t~t~t" + path[2..])
+			stack.AddLast("~t~t~t~t~q" + path[2..] + "~q")
 		End If
 		
 	Next
