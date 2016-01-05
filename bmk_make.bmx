@@ -150,98 +150,69 @@ End Function
 
 Function CheckAndroidPaths()
 	' check envs and paths
-	Local androidHome:String = getenv_("ANDROID_HOME")
+	Local androidHome:String = processor.Option("android.home", getenv_("ANDROID_HOME")).Trim()
 	If Not androidHome Then
-		androidHome = processor.Option("android.home", "")
-		If Not androidHome Then
-			Throw "ANDROID_HOME or 'android.home' config option not set"
-		End If
-		
-		putenv_("ANDROID_HOME=" + androidHome.Trim())
-	Else
-		globals.SetVar("android.home", androidHome)
+		Throw "ANDROID_HOME or 'android.home' config option not set"
 	End If
+		
+	putenv_("ANDROID_HOME=" + androidHome)
+	globals.SetVar("android.home", androidHome)
 	
-	Local androidSDK:String = getenv_("ANDROID_SDK")
+	Local androidSDK:String = processor.Option("android.sdk", getenv_("ANDROID_SDK")).Trim()
 	If Not androidSDK Then
-		androidSDK = processor.Option("android.sdk", "")
-		If Not androidSDK Then
-			Throw "ANDROID_SDK or 'android.sdk' config option not set"
-		End If
-		
-		putenv_("ANDROID_SDK=" + androidSDK.Trim())
-	Else
-		globals.SetVar("android.sdk", androidSDK)
+		Throw "ANDROID_SDK or 'android.sdk' config option not set"
 	End If
+		
+	putenv_("ANDROID_SDK=" + androidSDK)
+	globals.SetVar("android.sdk", androidSDK)
 
-	Local androidNDK:String = getenv_("ANDROID_NDK")
+	Local androidNDK:String = processor.Option("android.ndk", getenv_("ANDROID_NDK")).Trim()
 	If Not androidNDK Then
-		androidNDK = processor.Option("android.ndk", "")
-		If Not androidNDK Then
-			Throw "ANDROID_NDK or 'android.ndk' config option not set"
-		End If
-		
-		putenv_("ANDROID_NDK=" + androidNDK.Trim())
-	Else
-		globals.SetVar("android.ndk", androidNDK)
+		Throw "ANDROID_NDK or 'android.ndk' config option not set"
 	End If
+		
+	putenv_("ANDROID_NDK=" + androidNDK)
+	globals.SetVar("android.ndk", androidNDK)
 
-	Local androidToolchainVersion:String = getenv_("ANDROID_TOOLCHAIN_VERSION")
+	Local androidToolchainVersion:String = processor.Option("android.toolchain.version", getenv_("ANDROID_TOOLCHAIN_VERSION")).Trim()
 	If Not androidToolchainVersion Then
-		androidToolchainVersion = processor.Option("android.toolchain.version", "")
-		If Not androidToolchainVersion Then
-			Throw "ANDROID_TOOLCHAIN_VERSION or 'android.toolchain.version' config option not set"
-		End If
-		
-		putenv_("ANDROID_TOOLCHAIN_VERSION=" + androidToolchainVersion.Trim())
-	Else
-		globals.SetVar("android.toolchain.version", androidToolchainVersion)
+		Throw "ANDROID_TOOLCHAIN_VERSION or 'android.toolchain.version' config option not set"
 	End If
+		
+	putenv_("ANDROID_TOOLCHAIN_VERSION=" + androidToolchainVersion)
+	globals.SetVar("android.toolchain.version", androidToolchainVersion)
 
-	Local androidPlatform:String = getenv_("ANDROID_PLATFORM")
+	Local androidPlatform:String = processor.Option("android.platform", getenv_("ANDROID_PLATFORM")).Trim()
 	If Not androidPlatform Then
-		androidPlatform = processor.Option("android.platform", "")
-		If Not androidPlatform Then
-			Throw "ANDROID_PLATFORM or 'android.platform' config option not set"
-		End If
-		
-		putenv_("ANDROID_PLATFORM=" + androidPlatform.Trim())
-	Else
-		globals.SetVar("android.platform", androidPlatform)
+		Throw "ANDROID_PLATFORM or 'android.platform' config option not set"
 	End If
+		
+	putenv_("ANDROID_PLATFORM=" + androidPlatform.Trim())
+	globals.SetVar("android.platform", androidPlatform)
 
-	Local androidSDKTarget:String = getenv_("ANDROID_SDK_TARGET")
-	If Not androidSDKTarget Then
-		androidSDKTarget = processor.Option("android.sdk.target", "")
-		
-		If androidSDKTarget Then
-			putenv_("ANDROID_SDK_TARGET=" + androidSDKTarget.Trim())
-		End If
-		
-		' NOTE : if not set, we'll try to determine the actual target later, and fail if required then.
-	Else
+	Local androidSDKTarget:String = processor.Option("android.sdk.target", getenv_("ANDROID_SDK_TARGET")).Trim()
+
+	' NOTE : if not set, we'll try to determine the actual target later, and fail if required then.
+	If androidSDKTarget Then
+		putenv_("ANDROID_SDK_TARGET=" + androidSDKTarget)
 		globals.SetVar("android.sdk.target", androidSDKTarget)
 	End If
-
-	Local antHome:String = getenv_("ANT_HOME")
-	If Not antHome Then
-		antHome = processor.Option("ant.home", "")
-		If Not antHome Then
-			' as a further fallback, we can use the one from resources folder if it exists.
-			Local antDir:String = RealPath(BlitzMaxPath() + "/resources/android/apache-ant")
-			
-			If FileType(antDir) <> FILETYPE_DIR Then
-				Throw "ANT_HOME or 'ant.home' config option not set, and resources missing apache-ant."
-			Else
-				antHome = antDir
-				globals.SetVar("ant.home", antHome)
-			End If
-		End If
 		
-		putenv_("ANT_HOME=" + antHome.Trim())
-	Else
-		globals.SetVar("ant.home", antHome)
+	Local antHome:String = processor.Option("ant.home", getenv_("ANT_HOME")).Trim()
+	If Not antHome Then
+		' as a further fallback, we can use the one from resources folder if it exists.
+		Local antDir:String = RealPath(BlitzMaxPath() + "/resources/android/apache-ant")
+		
+		If FileType(antDir) <> FILETYPE_DIR Then
+			Throw "ANT_HOME or 'ant.home' config option not set, and resources missing apache-ant."
+		Else
+			antHome = antDir
+			globals.SetVar("ant.home", antHome)
+		End If
 	End If
+		
+	putenv_("ANT_HOME=" + antHome)
+	globals.SetVar("ant.home", antHome)
 
 ?Not win32	
 	Local pathSeparator:String = ":"
@@ -251,10 +222,10 @@ Function CheckAndroidPaths()
 	Local dirSeparator:String = "\"
 ?
 	Local path:String = getenv_("PATH")
-	path = androidSDK.Trim() + dirSeparator + "platform-tools" + pathSeparator + path
-	path = androidSDK.Trim() + dirSeparator + "tools" + pathSeparator + path
-	path = androidNDK.Trim() + pathSeparator + path
-	path = antHome.Trim() + dirSeparator + "bin" + pathSeparator + path
+	path = androidSDK + dirSeparator + "platform-tools" + pathSeparator + path
+	path = androidSDK + dirSeparator + "tools" + pathSeparator + path
+	path = androidNDK + pathSeparator + path
+	path = antHome + dirSeparator + "bin" + pathSeparator + path
 	putenv_("PATH=" + path)
 
 End Function
