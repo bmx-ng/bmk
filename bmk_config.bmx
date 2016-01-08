@@ -254,6 +254,9 @@ Function CharIsAlpha:Int( ch:Int )
 	Return ch=Asc("_") Or (ch>=Asc("a") And ch<=Asc("z")) Or (ch>=Asc("A") And ch<=Asc("Z"))
 End Function
 
+Function EscapeSpaces:String(path:String)
+	Return path.Replace(" ", "\\ ")
+End Function
 
 Function Usage:String(fullUsage:Int = False)
 	Local s:String = "~nUsage: bmk <operation> [options] source~n~n"

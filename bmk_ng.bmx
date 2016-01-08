@@ -511,7 +511,7 @@ Type TBMK
 			exe :+ ".exe"
 		End If
 
-		Local process:TProcess = CreateProcess(BlitzMaxPath() + "/bin/" + exe)
+		Local process:TProcess = CreateProcess(CQuote(BlitzMaxPath() + "/bin/" + exe))
 		Local s:String
 		
 		If Not process Then

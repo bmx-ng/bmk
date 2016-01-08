@@ -314,10 +314,12 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		End If
 
 		If usingLD Then
-			cmd=CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))+" -s -stack 4194304"
+			cmd=CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))+" -stack 4194304"
+			cmd :+ processor.option("strip.debug", " -s ")
 			If opt_apptype="gui" cmd:+" -subsystem windows"
 		Else
-			cmd=CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe"))+" -s --stack=4194304"
+			cmd=CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe"))+" --stack=4194304"
+			cmd :+ processor.option("strip.debug", " -s ")
 			If opt_apptype="gui"
 				cmd:+" --subsystem,windows -mwindows"
 			Else
@@ -1408,11 +1410,11 @@ Function iOSProjectLibSearchPaths:String(uuid:String, fileMap:TFileMap)
 
 		Select ExtractExt(name)
 			Case "a"
-				stack.AddLast "~t~t~t~t~q" + dir + "~q"
+				stack.AddLast "~t~t~t~t~q" + EscapeSpaces(dir) + "~q"
 		End Select
 		
 		If path.StartsWith("-L") Then
-			stack.AddLast("~t~t~t~t~q" + path[2..] + "~q")
+			stack.AddLast("~t~t~t~t~q" + EscapeSpaces(path[2..]) + "~q")
 		End If
 		
 	Next
