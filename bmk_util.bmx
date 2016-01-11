@@ -1011,12 +1011,19 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	project = iOSProjectAppendFiles(project, uuid, fileMap)
 
 	project = project.Replace("${PROJECT}", appId)
+	project = project.Replace("${PROJECT_STRIPPED}", iOSFixAppId(appId))
 	project = project.Replace("${COMPANY_IDENTIFIER}", processor.option("company_identifier", "com.mycompany"))
 	
 	SaveString(project, projectPath)
 	
 	iOSCopyDefaultFiles(templatePath, appPath)
 	
+End Function
+
+Function iOSFixAppId:String(id:String)
+	id = id.Replace(" ", "") ' no spaces
+	id = id.Replace("_", "") ' no underscores
+	Return id
 End Function
 
 Function iOSCopyDefaultFiles(templatePath:String, appPath:String)
