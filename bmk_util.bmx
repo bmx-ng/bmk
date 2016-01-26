@@ -1530,3 +1530,26 @@ Type TFileMap
 	End Method
 
 End Type
+
+Type TOrderedMap Extends TMap
+
+	Field _keys:TList = New TList
+
+	Method Insert( key:Object,value:Object )
+		If Not Contains(key) Then
+			_keys.AddLast(key)
+		End If
+		Super.Insert(key, value)
+	End Method
+	
+	Method Remove( key:Object )
+		_keys.Remove(key)
+		Return Super.Remove(key)
+	End Method
+
+	Method OrderedKeys:TList()
+		Return _keys
+	End Method
+
+End Type
+

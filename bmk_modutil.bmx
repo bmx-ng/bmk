@@ -64,6 +64,8 @@ Type TSourceFile
 	Field c_opts:String
 	
 	Field mod_opts:TModOpt
+	Field includePaths:TOrderedMap = New TOrderedMap
+	Field includePathString:String
 	
 	Field pct:Int
 	
@@ -251,6 +253,7 @@ Type TSourceFile
 		source.merge_time = merge_time
 		source.cpp_opts = cpp_opts
 		source.c_opts = c_opts
+		source.CopyIncludePaths(includePaths)
 	End Method
 	
 	Method GetSourcePath:String()
@@ -268,6 +271,27 @@ Type TSourceFile
 				p = arc_path
 		End Select
 		Return p
+	End Method
+	
+	Method GetIncludePaths:String()
+		If Not includePathString Then
+			For Local path:String = EachIn includePaths.OrderedKeys()
+				includePathString :+ path
+			Next
+		End If
+		Return includePathString
+	End Method
+	
+	Method AddIncludePath(path:String)
+		includePaths.Insert(path, path)
+		includePathString = ""
+	End Method
+	
+	Method CopyIncludePaths(paths:TOrderedMap)
+		For Local path:String = EachIn paths.OrderedKeys()
+			includePaths.Insert(path, path)
+		Next
+		includePathString = ""
 	End Method
 	
 End Type

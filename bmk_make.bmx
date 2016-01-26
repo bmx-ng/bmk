@@ -287,7 +287,8 @@ Type TBuildManager
 		source.iface_path = StripExt(source.obj_path) + ".o"
 		source.iface_time = FileTime(source.iface_path)
 	
-		Local cc_opts:String = " -I" + CQuote(ModulePath(""))
+		Local cc_opts:String
+		source.AddIncludePath(" -I" + CQuote(ModulePath("")))
 		If opt_release Then
 			cc_opts :+ " -DNDEBUG"
 		End If
@@ -458,7 +459,7 @@ Type TBuildManager
 										Print ShowPct(m.pct) + "Compiling:" + StripDir(csrc_path)
 									End If
 
-									CompileC csrc_path,cobj_path, m.cc_opts + " " + m.c_opts
+									CompileC csrc_path,cobj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.c_opts
 								Else
 									' asm compilation
 
@@ -565,7 +566,7 @@ Type TBuildManager
 						If processor.BCCVersion() = "BlitzMax" Then
 							Assemble m.path, m.obj_path
 						Else
-							CompileC m.path, m.obj_path, m.cc_opts + " " + m.c_opts
+							CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.c_opts
 						End If
 						
 					End If
@@ -585,9 +586,9 @@ Type TBuildManager
 							End If
 
 							If m.path.EndsWith(".cpp") Or m.path.EndsWith("cc") Then
-								CompileC m.path, m.obj_path, m.cc_opts + " " + m.cpp_opts
+								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.cpp_opts
 							Else
-								CompileC m.path, m.obj_path, m.cc_opts + " " + m.c_opts
+								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.c_opts
 							End If
 							
 							m.obj_time = time_(Null)
@@ -680,7 +681,7 @@ Type TBuildManager
 						source.moddeps.Insert(m, s)
 						source.deps.Insert(s.GetSourcePath(), s)
 					
-						source.cc_opts :+ " -I" + CQuote(ExtractDir(s.path))
+						source.AddIncludePath(" -I" + CQuote(ExtractDir(s.path)))
 					End If
 				End If
 			Next
@@ -718,6 +719,7 @@ Type TBuildManager
 							s.cc_opts :+ source.cc_opts
 							s.cpp_opts :+ source.cpp_opts
 							s.c_opts :+ source.c_opts
+							s.CopyIncludePaths(source.includePaths)
 							
 							CalculateDependencies(s, isMod, rebuildImports)
 							
@@ -751,6 +753,7 @@ Type TBuildManager
 							s.cc_opts = source.cc_opts
 							s.cpp_opts = source.cpp_opts
 							s.c_opts = source.c_opts
+							s.CopyIncludePaths(source.includePaths)
 							
 							source.deps.Insert(s.GetSourcePath(), s)
 							If Not source.depsList Then
@@ -766,7 +769,7 @@ Type TBuildManager
 						
 						If Match(ext, "h;hpp;hxx") Then ' header?
 						
-							source.cc_opts :+ " -I" + CQuote(ExtractDir(path))
+							source.AddIncludePath(" -I" + CQuote(ExtractDir(path)))
 							
 						Else If Match(ext, "o") Then ' object?
 						
@@ -837,6 +840,7 @@ Type TBuildManager
 						s.cc_opts = source.cc_opts
 						s.cpp_opts = source.cpp_opts
 						s.c_opts = source.c_opts
+						s.CopyIncludePaths(source.includePaths)
 					End If
 				Next
 			End If
@@ -990,8 +994,9 @@ Type TBuildManager
 			source.merge_path = merge_path
 			source.merge_time = merge_time
 			
-			Local cc_opts:String = " -I" + CQuote(path)
-			cc_opts :+ " -I" + CQuote(ModulePath(""))
+			Local cc_opts:String
+			source.AddIncludePath(" -I" + CQuote(path))
+			source.AddIncludePath(" -I" + CQuote(ModulePath("")))
 			If opt_release Then
 				cc_opts :+ " -DNDEBUG"
 			End If
