@@ -708,7 +708,7 @@ Function ValidatePlatformArchitecture()
 				valid = True
 			End If
 		Case "linux"
-			If arch = "x86" Or arch = "x64" Then
+			If arch = "x86" Or arch = "x64" Or arch = "arm" Then
 				valid = True
 			End If
 		Case "macos", "osx"

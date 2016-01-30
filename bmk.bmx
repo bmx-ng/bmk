@@ -1,6 +1,7 @@
 '
 ' Change History :
 ' 3.10 26/01/2016 - Fixed includes exuberance.
+'                   Support generic Linux ARM builds.
 ' 3.09 07/11/2015 - Android now links to (and includes) stlport_shared.
 '                   Fixed android x86/x64 tool paths.
 ' 3.08 01/11/2015 - Added new CPP_OPTS and C_OPTS options for C++ and C specific compiler options respectively.
