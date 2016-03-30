@@ -29,7 +29,7 @@ Function UncompressBank:TBank( bank:TBank )
 	out_size:|bank.PeekByte(2) Shl 16
 	out_size:|bank.PeekByte(3) Shl 24
 	Local out:TBank=TBank.Create( out_size )
-	uncompress out.Buf(),out_size,bank.Buf()+4,bank.Size()-4
+	uncompress out.Buf(),out_size,bank.Buf()+4,Int(bank.Size()-4)
 	Return out
 	
 End Function

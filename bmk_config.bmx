@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.10"
+Const BMK_VERSION:String = "3.11"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -37,6 +37,8 @@ Global opt_gdbdebug=False
 Global opt_standalone=False
 Global opt_nolog
 Global opt_quickscan=False
+Global opt_nostrictupgrade=False
+Global opt_warnover=False
 
 Global opt_dumpbuild
 
@@ -80,8 +82,12 @@ opt_arch="x86"
 opt_arch="x64"
 ?linuxarm
 opt_arch="arm"
+?linuxarm64
+opt_arch="arm64"
 ?raspberrypi
 opt_arch="arm"
+?raspberrypi64
+opt_arch="arm64"
 ?
 
 ChangeDir LaunchDir
@@ -215,6 +221,10 @@ Function ParseConfigArgs$[]( args$[] )
 			opt_standalone = True
 		Case "quick"
 			opt_quickscan = True
+		Case "nostrictupgrade"
+			opt_nostrictupgrade = True
+		Case "w"
+			opt_warnover = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -293,6 +303,8 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "ppc"
 ?arm
 		s:+ "arm"
+?arm64
+		s:+ "arm64"
 ?armeabi
 		s:+ "armeabi"
 ?armeabiv7a
@@ -306,10 +318,10 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
 		s:+ "~t~t~tMacOS : x86, x64~n"
 		s:+ "~t~t~tWin32 : x86, x64~n"
-		s:+ "~t~t~tLinux : x86, x64, arm~n"
+		s:+ "~t~t~tLinux : x86, x64, arm, arm64~n"
 		s:+ "~t~t~tiOS : x86, x64 (simulator), armv7, arm64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
-		s:+ "~t~t~tRaspberryPi : arm~n"
+		s:+ "~t~t~tRaspberryPi : arm, arm64~n"
 		s:+ "~t~t~tEmscripten : js~n"
 		s:+ "~n~n"
 		s:+ "~t-gdb~n"
@@ -327,6 +339,11 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tCross-compiles to the specific target platform.~n"
 		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and emscripten.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
+		s:+ "~n~n"
+		s:+ "~t-nostrictupgrade~n"
+		s:+ "~t~tDon't upgrade strict method void return types, if required. (NG only)~n"
+		s:+ "~t~tIf a Strict sub type overrides the method of a SuperStrict type and the return type is void,~n"
+		s:+ "~t~tdon't upgrade the return type to void (i.e. none), and default it to Int."
 		s:+ "~n~n"
 		s:+ "~t-o <output file>~n"
 		s:+ "~t~tSpecify output file. (makeapp only)~n"
@@ -355,6 +372,10 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-v~n"
 		s:+ "~t~tVerbose (noisy) build."
+		s:+ "~n~n"
+		s:+ "~t-w~n"
+		s:+ "~t~tWarn about function argument casting issues rather than error. (NG only)~n"
+		s:+ "~t~tWith this warning enabled you may have issues with method overloading."
 		s:+ "~n~n"
 		s:+ "~t-x~n"
 		s:+ "~t~tExecute built application. (makeapp only)"
@@ -396,6 +417,8 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "x64"
 ?arm
 	s:+ "arm"
+?arm64
+	s:+ "arm64"
 ?armeabi
 	s:+ "armeabi"
 ?armeabiv7a

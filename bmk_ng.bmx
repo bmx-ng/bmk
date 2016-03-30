@@ -54,16 +54,31 @@ Type TBMK
 
 	' loads a .bmk, stores any functions, and runs any commands.
 	Method LoadBMK(path:String)
+If Int(globals.Get("verbose")) Or opt_verbose
+Print "LoadBMK : " + path
+End If
 		Local str:String
 		Try
 			If FileType(path) = 1 Then
 				str = LoadText( path )
+
+				If Int(globals.Get("verbose")) Or opt_verbose
+					Print "Loading " + path
+				End If
 			Else
 				If FileType(AppDir + "/" + path) = 1 Then
 					str = LoadText( AppDir + "/" + path )
+
+					If Int(globals.Get("verbose")) Or opt_verbose
+						Print "Loading " + AppDir + "/" + path
+					End If
 				Else
 					If FileType(globals.Get("BUILDPATH") + "/" + path) = 1 Then
 						str = LoadText(globals.Get("BUILDPATH") + "/" + path )
+
+						If Int(globals.Get("verbose")) Or opt_verbose
+							Print "Loading " + globals.Get("BUILDPATH") + "/" + path
+						End If
 					Else
 						Return
 					End If
@@ -73,9 +88,17 @@ Type TBMK
 			Try
 				If FileType(AppDir + "/" + path) = 1 Then
 					str = LoadText( AppDir + "/" + path )
+
+					If Int(globals.Get("verbose")) Or opt_verbose
+						Print "Loading " + AppDir + "/" + path
+					End If
 				Else
 					If FileType(globals.Get("BUILDPATH") + "/" + path) = 1 Then
 						str = LoadText(globals.Get("BUILDPATH") + "/" + path )
+
+						If Int(globals.Get("verbose")) Or opt_verbose
+							Print "Loading " + globals.Get("BUILDPATH") + "/" + path
+						End If
 					Else
 						Return
 					End If

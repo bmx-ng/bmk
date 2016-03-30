@@ -299,8 +299,16 @@ Type TBuildManager
 		If opt_release bcc_opts:+" -r"
 		If opt_threaded bcc_opts:+" -h"
 		If opt_framework bcc_opts:+" -f " + opt_framework
-		If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
-			bcc_opts:+" -d"
+		If processor.BCCVersion() <> "BlitzMax" Then
+			If opt_gdbdebug Then
+				bcc_opts:+" -d"
+			End If
+			If Not opt_nostrictupgrade Then
+				bcc_opts:+ " -s"
+			End If
+			If opt_warnover Then
+				bcc_opts:+" -w"
+			End If
 		End If
 
 		source.cc_opts :+ cc_opts
@@ -1021,8 +1029,16 @@ Type TBuildManager
 			If opt_verbose bcc_opts:+" -v"
 			If opt_release bcc_opts:+" -r"
 			If opt_threaded bcc_opts:+" -h"
-			If opt_gdbdebug And processor.BCCVersion() <> "BlitzMax" Then
-				bcc_opts:+" -d"
+			If processor.BCCVersion() <> "BlitzMax" Then
+				If opt_gdbdebug Then
+					bcc_opts:+" -d"
+				End If
+				If Not opt_nostrictupgrade Then
+					bcc_opts:+ " -s"
+				End If
+				If opt_warnover Then
+					bcc_opts:+" -w"
+				End If
 			End If
 	
 			source.bcc_opts = bcc_opts

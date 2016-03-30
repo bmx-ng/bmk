@@ -447,8 +447,11 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi"
 		cmd$ = processor.Option(processor.BuildName("gpp"), "g++")
 		'cmd:+" -m32 -s -Os -pthread"
-		If processor.CPU() = "x86" Then
+		If processor.CPU() = "x86" Or processor.CPU() = "arm" Then
 			cmd:+" -m32"
+		End If
+		If processor.CPU() = "x64" Or processor.CPU() = "arm64" Then
+			cmd:+" -m64"
 		End If
 		cmd:+" -pthread"
 		cmd:+" -o "+CQuote( path )

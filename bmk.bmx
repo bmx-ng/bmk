@@ -1,5 +1,8 @@
 '
 ' Change History :
+' 3.11 20/02/2016 - Added -nostrictupgrade option for NG.
+'                   Added -w option for NG.
+'                   Support Linux/Pi ARM64 build options.
 ' 3.10 26/01/2016 - Fixed includes exuberance.
 '                   Support generic Linux ARM builds.
 ' 3.09 07/11/2015 - Android now links to (and includes) stlport_shared.

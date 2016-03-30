@@ -531,6 +531,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					If processor.Platform() = "raspberrypi"
 						 cc=processor.CPU()="arm"
 					End If
+				Case "raspberrypiarm64"
+					cc=False
+					If processor.Platform() = "raspberrypi"
+						 cc=processor.CPU()="arm64"
+					End If
 				Case "emscripten"
 					cc=False
 					If processor.Platform() = "emscripten"
@@ -708,7 +713,7 @@ Function ValidatePlatformArchitecture()
 				valid = True
 			End If
 		Case "linux"
-			If arch = "x86" Or arch = "x64" Or arch = "arm" Then
+			If arch = "x86" Or arch = "x64" Or arch = "arm" Or arch="arm64" Then
 				valid = True
 			End If
 		Case "macos", "osx"
@@ -724,7 +729,7 @@ Function ValidatePlatformArchitecture()
 				valid = True
 			End If
 		Case "raspberrypi"
-			If arch = "arm" Then
+			If arch = "arm" Or arch="arm64" Then
 				valid = True
 			End If
 		Case "emscripten"
