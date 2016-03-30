@@ -106,7 +106,7 @@
 	sys.DeleteFile(obj)
 
 	#opts = opts .. " " .. %cc_opts% .. " " .. %BMK_CC_OPTS%
-	
+
 	local ext = sys.ExtractExt(src)
 
 	if bmk.Platform() == "macos" or bmk.Platform() == "osx" or bmk.Platform() == "ios" then
@@ -368,8 +368,8 @@
 		
 		if tonumber(%macos_version%) >= 4240 then
 			# macos version >= 0x1090 ?
-			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.6")
-			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.6")
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.7")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.7")
 		elseif tonumber(%macos_version%) >= 4224 then
 			# macos version >= 0x1080 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.5")
