@@ -22,8 +22,8 @@ Global processor:TBMK = New TBMK
 Global globals:TBMKGlobals = New TBMKGlobals
 
 ' load in the base stuff
-LoadBMK(AppDir + "/core.bmk")
-LoadBMK(AppDir + "/make.bmk")
+LoadBMK(AppDir + "/core.bmk", True)
+LoadBMK(AppDir + "/make.bmk", True)
 ' optional
 LoadBMK(AppDir + "/config.bmk")
 
@@ -37,8 +37,8 @@ globals.SetVar("c_opts", New TOptionVariable)
 globals.SetVar("cpp_opts", New TOptionVariable)
 'globals.SetVar("gcc_version", String(processor.GCCVersion()))
 
-Function LoadBMK(path:String)
-	processor.LoadBMK(path)
+Function LoadBMK(path:String, required:Int = False)
+	processor.LoadBMK(path, required)
 End Function
 
 ' this is the core bmk processor.
@@ -53,10 +53,7 @@ Type TBMK
 	End Method
 
 	' loads a .bmk, stores any functions, and runs any commands.
-	Method LoadBMK(path:String)
-If Int(globals.Get("verbose")) Or opt_verbose
-Print "LoadBMK : " + path
-End If
+	Method LoadBMK(path:String, required:Int = False)
 		Local str:String
 		Try
 			If FileType(path) = 1 Then
@@ -80,6 +77,9 @@ End If
 							Print "Loading " + globals.Get("BUILDPATH") + "/" + path
 						End If
 					Else
+						If required Then
+							Throw "Could not load required config '" + path + "'"
+						End If
 						Return
 					End If
 				End If
@@ -100,12 +100,19 @@ End If
 							Print "Loading " + globals.Get("BUILDPATH") + "/" + path
 						End If
 					Else
+						If required Then
+							Throw "Could not load required config '" + path + "'"
+						End If
 						Return
 					End If
 				End If
 			Catch e:Object
 				' we tried... twice
 				' fail silently...
+				' unless the file was required!
+				If required Then
+					Throw "Could not load required config '" + path + "'"
+				End If
 				Return
 			End Try
 		End Try
