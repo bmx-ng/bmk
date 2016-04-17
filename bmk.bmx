@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.12 17/04/2016 - App link optimisations.
 ' 3.11 20/02/2016 - Added -nostrictupgrade option for NG.
 '                   Added -w option for NG.
 '                   Support Linux/Pi ARM64 build options.

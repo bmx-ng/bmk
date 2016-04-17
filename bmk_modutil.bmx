@@ -25,6 +25,7 @@ Const STAGE_MERGE:Int = 4
 
 Type TSourceFile
 	Field ext$		'one of: "bmx", "i", "c", "cpp", "m", "s", "h"
+	Field exti:Int
 	Field path$
 	Field modid$
 	Field framewk$
@@ -68,6 +69,11 @@ Type TSourceFile
 	Field includePathString:String
 	
 	Field pct:Int
+	
+	Field linksCache:TList
+	Field optsCache:TList
+	Field lastCache:Int = -1
+	Field doneLinks:Int
 	
 	' add cc_opts or ld_opts
 	Method AddModOpt(opt:String)
@@ -151,69 +157,143 @@ Type TSourceFile
 			End Select
 			If Not list.Contains(fp) Then
 				list.AddLast(fp)
+				
+				linksCache.AddLast(fp)
 			End If
 		End If
 	End Method
 
-	Method GetLinks(list:TList, opts:TList, modsOnly:Int = False)
+	Method GetLinks(list:TList, opts:TList, modsOnly:Int = False, cList:TList = Null, cOpts:TList = Null)
 
-		If list And stage = STAGE_LINK Then
-			If Not modid Then
-				If Not list.Contains(obj_path) Then
-					list.AddLast(obj_path)
+		If linksCache Then
+		
+			If lastCache <> modsOnly Then
+				linksCache = Null
+				optsCache = Null
+				doneLinks = False
+			End If
+		
+		End If
+		
+		If doneLinks Then
+			Return
+		End If
+		
+		doneLinks = True
+
+		If Not linksCache Then
+			linksCache = New TList
+			optsCache = New TList
+			lastCache = modsOnly
+		
+
+			If list And stage = STAGE_LINK Then
+				If Not modid Then
+					If Not list.Contains(obj_path) Then
+						list.AddLast(obj_path)
+						
+						linksCache.AddLast(obj_path)
 					
-					If opt_universal And processor.Platform() = "ios" Then
-						MakeFatter(list, obj_path)
+						If opt_universal And processor.Platform() = "ios" Then
+							MakeFatter(list, obj_path)
+						End If
 					End If
 				End If
 			End If
-		End If
-
-		If depsList And list Then
-			For Local s:TSourceFile = EachIn depsList
-				If Not modsOnly Or (modsOnly And s.modid) Then
-					If Not stage Then
-						If Not s.modid Then
-							If s.obj_path And Not list.Contains(s.obj_path) Then
-								list.AddLast(s.obj_path)
-								
-								If opt_universal And processor.Platform() = "ios" Then
-									MakeFatter(list, s.obj_path)
+	
+			If depsList And list Then
+				For Local s:TSourceFile = EachIn depsList
+					If Not modsOnly Or (modsOnly And s.modid) Then
+						If Not stage Then
+							If Not s.modid Then
+								If s.obj_path And Not list.Contains(s.obj_path) Then
+									list.AddLast(s.obj_path)
+									
+									linksCache.AddLast(s.obj_path)
+									
+									If opt_universal And processor.Platform() = "ios" Then
+										MakeFatter(list, s.obj_path)
+									End If
 								End If
 							End If
 						End If
 					End If
-				End If
-				
-				s.GetLinks(list, opts, modsOnly)
 
+					If s.exti = SOURCE_BMX Or s.exti = SOURCE_IFACE Or s.modid Then
+						s.GetLinks(list, opts, modsOnly, linksCache, optsCache)
+					End If
+	
+				Next
+			End If
+	
+			If moddeps Then
+				For Local s:TSourceFile = EachIn moddeps.Values()
+					s.GetLinks(list, opts, True, linksCache, optsCache)
+				Next
+			End If
+	
+			If mod_opts Then
+				For Local f:String = EachIn mod_opts.ld_opts
+					Local p:String = TModOpt.SetPath(f, ExtractDir(path))
+					If Not list.Contains(p) Then
+						list.AddLast(p)
+						
+						linksCache.AddLast(p)
+					End If
+				Next
+			End If
+		
+			If ext_files Then
+				For Local f:String = EachIn ext_files
+					' remove previous link, add latest to the end...
+					If opts.Contains(f) Then
+						opts.Remove(f)
+						
+						optsCache.Remove(f)
+					End If
+					opts.AddLast(f)
+					
+					optsCache.AddLast(f)
+				Next
+			End If
+			
+			If cList Then
+				For Local s:String = EachIn linksCache
+					cList.AddLast(s)
+				Next
+				For Local f:String = EachIn optsCache
+					If cOpts.Contains(f) Then
+						cOpts.Remove(f)
+					End If
+					cOpts.AddLast(f)
+				Next
+			End If
+
+		Else
+
+			For Local s:String = EachIn linksCache
+				list.AddLast(s)
 			Next
-		End If
-
-		If moddeps Then
-
-			For Local s:TSourceFile = EachIn moddeps.Values()
-				s.GetLinks(list, opts, True)
-			Next
-		End If
-
-		If mod_opts Then
-			For Local f:String = EachIn mod_opts.ld_opts
-				Local p:String = TModOpt.SetPath(f, ExtractDir(path))
-				If Not list.Contains(p) Then
-					list.AddLast(p)
-				End If
-			Next
-		End If
-
-		If ext_files Then
-			For Local f:String = EachIn ext_files
-				' remove previous link, add latest to the end...
+		
+			For Local f:String = EachIn optsCache
 				If opts.Contains(f) Then
 					opts.Remove(f)
 				End If
 				opts.AddLast(f)
 			Next
+
+			If cList Then
+				For Local s:String = EachIn linksCache
+					cList.AddLast(s)
+				Next
+				For Local f:String = EachIn optsCache
+					If cOpts.Contains(f) Then
+						cOpts.Remove(f)
+					End If
+					cOpts.AddLast(f)
+				Next
+			End If
+
 		End If
 
 	End Method
@@ -233,6 +313,7 @@ Type TSourceFile
 
 	Method CopyInfo(source:TSourceFile)
 		source.ext = ext
+		source.exti = exti
 		source.path = path
 		source.modid = modid
 		source.framewk = framewk
@@ -317,6 +398,7 @@ Function ParseSourceFile:TSourceFile( path$ )
 
 	Local file:TSourceFile=New TSourceFile
 	file.ext=ext
+	file.exti=exti
 	file.path=path
 	file.time = FileTime(path)
 	
@@ -641,6 +723,7 @@ Function ParseISourceFile:TSourceFile( path$ )
 
 	Local file:TSourceFile=New TSourceFile
 	file.ext="i"
+	file.exti=SOURCE_IFACE
 	file.path=path
 	file.time = FileTime(path)
 	
