@@ -418,6 +418,9 @@
 	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")
 	globals.SetOption("cc_opts", "linker", "-c")
 	globals.SetOption("cc_opts", "optimization", "-O2")
+	if bmk.CPU() == "x64" then
+		globals.SetOption("cc_opts", "simd", "-msse4")
+	end
 	
 	if bmk.IsDebugBuild() == 0 then
 		if bmk.Platform() ~= "emscripten" then
