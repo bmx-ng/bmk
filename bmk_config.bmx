@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.13"
+Const BMK_VERSION:String = "3.14"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -34,11 +34,16 @@ Global opt_appstub$="brl.appstub" ' BaH 28/9/2007
 Global opt_universal=False
 Global opt_target_platform:String
 Global opt_gdbdebug=False
+Global opt_gdbdebug_set=False
 Global opt_standalone=False
+Global opt_standalone_set=False
 Global opt_nolog
 Global opt_quickscan=False
+Global opt_quickscan_set=False
 Global opt_nostrictupgrade=False
+Global opt_nostrictupgrade_set=False
 Global opt_warnover=False
+Global opt_warnover_set=False
 
 Global opt_dumpbuild
 
@@ -217,14 +222,19 @@ Function ParseConfigArgs$[]( args$[] )
 			End Select
 		Case "gdb"
 			opt_gdbdebug = True
+			opt_gdbdebug_set = True
 		Case "standalone"
 			opt_standalone = True
+			opt_standalone_set = True
 		Case "quick"
+			opt_quickscan = True
 			opt_quickscan = True
 		Case "nostrictupgrade"
 			opt_nostrictupgrade = True
+			opt_nostrictupgrade_set = True
 		Case "w"
 			opt_warnover = True
+			opt_warnover_set = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -433,4 +443,69 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ " (cpu x" + cores + ")"
 	
 	Print s + "~n"
+End Function
+
+Function AsConfigurable:Int(key:String, value:String)
+	Local config:Int = False
+	Local set:Int = 0
+	Select key
+		Case "opt_warnover"
+			If Not opt_warnover_set Then
+				opt_warnover = Int(value)
+				set = 1
+			Else
+				If opt_warnover <> Int(value) Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_quickscan"
+			If Not opt_quickscan_set Then
+				opt_quickscan = Int(value)
+				set = 1
+			Else
+				If opt_quickscan <> Int(value) Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_gdbdebug"
+			If Not opt_gdbdebug_set Then
+				opt_gdbdebug = Int(value)
+				set = 1
+			Else
+				If opt_gdbdebug <> Int(value) Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_standalone"
+			If Not opt_standalone_set Then
+				opt_standalone = Int(value)
+				set = 1
+			Else
+				If opt_standalone <> Int(value) Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_nostrictupgrade"
+			If Not opt_nostrictupgrade_set Then
+				opt_nostrictupgrade = Int(value)
+				set = 1
+			Else
+				If opt_nostrictupgrade <> Int(value) Then
+					set = 2
+				End If
+			End If
+			config = True
+	End Select
+	If set And opt_verbose Then
+		If set = 1 Then
+			Print "Using " + key.ToUpper() + " = " + value
+		Else
+			Print "Config " + key.ToUpper() + " = " + value + "  was NOT used because command-line arguments override it"
+		End If
+	End If
+	Return config
 End Function

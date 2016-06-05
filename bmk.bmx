@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.14 05/06/2016 - Can now set command-line options via custom.bmk.
 ' 3.13 21/05/2016 - Added default simd cc_opt for x64 (-msse4).
 ' 3.12 17/04/2016 - App link optimisations.
 ' 3.11 20/02/2016 - Added -nostrictupgrade option for NG.
