@@ -11,6 +11,7 @@ Const BMK_VERSION:String = "3.14"
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
 Global opt_arch$
+Global opt_arch_set=False
 Global opt_server$
 Global opt_outfile$
 Global opt_framework$
@@ -33,6 +34,7 @@ Global opt_traceheaders
 Global opt_appstub$="brl.appstub" ' BaH 28/9/2007
 Global opt_universal=False
 Global opt_target_platform:String
+Global opt_target_platform_set=False
 Global opt_gdbdebug=False
 Global opt_gdbdebug_set=False
 Global opt_standalone=False
@@ -155,21 +157,8 @@ Function ParseConfigArgs$[]( args$[] )
 			n:+1
 			If n=args.length CmdError "Missing arg for '-g'"
 			opt_arch=args[n].ToLower()
-			Select opt_arch
-				Case "ppc"
-				Case "x86"
-				Case "x64"
-				Case "arm"
-				Case "armeabi"
-				Case "armeabiv7a"
-				Case "arm64v8a"
-				Case "armv7"
-				Case "arm64"
-				Case "js"
-				Default
-					' oops
-					CmdError "Not a valid architecture : '" + opt_arch + "'"
-			End Select
+			ValidateArch(opt_arch)
+			opt_arch_set = True
 		Case "t"
 			n:+1
 			If n=args.length CmdError "Missing arg for '-t'"
@@ -207,19 +196,8 @@ Function ParseConfigArgs$[]( args$[] )
 			n:+1
 			If n=args.length CmdError "Missing arg for '-l'"
 			opt_target_platform=args[n].ToLower()
-			Select opt_target_platform
-				Case "win32"
-				Case "macos"
-				Case "osx"
-				Case "ios"
-				Case "linux"
-				Case "android"
-				Case "raspberrypi"
-				Case "emscripten"
-				Default
-					' oops
-					CmdError "Not valid platform : '" + opt_target_platform + "'"
-			End Select
+			ValidatePlatform(opt_target_platform)
+			opt_target_platform_set = True
 		Case "gdb"
 			opt_gdbdebug = True
 			opt_gdbdebug_set = True
@@ -499,6 +477,28 @@ Function AsConfigurable:Int(key:String, value:String)
 				End If
 			End If
 			config = True
+		Case "opt_arch"
+			If Not opt_arch_set Then
+				opt_arch = value.ToLower()
+				ValidateArch(opt_arch)
+				set = 1
+			Else
+				If opt_arch <> value.ToLower() Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_target_platform"
+			If Not opt_target_platform_set Then
+				opt_target_platform = value.ToLower()
+				ValidatePlatform(opt_target_platform)
+				set = 1
+			Else
+				If opt_target_platform <> value.ToLower() Then
+					set = 2
+				End If
+			End If
+			config = True
 	End Select
 	If set And opt_verbose Then
 		If set = 1 Then
@@ -508,4 +508,37 @@ Function AsConfigurable:Int(key:String, value:String)
 		End If
 	End If
 	Return config
+End Function
+
+Function ValidateArch(arch:String)
+	Select arch
+		Case "ppc"
+		Case "x86"
+		Case "x64"
+		Case "arm"
+		Case "armeabi"
+		Case "armeabiv7a"
+		Case "arm64v8a"
+		Case "armv7"
+		Case "arm64"
+		Case "js"
+		Default
+			CmdError "Not a valid architecture : '" + arch + "'"
+	End Select
+End Function
+
+Function ValidatePlatform(platform:String)
+	Select platform
+		Case "win32"
+		Case "macos"
+		Case "osx"
+		Case "ios"
+		Case "linux"
+		Case "android"
+		Case "raspberrypi"
+		Case "emscripten"
+		Default
+			' oops
+			CmdError "Not valid platform : '" + platform + "'"
+	End Select
 End Function
