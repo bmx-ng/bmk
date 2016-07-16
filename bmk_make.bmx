@@ -309,6 +309,9 @@ Type TBuildManager
 			If opt_warnover Then
 				bcc_opts:+" -w"
 			End If
+			If opt_musl Then
+				bcc_opts:+" -musl"
+			End If
 		End If
 
 		source.cc_opts :+ cc_opts
@@ -1038,6 +1041,9 @@ Type TBuildManager
 				End If
 				If opt_warnover Then
 					bcc_opts:+" -w"
+				End If
+				If opt_musl Then
+					bcc_opts:+" -musl"
 				End If
 			End If
 	

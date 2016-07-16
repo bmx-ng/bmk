@@ -274,7 +274,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib" ) )
 	
 		If Not opt_dumpbuild cmd:+" -filelist "+CQuote( tmpfile )
-		
+
 		For Local t$=EachIn lnk_files
 			If opt_dumpbuild Or (t[..1]="-")
 				cmd:+" "+t 
@@ -416,6 +416,10 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			' if using 4.8+ or mingw64, we need to link to pthreads
 			If version >= 40800 Or processor.HasTarget("x86_64") Then
 				files :+ " -lwinpthread "
+				
+				If processor.CPU()="x86" Then
+					files:+" -lgcc"
+				End If
 			End If
 			
 			files :+ " -lmoldname -lmsvcrt "
@@ -452,6 +456,9 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		End If
 		If processor.CPU() = "x64" Or processor.CPU() = "arm64" Then
 			cmd:+" -m64"
+		End If
+		If opt_static Then
+			cmd:+" -static"
 		End If
 		cmd:+" -pthread"
 		cmd:+" -o "+CQuote( path )

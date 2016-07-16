@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.14"
+Const BMK_VERSION:String = "3.15"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
 
@@ -46,6 +46,10 @@ Global opt_nostrictupgrade=False
 Global opt_nostrictupgrade_set=False
 Global opt_warnover=False
 Global opt_warnover_set=False
+Global opt_musl=False
+Global opt_musl_set=False
+Global opt_static=False
+Global opt_static_set=False
 
 Global opt_dumpbuild
 
@@ -213,6 +217,12 @@ Function ParseConfigArgs$[]( args$[] )
 		Case "w"
 			opt_warnover = True
 			opt_warnover_set = True
+		Case "musl"
+			opt_musl = True
+			opt_musl_set = True
+		Case "static"
+			opt_static = True
+			opt_static_set = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -328,6 +338,9 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and emscripten.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
 		s:+ "~n~n"
+		s:+ "~t-musl~n"
+		s:+ "~t~tEnable musl libc compatibility. (Linux NG only)"
+		s:+ "~n~n"
 		s:+ "~t-nostrictupgrade~n"
 		s:+ "~t~tDon't upgrade strict method void return types, if required. (NG only)~n"
 		s:+ "~t~tIf a Strict sub type overrides the method of a SuperStrict type and the return type is void,~n"
@@ -352,6 +365,9 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t-standalone~n"
 		s:+ "~t~tGenerate but do not compile into binary form.~n"
 		s:+ "~t~tUseful for creating ready-to-build source for a different platform/architecture."
+		s:+ "~n~n"
+		s:+ "~t-static~n"
+		s:+ "~t~tStatically link binary. (Linux NG only)"
 		s:+ "~n~n"
 		s:+ "~t-t <app type>~n"
 		s:+ "~t~tSpecify application type. (makeapp only)~n"
@@ -495,6 +511,26 @@ Function AsConfigurable:Int(key:String, value:String)
 				set = 1
 			Else
 				If opt_target_platform <> value.ToLower() Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_musl"
+			If Not opt_musl_set Then
+				opt_musl = Int(value)
+				set = 1
+			Else
+				If opt_musl <> Int(value) Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_static"
+			If Not opt_static_set Then
+				opt_static = Int(value)
+				set = 1
+			Else
+				If opt_static <> Int(value) Then
 					set = 2
 				End If
 			End If

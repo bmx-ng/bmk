@@ -417,7 +417,7 @@
 
 	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")
 	globals.SetOption("cc_opts", "linker", "-c")
-	globals.SetOption("cc_opts", "optimization", "-O2")
+	globals.SetOption("cc_opts", "optimization", "-O3")
 	if bmk.CPU() == "x64" then
 		globals.SetOption("cc_opts", "simd", "-msse4")
 	end
