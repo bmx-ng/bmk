@@ -638,6 +638,11 @@ Function ParseSourceFile:TSourceFile( path$ )
 					If processor.BCCVersion() <> "BlitzMax" Then
 						cc=True
 					End If
+				Case "musl"
+					cc=False
+					If processor.Platform() = "linux" Or processor.Platform() ="raspberrypi"
+						 cc=True
+					End If
 				Default
 					cc=False
 				End Select
