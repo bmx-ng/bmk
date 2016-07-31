@@ -782,7 +782,7 @@ Type TBuildManager
 						
 							source.AddIncludePath(" -I" + CQuote(ExtractDir(path)))
 							
-						Else If Match(ext, "o") Then ' object?
+						Else If Match(ext, "o;a") Then ' object or archive?
 						
 							Local s:TSourceFile = New TSourceFile
 							s.time = FileTime(path)
@@ -799,7 +799,6 @@ Type TBuildManager
 								source.depsList = New TList
 							End If
 							source.depsList.AddLast(s)
-						
 						End If
 						
 					End If

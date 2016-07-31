@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.16 31/07/2016 - Added support for direct import of .a files.
 ' 3.15 16/07/2016 - Linux build additions. Support for musl libc and static linking.
 '                   Fixed Win32 32-bit link issue on recent 64-bit MinGW.
 ' 3.14 05/06/2016 - Can now set command-line options via custom.bmk.
