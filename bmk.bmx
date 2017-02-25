@@ -1,5 +1,6 @@
 '
 ' Change History :
+' 3.17 25/02/2017 - Support for single-target MinGW32 distros (eg. MinGW-w64), with paths MinGW32x86 and MinGW32x64.
 ' 3.16 31/07/2016 - Added support for direct import of .a files.
 ' 3.15 16/07/2016 - Linux build additions. Support for musl libc and static linking.
 '                   Fixed Win32 32-bit link issue on recent 64-bit MinGW.

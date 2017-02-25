@@ -400,7 +400,7 @@ Type TBMK
 ?threaded
 		processManager.DoSystem(cmd, src)
 ?Not threaded
-		Return system_( cmd )
+		Return  system_( cmd )
 ?
 		End If
 	End Method
@@ -589,6 +589,21 @@ Type TBMK
 		If Not _path Then
 			Local path:String
 			' look for local MinGW32 dir
+			' some distros (eg. MinGW-w64) only support a single target architecture - x86 or x64
+			' to compile for both, requires two separate MinGW installations. Check against
+			' CPU target based dir first, before working through the fallbacks.
+			Local cpuMinGW:String = "/MinGW32x86"
+			If processor.CPU()="x64" Then
+				cpuMinGW = "/MinGW32x64"
+			EndIf
+
+			path = BlitzMaxPath() + cpuMinGW + "/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_path = BlitzMaxPath() + cpuMinGW 
+				Return _path
+			End If
+			
 			path = BlitzMaxPath() + "/MinGW32/bin"
 			If FileType(path) = FILETYPE_DIR Then
 				' bin dir exists, go with that
