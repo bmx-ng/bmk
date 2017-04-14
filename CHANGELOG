@@ -1,0 +1,245 @@
+## [3.17] - 2017-02-25
+### Added
+ - Support for single-target MinGW32 distros (eg. MinGW-w64), with paths MinGW32x86 and MinGW32x64.
+
+## [3.16] - 2016-07-31
+### Added
+ - Support for direct import of .a files.
+
+## [3.15] - 2016-07-16
+### Fixed
+ - Win32 32-bit link issue on recent 64-bit MinGW.
+### Added
+ - Linux build additions. Support for musl libc and static linking.
+ 
+## [3.14] - 2016-06-05
+### Added
+ - Can now set command-line options via custom.bmk.
+
+## [3.13] - 2016-05-21
+### Added
+ - Default simd cc_opt for x64 (-msse4).
+ 
+## [3.12] - 2016-04-17
+### Changed 
+ App link optimisations.
+ 
+## [3.11] - 2016-02-20
+### Added
+ - nostrictupgrade option for NG.
+ - -w option for NG.
+ - Support Linux/Pi ARM64 build options.
+ 
+## [3.10] - 2016-01-26
+### Fixed
+ - Includes exuberance.
+### Added
+ - Support generic Linux ARM builds.
+
+## [3.09] - 2015-11-07
+### Fixed
+ - Android x86/x64 tool paths.
+### Changed
+ - Android now links to (and includes) stlport_shared.
+ 
+## [3.08] - 2015-11-01
+### Added
+ - New CPP_OPTS and C_OPTS options for C++ and C specific compiler options respectively.
+ 
+## [3.07] - 2015-10-28
+### Fixed
+ - Android debug builds.
+ - Improved iOS 9 support.
+ 
+## [3.06] - 2015-08-31
+### Fixed
+ - Copy android resources to apk.
+### Added
+ - Universal ios builds (x86+x64, armv7+arm64).
+ - ?ptr32 and ?ptr64 compiler definitions.
+
+## [3.05] - 2015-08-04
+### Added
+ - Support for ios target.
+
+## [3.04] - 2015-07-03
+### Added
+ - -quick app build option - skips building/checking required module if .a and .i present.
+
+## [3.03] - 2015-06-20
+### Changed
+ - Legacy bcc installations can now use local MinGW32 dir.
+
+## [3.02] - 2015-06-10
+### Added
+ - Standalone app build generation. Generates source and build script for bmk/bcc-less compile.
+
+## [3.01] - 2015-05-28
+### Fixed
+ - OS X sysroot issue, and enhanced OS X configuration.
+### Changed
+ - Reworked android stuff to work with standard setup.
+ - Improved support for mixed builds (compiling between legacy and ng)
+
+## [3.00] - 2015-05-05 "Chirpy Chipmunk"
+### Added
+ - Progress information.
+### Changed
+ - Redesign of dependency processing - parallel build!
+ - Now uses thread pool.
+ 
+## [2.25] - 2015-02-15
+### Fixed
+ - Fix for preprocessor bmxng version check.
+ - Win32 pthread link order issue.
+### Changed
+ - Use Win32 pthread link for GCC 4.8+
+ 
+## [2.24] - 2015-01-22
+### Added
+ - Support for emscripten target.
+ - Auto suffix .html for emscripten apps.
+ - Platform/arch validation.
+ - Opengles target platform preprocessor option.
+ - Project-specific pre-processing - "<app file>.bmk".
+ - Gdb debug generation option.
+
+## [2.23] - 2014-12-01
+### Added
+ - Direct support for android and raspberrypi targets.
+ - Android configuration settings and project template.
+
+## [2.22] - 2014-10-02
+### Fixed
+ - Handle quotes in Import strings.
+### Added
+ - Add MinGW/bin to PATH on Windows.
+### Changed
+ - Win32 NG will now prefer MINGW-located files (bin/lib), instead of BlitzMax bin/lib.
+ - Use .exe suffixes for binaries on Windows.
+ - Minimum OS-X version 10.5 (circa 2007).
+ - Release builds are stripped by default. Can be overridden with 'stripsymbols' option.
+
+## [2.21] - 2014-08-28
+### Added
+ - Support for 64-bit Win32 build options.
+
+## [2.20] - 2014-07-17
+### Fixed
+ - Issue with Linux popen signature and old bcc.
+### Changed
+ - Improved target (cross-compile) options.
+
+## [2.19] - 2014-06-05
+### Fixed
+ - Linux compilation fix for new bcc.
+### Changed
+ - Architecture tweaks and documentation update.
+ - Removed bb2bmx/convertbb option.
+
+## [2.18] - 2014-04-13
+### Added
+ - Support for 64-bit OS X build options.
+ - New bcc c/c++ compiler definition : BMX_NG
+
+## [2.17] - 2014-02-25
+### Added
+ - upport multiple build systems.
+ - Linux custom tool locations.
+
+## [2.16] - 2013-12-07
+### Fixed
+ - Return correct version when using clang as gcc compiler.
+ - Module hierarchical build issue.
+### Added
+ - Support for pre-build scripts.
+ - Configurable ld_opts settings.
+### Changed
+ - Changes for OS X sandbox/codesign support.
+ - Enhanced inline pragma support.
+ 
+## [2.15] - 2012-12-04
+### Added
+ - Update to latest official changes.
+
+## [2.14] - 2011-10-05
+### Fixed
+ - Mingw gcc 4.6+ build problems.
+### Added
+ - Recent official changes.
+
+## [2.13] - 2011-08-21
+### Fixed
+ - ModuleInfo quotes support.
+
+## [2.12] - 2011-07-30
+### Changed
+ - OSX 10.7 (Lion) tweaks.
+
+## [2.11] - 2011-02-27
+### Changed
+ - Use g++ instead of ld for linking on win32.
+
+## [2.10] - 2011-02-24
+#Added
+ - Option for skipping module builds.
+
+## [2.09] - 2010-04-30
+### Fixed
+ - loadBMK to work for local app folder.
+
+## [2.08] - 2010-04-05
+### Fixed
+ - PPC universal link issue.
+### Added
+ - Tommo's include speedup fix.
+
+## [2.07] - 2010-01-28
+### Fixed
+ - Win32 linking to include libmingw32 both at the start and end of the list. (should cover 3.9.5 and 4.x gcc's)
+
+## [2.06] - 2009-12-30
+### Added
+ - APPID variable for scripts on Mac (useful for custom plists).
+
+## [2.05] - 2009-12-10
+### Fixed
+ - Linux optimization flag -Os always being set.
+### Added
+ - .cc file support.
+
+## [2.04] - 2009-06-28
+### Changed
+ - Tweaked thread error reporting.
+ - Small speedup with threading.
+
+## [2.03] - 2009-06-28
+### Fixed
+ - Import ordering.
+### Changed
+ - Improved custom options support for Universal builds.
+
+## [2.02] - 2009-06-08
+### Fixed
+ - Multiple defines problem.
+ 
+## [2.01] - 2009-06-07
+### Fixed
+ - Dependency compilation issue - or lack of it!
+ 
+## [< 2.00] - 2009-05-26
+### Added
+ - Multi-process (threading) support.
+### Changed
+ - Improved custom variable overriding.
+
+## [< 2.00] - 2009-05-18
+### Added
+ - Universal support (Mac) with -i parameter.
+ - Cross-compile support with -l win32.
+
+## [< 2.00] - 2007-09-28
+### Added
+ - Custom appstub compiles using -b parameter.
+### Changed
+ - Synched with current bmk source.
