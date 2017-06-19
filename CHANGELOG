@@ -1,3 +1,9 @@
+## [3.18] - 2017-06-19
+### Added
+ - Support for native asm compilation.
+### Changed
+ - NG builds are now threaded by default.
+
 ## [3.17] - 2017-02-25
 ### Added
  - Support for single-target MinGW32 distros (eg. MinGW-w64), with paths MinGW32x86 and MinGW32x64.

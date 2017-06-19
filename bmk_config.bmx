@@ -6,9 +6,9 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.17"
+Const BMK_VERSION:String = "3.18"
 
-Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc"
+Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
 Global opt_arch$
 Global opt_arch_set=False
@@ -115,7 +115,7 @@ Function CmdError(details:String = Null, fullUsage:Int = False)
 	Throw s
 End Function
 
-Function ParseConfigArgs$[]( args$[] )
+Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 
 	Local n
 	
@@ -227,6 +227,13 @@ Function ParseConfigArgs$[]( args$[] )
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
 	Next
+	
+	If Not legacyMax Then
+		If opt_threaded And opt_verbose Then
+			Print "Note: NG builds are threaded by default."
+		End If
+		opt_threaded=True
+	End If
 	
 	Return args[n..]
 

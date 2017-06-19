@@ -14,7 +14,7 @@ If AppArgs.length<2 CmdError "Not enough parameters", True
 
 Local cmd$=AppArgs[1],args$[]
 
-args=ParseConfigArgs( AppArgs[2..] )
+args=ParseConfigArgs( AppArgs[2..], processor.BCCVersion() = "BlitzMax" )
 
 ' validate the platform configuration
 ValidatePlatformArchitecture()
@@ -99,13 +99,17 @@ Function SetConfigMung()
 	If opt_release
 		opt_debug=False
 		opt_configmung="release"
-		If opt_threaded opt_configmung:+".mt"
+		If processor.BCCVersion() = "BlitzMax" Then
+			If opt_threaded opt_configmung:+".mt"
+		End If
 		opt_configmung="."+opt_configmung+"."+processor.Platform()+"."'+opt_arch
 	Else
 		opt_debug=True
 		opt_release=False
 		opt_configmung="debug"
-		If opt_threaded opt_configmung:+".mt"
+		If processor.BCCVersion() = "BlitzMax" Then
+			If opt_threaded opt_configmung:+".mt"
+		End If
 		opt_configmung="."+opt_configmung+"."+processor.Platform()+"."'+opt_arch
 	EndIf
 End Function

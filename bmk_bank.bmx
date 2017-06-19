@@ -9,7 +9,11 @@ Import BRL.SocketStream
 Function CompressBank:TBank( bank:TBank )
 
 	Local size=bank.Size()
+?bmxng
+	Local out_size:UInt=size+size/10+32
+?Not bmkng
 	Local out_size=size+size/10+32
+?
 	Local out:TBank=TBank.Create( out_size )
 	compress out.Buf()+4,out_size,bank.Buf(),size
 	out.PokeByte 0,size
@@ -23,7 +27,11 @@ End Function
 
 Function UncompressBank:TBank( bank:TBank )
 
+?bmxng
+	Local out_size:UInt
+?Not bmkng
 	Local out_size
+?
 	out_size:|bank.PeekByte(0)
 	out_size:|bank.PeekByte(1) Shl 8
 	out_size:|bank.PeekByte(2) Shl 16

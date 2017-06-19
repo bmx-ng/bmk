@@ -39,6 +39,29 @@
 	end
 @end
 
+@define assembleNative
+	local src = nvl(arg1, %infile%)
+	local obj = nvl(arg2, %outfile%)
+
+	sys.DeleteFile(obj)
+	
+	cmd = "as"
+	
+	if bmk.Platform() == "win32" then
+		if bmk.CPU() == "x86" then
+			cmd = cmd .. " -arch i686"
+		else
+			cmd = cmd .. " -arch generic64"
+		end
+	end
+	
+	cmd = cmd .. " -W -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+
+	if bmk.MultiSys(cmd, src) ~= 0 then
+		bmk.ThrowNew("Build Error: Failed to assemble " .. src)
+	end
+@end
+
 @define compileBMX
 	local src = nvl(arg1, %infile%)
 	local obj = nvl(arg2, %outfile%)

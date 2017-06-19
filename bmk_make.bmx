@@ -598,6 +598,8 @@ Type TBuildManager
 
 							If m.path.EndsWith(".cpp") Or m.path.EndsWith("cc") Then
 								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.cpp_opts
+							ElseIf m.path.EndsWith(".S") Or m.path.EndsWith("asm") Then
+								AssembleNative m.path, m.obj_path
 							Else
 								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.c_opts
 							End If
@@ -782,7 +784,7 @@ Type TBuildManager
 						
 							source.AddIncludePath(" -I" + CQuote(ExtractDir(path)))
 							
-						Else If Match(ext, "o;a") Then ' object or archive?
+						Else If Match(ext, "o;a;lib") Then ' object or archive?
 						
 							Local s:TSourceFile = New TSourceFile
 							s.time = FileTime(path)
@@ -870,6 +872,7 @@ Type TBuildManager
 				If Match(ext, ALL_SRC_EXTS) Then
 
 					If Not isInclude Then
+
 						sources.Insert(source_path, source)
 						
 						source.obj_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".o"
