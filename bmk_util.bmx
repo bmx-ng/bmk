@@ -104,6 +104,10 @@ Function Assemble( src$,obj$ )
 	processor.RunCommand("assemble", [src, obj])
 End Function
 
+Function AssembleNative( src$, obj$ )
+	processor.RunCommand("assembleNative", [src, obj])
+End Function
+
 Function Fasm2As( src$,obj$ )
 	processor.RunCommand("fasm2as", [src, obj])
 End Function
@@ -304,7 +308,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		'	usingLD = True
 		'End If
 		' or we can override in the config...
-		If globals.Get("link_with_ld") Or version >= 40600 Then
+		If globals.Get("link_with_ld") Or (version >= 40600 And version < 60000) Then
 			usingLD = True
 		End If
 		
@@ -318,10 +322,21 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			cmd :+ processor.option("strip.debug", " -s ")
 			If opt_apptype="gui" cmd:+" -subsystem windows"
 		Else
-			cmd=CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe"))+" --stack=4194304"
+			cmd=CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe"))
+
+			If version < 60000 Then
+				cmd :+" --stack=4194304"
+			Else
+				cmd :+ " -Wl,--stack,4194304"
+			End If
+
 			cmd :+ processor.option("strip.debug", " -s ")
 			If opt_apptype="gui"
-				cmd:+" --subsystem,windows -mwindows"
+				If version < 60000 Then
+					cmd:+" --subsystem,windows -mwindows"
+				Else
+					cmd:+" -Wl,--subsystem,windows -mwindows"
+				End If
 			Else
 				If Not makelib
 					cmd:+" -mconsole"
@@ -329,7 +344,11 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			End If
 			
 			If opt_threaded Then
-				cmd:+" -mthread"
+				If version < 60000 Then
+					cmd:+" -mthread"
+				Else
+					cmd:+" -mthreads"
+				End if
 			End If
 		End If
 		If makelib cmd:+" -shared"
