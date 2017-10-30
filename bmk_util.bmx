@@ -348,10 +348,14 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 					cmd:+" -mthread"
 				Else
 					cmd:+" -mthreads"
-				End if
+				End If
 			End If
 		End If
-		If makelib cmd:+" -shared"
+		If makelib Then
+			cmd:+" -shared"
+		Else
+			cmd:+" -static"
+		End If
 		
 		cmd:+" -o "+CQuote( path )
 		If usingLD Then
