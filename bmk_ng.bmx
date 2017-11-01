@@ -713,10 +713,16 @@ Type TBMK
 				
 				_path = path
 			Else
-				path :+ "lib/gcc/mingw32/" + GCCVersion(True, True)
+			
+				Local p:String = path +  "lib/gcc/mingw32/" + GCCVersion(True, True)
+				If FileType(p) = 0 Then
+					path :+ "lib/gcc/i686-w64-mingw32/" + GCCVersion(True, True)
+				Else
+					path = p
+				End If
 
 				If FileType(path) = 0 Then
-					Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
+					Throw "Could not determine MinGWCrtPath: Expecting '" + p + "' or '" + path + "'"
 				End If
 				
 				_path = path
