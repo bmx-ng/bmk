@@ -6,7 +6,7 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.18"
+Const BMK_VERSION:String = "3.19"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 

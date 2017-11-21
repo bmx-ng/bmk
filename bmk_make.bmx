@@ -1183,9 +1183,10 @@ Type TBuildManager
 			count :+ 1
 		Next
 		
+		
 		Local dependencies:TMap = New TMap
 		For Local m:TSourceFile = EachIn files
-			dependencies.Insert(m.GetSourcePath(), m.deps)
+			dependencies.Insert(m.GetSourcePath(), m.deps)		
 		Next
 		
 		Local pct:Float = 100.0 / count
@@ -1222,11 +1223,57 @@ Type TBuildManager
 					dep.Remove(name)
 				Next
 			Next
-		
+
 			Local list:TList = New TList
 			For Local name:String = EachIn noDeps
 				Local m:TSourceFile = TSourceFile(instances.ValueForKey(name))
+
 				list.AddLast(m)
+			Next 
+
+			batches.AddLast(list)
+		
+		Wend
+
+		' post process batches
+		Local suffix:String[]
+		For Local i:Int = 0 Until 2
+			Select i
+				Case 0
+					suffix = ["c", "cpp", "cc", "cxx"]
+				Case 1
+					suffix = ["o"]
+			End Select
+			
+			Local newList:TList = New TList
+		
+			For Local list:TList = EachIn batches
+	
+				For Local f:TSourceFile = EachIn list
+				
+					Local p:String = f.GetSourcePath()
+					
+					If Not p.EndsWith("bmx") Then
+						For Local s:String = EachIn suffix
+							If p.EndsWith(s) Then
+								newList.AddLast(f)
+								list.Remove(f)
+								If list.IsEmpty() Then
+									batches.Remove(list)
+								End If
+								' found, no need to loop further
+								Exit
+							End If
+						Next
+					End If
+				Next
+			Next
+			
+			batches.AddLast(newList)
+		Next
+		
+		For Local list:TList = EachIn batches
+			For Local m:TSourceFile = EachIn list
 				total :+ pct
 				num :+ 1
 				If num = count Then
@@ -1234,12 +1281,9 @@ Type TBuildManager
 				Else
 					m.pct = total
 				End If
-			Next 
+			Next
+		Next
 
-			batches.AddLast(list)
-		
-		Wend
-		
 		Return batches
 		
 	End Method
