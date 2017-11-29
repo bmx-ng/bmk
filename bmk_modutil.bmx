@@ -74,6 +74,8 @@ Type TSourceFile
 	Field optsCache:TList
 	Field lastCache:Int = -1
 	Field doneLinks:Int
+	'cache calculated MaxLinkTime()-value for faster lookups
+	Field maxLinkTimeCache:Int = -1
 	
 	' add cc_opts or ld_opts
 	Method AddModOpt(opt:String)
@@ -112,32 +114,45 @@ Type TSourceFile
 		End If
 	End Method
 
+	Method SetRequiresBuild(enable:int)
+		If requiresBuild <> enable Then
+			requiresBuild = enable
+			'seems our information is outdated now
+			If requiresBuild Then
+				maxLinkTimeCache = -1
+			End If
+		End If
+	End Method
+
 	Method MaxLinkTime:Int(modsOnly:Int = False)
-		Local t:Int
-		
-		If modid Then
-			t = arc_time
-		Else
-			t = obj_time
-		End If
-		If depsList Then
-			For Local s:TSourceFile = EachIn depsList
-				Local st:Int = s.MaxLinkTime(modsOnly)
-				If st > t Then
-					t = st
-				End If
-			Next
-		End If
-		If moddeps Then
-			For Local s:TSourceFile = EachIn moddeps.Values()
-				Local st:Int = s.MaxLinkTime(True)
-				If st > t Then
-					t = st
-				End If
-			Next
+		If maxLinkTimeCache = -1 Then
+			Local t:Int
+			If modid Then
+				t = arc_time
+			Else
+				t = obj_time
+			End If
+			If depsList Then
+				For Local s:TSourceFile = EachIn depsList
+					Local st:Int = s.MaxLinkTime(modsOnly)
+					If st > t Then
+						t = st
+					End If
+				Next
+			End If
+			If moddeps Then
+				For Local s:TSourceFile = EachIn moddeps.Values()
+					Local st:Int = s.MaxLinkTime(True)
+					If st > t Then
+						t = st
+					End If
+				Next
+			End If
+
+			maxLinkTimeCache = t
 		End If
 
-		Return t
+		Return maxLinkTimeCache
 	End Method
 	
 	Method MakeFatter(list:TList, o_path:String)
@@ -335,6 +350,7 @@ Type TSourceFile
 		source.cpp_opts = cpp_opts
 		source.c_opts = c_opts
 		source.CopyIncludePaths(includePaths)
+		source.maxLinkTimeCache = maxLinkTimeCache
 	End Method
 	
 	Method GetSourcePath:String()
