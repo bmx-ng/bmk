@@ -342,7 +342,7 @@ Type TBuildManager
 		
 		source.bcc_opts = bcc_opts
 
-		source.requiresBuild = opt_all
+		source.SetRequiresBuild(opt_all)
 
 		CalculateDependencies(source, False, opt_all)
 
@@ -414,7 +414,7 @@ Type TBuildManager
 						
 							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
 							
-								m.requiresBuild = True
+								m.SetRequiresBuild(True)
 
 								If Not opt_quiet Then
 									Print ShowPct(m.pct) + "Processing:" + StripDir(m.path)
@@ -436,14 +436,14 @@ Type TBuildManager
 
 							For Local s:TSourceFile = EachIn m.depsList
 								If s.requiresBuild Then
-									m.requiresBuild = True
+									m.SetRequiresBuild(True)
 									Exit
 								End If
 							Next
 
 							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
 							
-								m.requiresBuild = True
+								m.SetRequiresBuild(True)
 
 								If Not opt_quiet Then
 									Print ShowPct(m.pct) + "Converting:" + StripDir(StripExt(m.obj_path) + ".s")
@@ -459,7 +459,7 @@ Type TBuildManager
 
 							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
 							
-								m.requiresBuild = True
+								m.SetRequiresBuild(True)
 								
 								If processor.BCCVersion() <> "BlitzMax" Then
 
@@ -565,7 +565,7 @@ Type TBuildManager
 				Else If Match(m.ext, "s") Then
 
 					If m.time > m.obj_time Then ' object is older or doesn't exist
-						m.requiresBuild = True
+						m.SetRequiresBuild(True)
 					End If
 
 					If m.requiresBuild Then
@@ -587,7 +587,7 @@ Type TBuildManager
 					If Not m.dontbuild Then
 						' c/c++ source
 						If m.time > m.obj_time Then ' object is older or doesn't exist
-							m.requiresBuild = True
+							m.SetRequiresBuild(True)
 						End If
 						
 						If m.requiresBuild Then
@@ -707,7 +707,7 @@ Type TBuildManager
 					If s Then
 	
 						If rebuildImports Then
-							s.requiresBuild = rebuildImports
+							s.SetRequiresBuild(rebuildImports)
 						End If
 	
 						If Match(s.ext, "bmx") Then
@@ -739,11 +739,11 @@ Type TBuildManager
 							' if file that we generate is missing, we need to rebuild
 							If processor.BCCVersion() = "BlitzMax" Then
 								If Not FileType(StripExt(s.obj_path) + ".s") Then
-									s.requiresBuild = True
+									s.SetRequiresBuild(True)
 								End If
 							Else
 								If Not FileType(StripExt(s.obj_path) + ".c") Then
-									s.requiresBuild = True
+									s.SetRequiresBuild(True)
 								End If
 							End If
 							
@@ -1051,11 +1051,11 @@ Type TBuildManager
 	
 			source.bcc_opts = bcc_opts
 			
-			source.requiresBuild = rebuild
+			source.SetRequiresBuild(rebuild)
 
 			' interface is REQUIRED for compilation
 			If Not iface_time Then
-				source.requiresBuild = True
+				source.SetRequiresBuild(True)
 			End If
 
 			If m <> "brl.blitz" Then	

@@ -114,8 +114,18 @@ Type TSourceFile
 		End If
 	End Method
 
+	Method SetRequiresBuild(enable:int)
+		If requiresBuild <> enable Then
+			requiresBuild = enable
+			'seems our information is outdated now
+			If requiresBuild Then
+				maxLinkTimeCache = -1
+			End If
+		End If
+	End Method
+
 	Method MaxLinkTime:Int(modsOnly:Int = False)
-		If maxLinkTimeCache = -1
+		If maxLinkTimeCache = -1 Then
 			Local t:Int
 			If modid Then
 				t = arc_time
@@ -340,6 +350,7 @@ Type TSourceFile
 		source.cpp_opts = cpp_opts
 		source.c_opts = c_opts
 		source.CopyIncludePaths(includePaths)
+		source.maxLinkTimeCache = maxLinkTimeCache
 	End Method
 	
 	Method GetSourcePath:String()
