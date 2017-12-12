@@ -6,7 +6,10 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
-Const BMK_VERSION:String = "3.19"
+
+Import "stringbuffer_core.bmx"
+
+Const BMK_VERSION:String = "3.20"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -100,6 +103,8 @@ opt_arch="arm"
 ?raspberrypi64
 opt_arch="arm64"
 ?
+
+TStringBuffer.initialCapacity = 128
 
 ChangeDir LaunchDir
 

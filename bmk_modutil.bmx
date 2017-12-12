@@ -51,6 +51,7 @@ Type TSourceFile
 	Field arc_time:Int
 	Field asm_time:Int
 	Field iface_time:Int
+	Field gen_time:Int
 	Field requiresBuild:Int
 	Field dontBuild:Int
 	Field depsList:TList
@@ -114,7 +115,7 @@ Type TSourceFile
 		End If
 	End Method
 
-	Method SetRequiresBuild(enable:int)
+	Method SetRequiresBuild(enable:Int)
 		If requiresBuild <> enable Then
 			requiresBuild = enable
 			'seems our information is outdated now

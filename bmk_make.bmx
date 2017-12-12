@@ -293,24 +293,25 @@ Type TBuildManager
 			cc_opts :+ " -DNDEBUG"
 		End If
 	
-		Local bcc_opts:String = " -g " + processor.CPU()
-		If opt_quiet bcc_opts:+" -q"
-		If opt_verbose bcc_opts:+" -v"
-		If opt_release bcc_opts:+" -r"
-		If opt_threaded bcc_opts:+" -h"
-		If opt_framework bcc_opts:+" -f " + opt_framework
+		Local sb:TStringBuffer = New TStringBuffer
+		sb.Append(" -g ").Append(processor.CPU())
+		If opt_quiet sb.Append(" -q")
+		If opt_verbose sb.Append(" -v")
+		If opt_release sb.Append(" -r")
+		If opt_threaded sb.Append(" -h")
+		If opt_framework sb.Append(" -f ").Append(opt_framework)
 		If processor.BCCVersion() <> "BlitzMax" Then
 			If opt_gdbdebug Then
-				bcc_opts:+" -d"
+				sb.Append(" -d")
 			End If
 			If Not opt_nostrictupgrade Then
-				bcc_opts:+ " -s"
+				sb.Append(" -s")
 			End If
 			If opt_warnover Then
-				bcc_opts:+" -w"
+				sb.Append(" -w")
 			End If
 			If opt_musl Then
-				bcc_opts:+" -musl"
+				sb.Append(" -musl")
 			End If
 		End If
 
@@ -326,7 +327,7 @@ Type TBuildManager
 				Throw "Framework already specified on commandline"
 			End If
 			opt_framework = source.framewk
-			bcc_opts :+" -f " + opt_framework
+			sb.Append(" -f ").Append(opt_framework)
 			source.modimports.AddLast(opt_framework)
 		Else
 			framework_mods = New TList
@@ -340,7 +341,7 @@ Type TBuildManager
 			Next
 		End If
 		
-		source.bcc_opts = bcc_opts
+		source.bcc_opts = sb.ToString()
 
 		source.SetRequiresBuild(opt_all)
 
@@ -412,8 +413,8 @@ Type TBuildManager
 					Select m.stage
 						Case STAGE_GENERATE
 						
-							If m.requiresBuild Or (m.time > m.obj_time Or m.iface_time < m.MaxIfaceTime()) Then
-							
+							If m.requiresBuild Or (m.time > m.gen_time Or m.iface_time < m.MaxIfaceTime()) Then
+
 								m.SetRequiresBuild(True)
 
 								If Not opt_quiet Then
@@ -429,6 +430,7 @@ Type TBuildManager
 								CompileBMX m.path, m.obj_path, m.bcc_opts
 	
 								m.iface_time = time_(Null)
+								m.gen_time = time_(Null)
 					
 							End If
 
@@ -875,12 +877,27 @@ Type TBuildManager
 
 						sources.Insert(source_path, source)
 						
-						source.obj_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".o"
+						Local sp:String = Concat5(ExtractDir(source_path), "/.bmx/", StripDir(source_path), opt_configmung, processor.CPU())
+						
+						source.obj_path = sp + ".o"
 						source.obj_time = FileTime(source.obj_path)
 						
 						If Match(ext, "bmx") Then
-							source.iface_path = ExtractDir(source_path) + "/.bmx/" + StripDir(source_path) + opt_configmung + processor.CPU() + ".i"
+							source.iface_path = sp + ".i"
 							source.iface_time = FileTime(source.iface_path)
+							
+							' gen file times
+							If processor.BCCVersion() <> "BlitzMax" Then
+								Local p:String = sp + ".c"
+								source.gen_time = FileTime(p)
+								If source.gen_time Then
+									p = sp + ".h"
+									source.gen_time = Min(source.gen_time, FileTime(p))
+								End If
+							Else
+								Local p:String = sp + ".s"
+								source.gen_time = FileTime(p)
+							End If
 						End If
 					End If
 				End If
@@ -928,20 +945,22 @@ Type TBuildManager
 	
 		Local path:String = ModulePath(m)
 		Local id:String = ModuleIdent(m)
+		
+		Local mp:String = Concat5(path, "/", id, opt_configmung, processor.CPU())
 
 		' get the module interface and lib details
-		Local arc_path:String = path + "/" + id + opt_configmung + processor.CPU() + ".a"
+		Local arc_path:String = mp + ".a"
 		Local arc_time:Int = FileTime(arc_path)
-		Local iface_path:String = path + "/" + id + opt_configmung + processor.CPU() + ".i"
+		Local iface_path:String = mp + ".i"
 		Local iface_time:Int = FileTime(iface_path)
 		Local merge_path:String
 		Local merge_time:Int
 		
 		If processor.Platform() = "ios" Then
 			If processor.CPU() = "x86" Or processor.CPU() = "x64" Then
-				merge_path = path + "/" + id + opt_configmung + "sim.a"
+				merge_path = Concat5(path, "/", id, opt_configmung, "sim.a")
 			Else
-				merge_path = path + "/" + id + opt_configmung + "dev.a"
+				merge_path = Concat5(path, "/", id, opt_configmung, "dev.a")
 			End If
 			merge_time = FileTime(merge_path)
 		End If
@@ -985,7 +1004,7 @@ Type TBuildManager
 			link = source
 		Else
 
-			Local src_path:String = path + "/" + id + ".bmx"
+			Local src_path:String = Concat4(path, "/", id, ".bmx")
 			source = GetSourceFile(src_path, True, rebuild)
 	
 			If Not source Then
@@ -1028,28 +1047,29 @@ Type TBuildManager
 			source.c_opts :+ c_opts
 	
 			' Module BCC opts
-			Local bcc_opts:String = " -g "+processor.CPU()
-			bcc_opts :+ " -m " + m
-			If opt_quiet bcc_opts:+" -q"
-			If opt_verbose bcc_opts:+" -v"
-			If opt_release bcc_opts:+" -r"
-			If opt_threaded bcc_opts:+" -h"
+			Local sb:TStringBuffer = New TStringBuffer
+			sb.Append(" -g ").Append(processor.CPU())
+			sb.Append(" -m ").Append(m)
+			If opt_quiet sb.Append(" -q")
+			If opt_verbose sb.Append(" -v")
+			If opt_release sb.Append(" -r")
+			If opt_threaded sb.Append(" -h")
 			If processor.BCCVersion() <> "BlitzMax" Then
 				If opt_gdbdebug Then
-					bcc_opts:+" -d"
+					sb.Append(" -d")
 				End If
 				If Not opt_nostrictupgrade Then
-					bcc_opts:+ " -s"
+					sb.Append(" -s")
 				End If
 				If opt_warnover Then
-					bcc_opts:+" -w"
+					sb.Append(" -w")
 				End If
 				If opt_musl Then
-					bcc_opts:+" -musl"
+					sb.Append(" -musl")
 				End If
 			End If
 	
-			source.bcc_opts = bcc_opts
+			source.bcc_opts = sb.ToString()
 			
 			source.SetRequiresBuild(rebuild)
 

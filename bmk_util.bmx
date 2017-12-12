@@ -260,40 +260,45 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	Local files$
 	Local tmpfile$=BlitzMaxPath()+"/tmp/ld.tmp"
 	
+	Local sb:TStringBuffer = New TStringBuffer
+	Local fb:TStringBuffer = New TStringBuffer
+	
 	If opt_standalone tmpfile = String(globals.GetRawVar("EXEPATH")) + "/ld." + processor.AppDet() + ".txt.tmp"
 	
 	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
-		cmd="g++"
+		sb.Append("g++")
 
 		If processor.CPU()="ppc" 
-			cmd:+" -arch ppc" 
+			sb.Append(" -arch ppc" )
 		Else If processor.CPU()="x86"
-			cmd:+" -arch i386 -read_only_relocs suppress"
+			sb.Append(" -arch i386 -read_only_relocs suppress")
 		Else
-			cmd:+" -arch x86_64"
+			sb.Append(" -arch x86_64")
 		EndIf
 	
-		cmd:+" -o "+CQuote( path )
+		sb.Append(" -o ").Append(CQuote( path ))
 	
-		cmd:+" "+CQuote( "-L"+CQuote( BlitzMaxPath()+"/lib" ) )
+		sb.Append(" ").Append(CQuote("-L" +CQuote( BlitzMaxPath()+"/lib" ) ))
 	
-		If Not opt_dumpbuild cmd:+" -filelist "+CQuote( tmpfile )
+		If Not opt_dumpbuild Then
+			sb.Append(" -filelist ").Append(CQuote( tmpfile ))
+		End If
 
 		For Local t$=EachIn lnk_files
 			If opt_dumpbuild Or (t[..1]="-")
-				cmd:+" "+t 
+				sb.Append(" ").Append(t) 
 			Else
-				files:+t+Chr(10)
+				fb.Append(t).Append(Chr(10))
 			EndIf
 		Next
-		cmd:+" -lSystem -framework CoreServices -framework CoreFoundation"
+		sb.Append(" -lSystem -framework CoreServices -framework CoreFoundation")
 
 		If opts Then
-			cmd :+ " " + opts
+			sb.Append(" ").Append(opts)
 		End If
 		
 		If processor.CPU() = "ppc"
-			cmd:+ " -lc -lgcc_eh"
+			sb.Append(" -lc -lgcc_eh")
 		End If
 		
 	End If
@@ -318,66 +323,68 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		End If
 
 		If usingLD Then
-			cmd=CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))+" -stack 4194304"
-			cmd :+ processor.option("strip.debug", " -s ")
-			If opt_apptype="gui" cmd:+" -subsystem windows"
+			sb.Append(CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))).Append(" -stack 4194304")
+			sb.Append(processor.option("strip.debug", " -s "))
+			If opt_apptype="gui" Then
+				sb.Append(" -subsystem windows")
+			End If
 		Else
-			cmd=CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe"))
+			sb.Append(CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe")))
 
 			If version < 60000 Then
-				cmd :+" --stack=4194304"
+				sb.Append(" --stack=4194304")
 			Else
-				cmd :+ " -Wl,--stack,4194304"
+				sb.Append(" -Wl,--stack,4194304")
 			End If
 
-			cmd :+ processor.option("strip.debug", " -s ")
+			sb.Append(processor.option("strip.debug", " -s "))
 			If opt_apptype="gui"
 				If version < 60000 Then
-					cmd:+" --subsystem,windows -mwindows"
+					sb.Append(" --subsystem,windows -mwindows")
 				Else
-					cmd:+" -Wl,--subsystem,windows -mwindows"
+					sb.Append(" -Wl,--subsystem,windows -mwindows")
 				End If
 			Else
 				If Not makelib
-					cmd:+" -mconsole"
+					sb.Append(" -mconsole")
 				End If
 			End If
 			
 			If opt_threaded Then
 				If version < 60000 Then
-					cmd:+" -mthread"
+					sb.Append(" -mthread")
 				Else
-					cmd:+" -mthreads"
+					sb.Append(" -mthreads")
 				End If
 			End If
 		End If
 		If makelib Then
-			cmd:+" -shared"
+			sb.Append(" -shared")
 		Else
-			cmd:+" -static"
+			sb.Append(" -static")
 		End If
 		
-		cmd:+" -o "+CQuote( path )
+		sb.Append(" -o ").Append(CQuote( path ))
 		If usingLD Then
 			If processor.CPU()="x86"
-				cmd:+" "+ processor.MinGWLinkPaths() ' the BlitzMax lib folder
+				sb.Append(" ").Append(processor.MinGWLinkPaths()) ' the BlitzMax lib folder
 				
 				' linking for x86 when using mingw64 binaries
 				If processor.HasTarget("x86_64") Then
-					cmd:+" -mi386pe"
+					sb.Append(" -mi386pe")
 				End If
 			Else
-				cmd:+" "+ processor.MinGWLinkPaths() ' the BlitzMax lib folder 
+				sb.Append(" ").Append(processor.MinGWLinkPaths()) ' the BlitzMax lib folder 
 			End If
 
 			If globals.Get("path_to_mingw_lib") Then
-				cmd:+" "+CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") ) ) )
+				sb.Append(" ").Append(CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib", BlitzMaxPath()+"/lib") ) ) ))
 			End If
 			If globals.Get("path_to_mingw_lib2") Then
-				cmd:+" "+CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") ) ) )
+				sb.Append(" ").Append(CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib2", BlitzMaxPath()+"/lib") ) ) ))
 			End If
 			If globals.Get("path_to_mingw_lib3") Then
-				cmd:+" "+CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib3", BlitzMaxPath()+"/lib") ) ) )
+				sb.Append(" ").Append(CQuote( "-L"+CQuote( RealPath(processor.Option("path_to_mingw_lib3", BlitzMaxPath()+"/lib") ) ) ))
 			End If
 		End If
 	
@@ -385,15 +392,15 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			Local imp$=StripExt(path)+".a"
 			Local def$=StripExt(path)+".def"
 			If FileType( def )<>FILETYPE_FILE Throw "Cannot locate .def file"
-			cmd:+" "+def
-			cmd:+" --out-implib "+imp
+			sb.Append(" ").Append(def)
+			sb.Append(" --out-implib ").Append(imp)
 			If usingLD Then
-				files:+" "+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) )
+				fb.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) ))
 			End If
 		Else
 			If usingLD
-				files:+" "+CQuote( RealPath(processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtbegin.o" ) )
-				files:+" "+CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/crt2.o" ) )
+				fb.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtbegin.o" ) ))
+				fb.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/crt2.o" ) ))
 			End If
 		EndIf
 	
@@ -401,168 +408,174 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		For Local f$=EachIn lnk_files
 			Local t$=CQuote( f )
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
-				cmd:+" "+t
+				sb.Append(" ").Append(t)
 			Else
 				If f.EndsWith( "/win32maxguiex.mod/xpmanifest.o" )
 					xpmanifest=t
 				Else
-					files:+" "+t
+					fb.Append(" ").Append(t)
 				EndIf
 			EndIf
 		Next
-		If xpmanifest files:+" "+xpmanifest
+		If xpmanifest Then
+			fb.Append(" ").Append(xpmanifest)
+		End If
 		
-		cmd:+" "+CQuote( tmpfile )
+		sb.Append(" ").Append(CQuote( tmpfile ))
 	
-		files:+" -lgdi32 -lwsock32 -lwinmm -ladvapi32"
+		fb.Append(" -lgdi32 -lwsock32 -lwinmm -ladvapi32")
 
 		' add any user-defined linker options
-		files:+ " " + opts
+		fb.Append(" ").Append(opts)
 
 		If usingLD
 			If opts.Find("stdc++") = -1 Then
-				files:+" -lstdc++"
+				fb.Append(" -lstdc++")
 			End If
 
-			files:+" -lmingwex"
+			fb.Append(" -lmingwex")
 			
 		
 		' for a native Win32 runtiime of mingw 3.4.5, this needs to appear early.
 		'If Not processor.Option("path_to_mingw", "") Then
-			files:+" -lmingw32"
+			fb.Append(" -lmingw32")
 		'End If
 
 			If opts.Find("gcc") = -1 Then
-				files:+" -lgcc"
+				fb.Append(" -lgcc")
 			End If
 
 			' if using 4.8+ or mingw64, we need to link to pthreads
 			If version >= 40800 Or processor.HasTarget("x86_64") Then
-				files :+ " -lwinpthread "
+				fb.Append(" -lwinpthread ")
 				
 				If processor.CPU()="x86" Then
-					files:+" -lgcc"
+					fb.Append(" -lgcc")
 				End If
 			End If
 			
-			files :+ " -lmoldname -lmsvcrt "
+			fb.Append(" -lmoldname -lmsvcrt ")
 		End If
 
-		files :+ " -luser32 -lkernel32 "
+		fb.Append(" -luser32 -lkernel32 ")
 
 		'If processor.Option("path_to_mingw", "") Then
 			' for a non-native Win32 runtime, this needs to appear last.
 			' (Actually, also for native gcc 4.x, but I dunno how we'll handle that yet!)
 		If usingLD
-			files:+" -lmingw32 "
+			fb.Append(" -lmingw32 ")
 		End If
 
 		' add any user-defined linker options, again - just to cover whether we missed dependencies before.
-		files:+ " " + opts
+		fb.Append(" ").Append(opts)
 
 		'End If
 		
 		If Not makelib
 			If usingLD
-				files:+" "+CQuote( processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtend.o" )
+				fb.Append(" ").Append(CQuote( processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtend.o" ))
 			End If
 		EndIf
 		
-		files="INPUT("+files+")"
+		fb.Insert(0,"INPUT(").Append(")")
+		
 	End If
 	
 	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi"
-		cmd$ = processor.Option(processor.BuildName("gpp"), "g++")
+		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
 		'cmd:+" -m32 -s -Os -pthread"
 		If processor.CPU() = "x86" Or processor.CPU() = "arm" Then
-			cmd:+" -m32"
+			sb.Append(" -m32")
 		End If
 		If processor.CPU() = "x64" Or processor.CPU() = "arm64" Then
-			cmd:+" -m64"
+			sb.Append(" -m64")
 		End If
 		If opt_static Then
-			cmd:+" -static"
+			sb.Append(" -static")
 		End If
-		cmd:+" -pthread"
-		cmd:+" -o "+CQuote( path )
-		cmd:+" "+CQuote( tmpfile )
+		sb.Append(" -pthread")
+		sb.Append(" -o ").Append(CQuote( path ))
+		sb.Append(" ").Append(CQuote( tmpfile ))
 		If processor.CPU() = "x86" Then
-			cmd:+ " -L" + processor.Option(processor.BuildName("lib32"), "/usr/lib32")
+			sb.Append(" -L").Append(processor.Option(processor.BuildName("lib32"), "/usr/lib32"))
 		End If
-		cmd:+" -L" + processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib")
-		cmd:+" -L" + processor.Option(processor.BuildName("lib"), "/usr/lib")
-		cmd:+" -L"+CQuote( BlitzMaxPath()+"/lib" )
+		sb.Append(" -L").Append(processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib"))
+		sb.Append(" -L").Append(processor.Option(processor.BuildName("lib"), "/usr/lib"))
+		sb.Append(" -L").Append(CQuote( BlitzMaxPath()+"/lib" ))
 	
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
-				cmd:+" "+t
+				sb.Append(" ").Append(t)
 			Else
-				files:+" "+t
+				fb.Append(" ").Append(t)
 			EndIf
 		Next
 	
-		files="INPUT("+files+")"
+		fb.Insert(0,"INPUT(").Append(")")
 	End If
 	
 	If processor.Platform() = "android" Then
-		cmd$ = processor.Option(processor.BuildName("gpp"), "g++")
+		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
 		
 		Local libso:String = StripDir(path)
-		cmd :+ " -fPIC -shared "
+		sb.Append(" -fPIC -shared ")
 		
 		' for stlport shared lib
-		cmd :+ " -L" + AndroidSTLPortDir()
+		sb.Append(" -L").Append(AndroidSTLPortDir())
 		
-		cmd :+ " -Wl,-soname,lib" + libso + ".so "
-		cmd :+ " -Wl,--export-dynamic -rdynamic "
-		cmd:+" -o "+CQuote( ExtractDir(path) + "/lib" + libso + ".so" )
-		cmd:+" "+CQuote( tmpfile )
-		cmd:+" " + processor.Option("android.platform.sysroot", "")
+		sb.Append(" -Wl,-soname,lib").Append(libso).Append(".so ")
+		sb.Append(" -Wl,--export-dynamic -rdynamic ")
+		sb.Append(" -o ").Append(CQuote( ExtractDir(path) + "/lib" + libso + ".so" ))
+		sb.Append(" ").Append(CQuote( tmpfile ))
+		sb.Append(" ").Append(processor.Option("android.platform.sysroot", ""))
 		
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
-				cmd:+" "+t
+				sb.Append(" ").Append(t)
 			Else
-				files:+" "+t
+				fb.Append(" ").Append(t)
 			EndIf
 		Next
 	
-		cmd :+ " -Wl,-Bdynamic -lGLESv2 -lGLESv1_CM "
+		sb.Append(" -Wl,-Bdynamic -lGLESv2 -lGLESv1_CM ")
 		' libstlport
-		cmd :+ " -lstlport_shared"
-		cmd :+ " -llog -ldl -landroid "
+		sb.Append(" -lstlport_shared")
+		sb.Append(" -llog -ldl -landroid ")
 	
-		files="INPUT("+files+")"
+		fb.Insert(0,"INPUT(").Append(")")
 	End If
 
 	If processor.Platform() = "emscripten"
-		cmd$ = processor.Option(processor.BuildName("gpp"), "em++")
+		sb.Append(processor.Option(processor.BuildName("gpp"), "em++"))
 
 		' cmd:+" -pthread" ' No threading support yet...
-		cmd:+" -o "+CQuote( path )
+		sb.Append(" -o ").Append(CQuote( path ))
 		'cmd:+" -filelist "+CQuote( tmpfile )
 		
-		cmd:+ " " + opts
+		sb.Append(" ").Append(opts)
 		
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
 			'If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
-				cmd:+" "+t
+				sb.Append(" ").Append(t)
 			'Else
 			'	files:+" "+t
 			'EndIf
 		Next
 	
-		files="INPUT("+files+")"
+		fb.Insert(0,"INPUT(").Append(")")
 	End If
 	
 
 	Local t$=getenv_( "BMK_LD_OPTS" )
 	If t 
-		cmd:+" "+t
+		sb.Append(" ").Append(t)
 	EndIf
+	
+	cmd = sb.ToString()
+	files = fb.ToString()
 
 	If Not opt_standalone Then
 		Local stream:TStream=WriteStream( tmpfile )
@@ -1477,6 +1490,16 @@ Function FindEOL:Int(Text:String, substr:String, start:Int = 0)
 		Return Text.Length
 	End If
 	Return eol
+End Function
+
+Function Concat4:String(a1:String, a2:String, a3:String, a4:String)
+	Local s:TStringBuffer = New TStringBuffer(128)
+	Return s.Append(a1).Append(a2).Append(a3).Append(a4).ToString()
+End Function
+
+Function Concat5:String(a1:String, a2:String, a3:String, a4:String, a5:String)
+	Local s:TStringBuffer = New TStringBuffer(128)
+	Return s.Append(a1).Append(a2).Append(a3).Append(a4).Append(a5).ToString()
 End Function
 
 Type TStringStack Extends TList
