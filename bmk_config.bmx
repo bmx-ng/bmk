@@ -215,7 +215,7 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_standalone_set = True
 		Case "quick"
 			opt_quickscan = True
-			opt_quickscan = True
+			opt_quickscan_set = True
 		Case "nostrictupgrade"
 			opt_nostrictupgrade = True
 			opt_nostrictupgrade_set = True
