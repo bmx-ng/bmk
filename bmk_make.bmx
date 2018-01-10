@@ -271,7 +271,7 @@ Type TBuildManager
 		Next
 	End Method
 
-	Method MakeApp(main_path:String, makelib:Int)
+	Method MakeApp(main_path:String, makelib:Int, compileOnly:Int = False)
 		app_main = main_path
 
 		Local source:TSourceFile = GetSourceFile(app_main, False, opt_all)
@@ -282,7 +282,12 @@ Type TBuildManager
 
 		Local build_path:String = ExtractDir(main_path) + "/.bmx"
 
-		source.obj_path = build_path + "/" + StripDir( main_path ) + "." + opt_apptype + opt_configmung + processor.CPU() + ".o"
+		Local appType:String
+		If Not compileOnly Or source.framewk Then
+			appType = "." + opt_apptype
+		End If
+		
+		source.obj_path = build_path + "/" + StripDir( main_path ) + apptype + opt_configmung + processor.CPU() + ".o"
 		source.obj_time = FileTime(source.obj_path)
 		source.iface_path = StripExt(source.obj_path) + ".o"
 		source.iface_time = FileTime(source.iface_path)
@@ -358,8 +363,9 @@ Type TBuildManager
 		Else
 			gen = CreateGenStage(source)
 		End If
-		Local link:TSourceFile = CreateLinkStage(gen)
-
+		If Not compileOnly Then
+			Local link:TSourceFile = CreateLinkStage(gen)
+		End If
 	End Method
 	
 	Method DoBuild(app_build:Int = False)

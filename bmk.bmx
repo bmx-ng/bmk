@@ -74,7 +74,9 @@ Case "makemods"
 			LoadOptions(True)
 		End If
 	EndIf
-
+Case "compile"
+	SetConfigMung
+	MakeApplication args,False,True
 Case "cleanmods"
 	CleanModules args
 Case "zapmod"
@@ -202,12 +204,18 @@ Function CleanModules( args$[] )
 
 End Function
 
-Function MakeApplication( args$[],makelib )
+Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 
-	If opt_execute
+	If opt_execute And Not compileOnly
 		If Len(args)=0 CmdError "Execute requires at least 1 argument"
 	Else
-		If Len(args)<>1 CmdError "Expecting only 1 argument for makeapp"
+		If Len(args)<>1 Then
+			If compileOnly Then
+				CmdError "Expecting only 1 argument for compile"
+			Else
+				CmdError "Expecting only 1 argument for makeapp"
+			End If
+		End If
 	EndIf
 
 	Local Main$=RealPath( args[0] )
@@ -235,7 +243,7 @@ Function MakeApplication( args$[],makelib )
 	
 	
 	' some more useful globals
-	If processor.Platform() = "macos" And opt_apptype="gui" Then
+	If processor.Platform() = "macos" And opt_apptype="gui" And Not compileOnly Then
 		Local appId$=StripDir( opt_outfile )
 		
 		globals.SetVar("APPID", appId)
@@ -289,7 +297,7 @@ Function MakeApplication( args$[],makelib )
 	EndIf
 
 	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
-		If opt_apptype="gui"
+		If opt_apptype="gui" And Not compileOnly
 	
 			'Local appId$=StripDir( opt_outfile )
 			Local appId$ = globals.Get("APPID")
@@ -367,12 +375,12 @@ Function MakeApplication( args$[],makelib )
 	Local buildManager:TBuildManager = New TBuildManager
 
 	' "android-project" check and copy
-	If processor.Platform() = "android" Then
+	If processor.Platform() = "android" And Not compileOnly Then
 		DeployAndroidProject()
 	End If
 
-	buildManager.MakeApp(Main, makelib)
-	buildManager.DoBuild(True)
+	buildManager.MakeApp(Main, makelib, compileOnly)
+	buildManager.DoBuild(Not compileOnly)
 
 	If opt_universal And processor.Platform() = "ios" Then
 
@@ -382,7 +390,7 @@ Function MakeApplication( args$[],makelib )
 		BeginMake
 
 		Local buildManager:TBuildManager = New TBuildManager
-		buildManager.MakeApp(Main, makelib)
+		buildManager.MakeApp(Main, makelib, compileOnly)
 		buildManager.DoBuild(True)
 
 		processor.ToggleCPU()
@@ -406,7 +414,7 @@ Rem
 		opt_outfile = previousOutfile
 	End If
 End Rem
-	If opt_standalone
+	If opt_standalone And Not compileOnly
 		Local buildScript:String = String(globals.GetRawVar("EXEPATH")) + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + ".build"
 		Local ldScript:String = "$APP_ROOT/ld." + processor.AppDet() + ".txt"
 		
@@ -443,7 +451,7 @@ End Rem
 		
 	End If
 
-	If opt_execute
+	If opt_execute And Not compileOnly
 
 ?Not android
 		Print "Executing:"+StripDir( opt_outfile )

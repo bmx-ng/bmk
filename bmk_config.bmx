@@ -9,7 +9,7 @@ Import Pub.MacOS
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.20"
+Const BMK_VERSION:String = "3.21"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
