@@ -342,6 +342,7 @@ Type TSourceFile
 		source.obj_time = obj_time
 		source.arc_time = arc_time
 		source.iface_time = iface_time
+		source.gen_time = gen_time
 		source.requiresBuild = requiresBuild
 		source.dontBuild = dontBuild
 		source.cc_opts = cc_opts
