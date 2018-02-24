@@ -51,10 +51,11 @@ Function UncompressBank:TBank( bank:TBank )
 	out_size:|bank.PeekByte(3) Shl 24
 ?bmxng
 	Local out:TBank=TBank.Create( Size_T(out_size) )
+	uncompress out.Buf(),out_size,bank.Buf()+4,UInt(bank.Size()-4)
 ?Not bmxng
 	Local out:TBank=TBank.Create( out_size )
-?
 	uncompress out.Buf(),out_size,bank.Buf()+4,bank.Size()-4
+?
 	Return out
 	
 End Function
