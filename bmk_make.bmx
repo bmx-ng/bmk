@@ -287,9 +287,9 @@ Type TBuildManager
 			appType = "." + opt_apptype
 		End If
 		
-		source.obj_path = build_path + "/" + StripDir( main_path ) + apptype + opt_configmung + processor.CPU() + ".o"
+		source.obj_path = build_path + "/" + StripDir( main_path ) + appType + opt_configmung + processor.CPU() + ".o"
 		source.obj_time = FileTime(source.obj_path)
-		source.iface_path = StripExt(source.obj_path) + ".o"
+		source.iface_path = StripExt(source.obj_path) + ".i"
 		source.iface_time = FileTime(source.iface_path)
 	
 		Local cc_opts:String
@@ -418,8 +418,8 @@ Type TBuildManager
 				
 					Select m.stage
 						Case STAGE_GENERATE
-						
-							If m.requiresBuild Or (m.time > m.gen_time Or m.iface_time < m.MaxIfaceTime()) Then
+
+							If m.requiresBuild Or (m.time > m.gen_time Or m.iface_time < m.MaxIfaceTime() Or Not m.MaxIfaceTime()) Then
 
 								m.SetRequiresBuild(True)
 
@@ -882,8 +882,13 @@ Type TBuildManager
 					If Not isInclude Then
 
 						sources.Insert(source_path, source)
-						
-						Local sp:String = Concat5(ExtractDir(source_path), "/.bmx/", StripDir(source_path), opt_configmung, processor.CPU())
+
+						Local sp:String
+						If app_main = source_path Then
+							sp = ConcatString(ExtractDir(source_path), "/.bmx/", StripDir(source_path), "." + opt_apptype, opt_configmung, processor.CPU())
+						Else
+							sp = ConcatString(ExtractDir(source_path), "/.bmx/", StripDir(source_path), opt_configmung, processor.CPU())
+						End If
 						
 						source.obj_path = sp + ".o"
 						source.obj_time = FileTime(source.obj_path)
@@ -952,7 +957,7 @@ Type TBuildManager
 		Local path:String = ModulePath(m)
 		Local id:String = ModuleIdent(m)
 		
-		Local mp:String = Concat5(path, "/", id, opt_configmung, processor.CPU())
+		Local mp:String = ConcatString(path, "/", id, opt_configmung, processor.CPU())
 
 		' get the module interface and lib details
 		Local arc_path:String = mp + ".a"
@@ -964,9 +969,9 @@ Type TBuildManager
 		
 		If processor.Platform() = "ios" Then
 			If processor.CPU() = "x86" Or processor.CPU() = "x64" Then
-				merge_path = Concat5(path, "/", id, opt_configmung, "sim.a")
+				merge_path = ConcatString(path, "/", id, opt_configmung, "sim.a")
 			Else
-				merge_path = Concat5(path, "/", id, opt_configmung, "dev.a")
+				merge_path = ConcatString(path, "/", id, opt_configmung, "dev.a")
 			End If
 			merge_time = FileTime(merge_path)
 		End If
@@ -1010,7 +1015,7 @@ Type TBuildManager
 			link = source
 		Else
 
-			Local src_path:String = Concat4(path, "/", id, ".bmx")
+			Local src_path:String = ConcatString(path, "/", id, ".bmx")
 			source = GetSourceFile(src_path, True, rebuild)
 	
 			If Not source Then

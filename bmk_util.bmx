@@ -1491,24 +1491,18 @@ Function FindEOL:Int(Text:String, substr:String, start:Int = 0)
 	Return eol
 End Function
 
-Function Concat4:String(a1:String, a2:String, a3:String, a4:String)
+Function ConcatString:String(a1:String, a2:String, a3:String, a4:String, a5:String = Null, a6:String = Null, a7:String = Null)
 ?bmxng
 	Local s:TStringBuffer = New TStringBuffer(128)
-?not bmxng
+?Not bmxng
 	TStringBuffer.initialCapacity = 128
 	Local s:TStringBuffer = New TStringBuffer
 ?
-	Return s.Append(a1).Append(a2).Append(a3).Append(a4).ToString()
-End Function
-
-Function Concat5:String(a1:String, a2:String, a3:String, a4:String, a5:String)
-?bmxng
-	Local s:TStringBuffer = New TStringBuffer(128)
-?not bmxng
-	TStringBuffer.initialCapacity = 128
-	Local s:TStringBuffer = New TStringBuffer
-?
-	Return s.Append(a1).Append(a2).Append(a3).Append(a4).Append(a5).ToString()
+	s.Append(a1).Append(a2).Append(a3).Append(a4)
+	If a5 s.Append(a5)
+	If a6 s.Append(a6)
+	If a7 s.Append(a7)
+	Return s.ToString()
 End Function
 
 Type TStringStack Extends TList
