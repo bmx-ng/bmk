@@ -251,6 +251,18 @@
 	end
 @end
 
+@define setwin32x86ccopt
+	if bmk.Platform() == "win32" and bmk.CPU() == "x86" then
+		globals.SetOption("cc_opts", arg1, arg2)
+	end
+@end
+
+@define setwin32x64ccopt
+	if bmk.Platform() == "win32" and bmk.CPU() == "x64" then
+		globals.SetOption("cc_opts", arg1, arg2)
+	end
+@end
+
 @define addmacccopt
 	if bmk.Platform() == "macos" then
 		globals.AddOption("cc_opts", arg1, arg2)
