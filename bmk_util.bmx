@@ -483,11 +483,13 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi"
 		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
 		'cmd:+" -m32 -s -Os -pthread"
-		If processor.CPU() = "x86" Or processor.CPU() = "arm" Then
-			sb.Append(" -m32")
-		End If
-		If processor.CPU() = "x64" Or processor.CPU() = "arm64" Then
-			sb.Append(" -m64")
+		If processor.Platform() <> "raspberrypi" Then
+			If processor.CPU() = "x86" Or processor.CPU() = "arm" Then
+				sb.Append(" -m32")
+			End If
+			If processor.CPU() = "x64" Or processor.CPU() = "arm64" Then
+				sb.Append(" -m64")
+			End If
 		End If
 		If opt_static Then
 			sb.Append(" -static")
