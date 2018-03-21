@@ -1,6 +1,11 @@
+## [3.22] - 2018-03-21
+### Changed
+ - Further build tree enhancements to significantly improve partial build times.
+ 
 ## [3.21] - 2018-01-10
 ### Added
  - New 'compile' option. Similar to makeapp, but doesn't link or create executables.
+
 ## [3.20] - 2017-12-12
 ### Fixed
  - Now correctly factors in generated sources when determining current build requirements.

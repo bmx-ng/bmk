@@ -1,23 +1,7 @@
 
-Strict
+SuperStrict
 
 Import "bmk_modutil.bmx"
-
-Rem
-Experimental speedup hack by Mark!
-
-Should allow you to modify non-interface affecting code without triggering lots of recompiles.
-
-Works by determining whether blah.bmx's .i file physically changes after blah.bmx is compiled.
-
-If not, then anything importing blah.bmx may not need to be recompiled.
-
-Uses a new '.i2' file which is updated only when actual .i file content changes.
-End Rem
-Global EXPERIMENTAL_SPEEDUP
-
-Local t$=getenv_( "BMK_SPEEDUP" )
-If t EXPERIMENTAL_SPEEDUP=True
 
 Global cc_opts$
 Global bcc_opts$
@@ -245,7 +229,7 @@ Function ConfigureIOSPaths()
 
 End Function
 
-Type TBuildManager
+Type TBuildManager Extends TCallback
 
 	Field sources:TMap = New TMap
 	
@@ -260,6 +244,8 @@ Type TBuildManager
 		Else If processor.Platform() = "ios" Then
 			ConfigureIOSPaths()
 		End If
+		
+		processor.callback = Self
 	End Method
 
 	Method MakeMods(mods:TList, rebuild:Int = False)
@@ -421,8 +407,6 @@ Type TBuildManager
 
 							If m.requiresBuild Or (m.time > m.gen_time Or m.iface_time < m.MaxIfaceTime() Or Not m.MaxIfaceTime()) Then
 
-								m.SetRequiresBuild(True)
-
 								If Not opt_quiet Then
 									Print ShowPct(m.pct) + "Processing:" + StripDir(m.path)
 								End If
@@ -434,10 +418,7 @@ Type TBuildManager
 								Next
 								
 								CompileBMX m.path, m.obj_path, m.bcc_opts
-	
-								m.iface_time = time_(Null)
-								m.gen_time = time_(Null)
-					
+
 							End If
 
 						Case STAGE_FASM2AS
@@ -895,7 +876,8 @@ Type TBuildManager
 						
 						If Match(ext, "bmx") Then
 							source.iface_path = sp + ".i"
-							source.iface_time = FileTime(source.iface_path)
+							source.iface_path2 = source.iface_path + "2"
+							source.iface_time = FileTime(source.iface_path2)
 							
 							' gen file times
 							If processor.BCCVersion() <> "BlitzMax" Then
@@ -928,12 +910,15 @@ Type TBuildManager
 		End If
 
 		If Not source Then
-			source = ParseISourceFile(iface_path)
+			Local iface_path2:String = iface_path + 2
+		
+			source = ParseISourceFile(iface_path2)
 			
 			If source Then
 				source.arc_path = arc_path
 				source.arc_time = arc_time
 				source.iface_path = iface_path
+				source.iface_path2 = iface_path2
 				source.iface_time = iface_time
 				source.merge_time = merge_time
 
@@ -963,7 +948,8 @@ Type TBuildManager
 		Local arc_path:String = mp + ".a"
 		Local arc_time:Int = FileTime(arc_path)
 		Local iface_path:String = mp + ".i"
-		Local iface_time:Int = FileTime(iface_path)
+		Local iface_path2:String = iface_path + "2"
+		Local iface_time:Int = FileTime(iface_path2)
 		Local merge_path:String
 		Local merge_time:Int
 		
@@ -994,6 +980,7 @@ Type TBuildManager
 				source.arc_path = arc_path
 				source.arc_time = arc_time
 				source.iface_path = iface_path
+				source.iface_path2 = iface_path2
 				source.iface_time = iface_time
 				source.obj_path = arc_path
 				source.merge_path = merge_path
@@ -1033,6 +1020,7 @@ Type TBuildManager
 			source.arc_path = arc_path
 			source.arc_time = arc_time
 			source.iface_path = iface_path
+			source.iface_path2 = iface_path2
 			source.iface_time = iface_time
 			source.merge_path = merge_path
 			source.merge_time = merge_time
@@ -1342,6 +1330,49 @@ Type TBuildManager
 			End If
 		End If
 		Return p	
+	End Method
+	
+	Method DoCallback(src:String)
+		Local update:Int = True
+
+		Local m:TSourceFile = TSourceFile(sources.ValueForKey(src))
+		
+		If m Then
+
+			If Not opt_all And FileType(m.iface_path) = FILETYPE_FILE Then
+			
+				' has the interface/api changed since the last build?
+				If FileType(m.iface_path2) = FILETYPE_FILE And m.time = FileTime( m.path ) Then
+
+					If FileSize(m.iface_path) = FileSize(m.iface_path2) Then
+
+						Local i_bytes:Byte[] = LoadByteArray(m.iface_path)
+						Local i_bytes2:Byte[] = LoadByteArray(m.iface_path2)
+?bmxng
+						If i_bytes.length = i_bytes2.length And memcmp_( i_bytes, i_bytes2, Size_T(i_bytes.length) )=0 Then
+?Not bmxng											
+						If i_bytes.length = i_bytes2.length And memcmp_( i_bytes, i_bytes2, i_bytes.length )=0 Then
+?
+							update = False
+						End If
+					End If
+				End If
+				If update Then
+					CopyFile m.iface_path, m.iface_path2
+				Else If m.iface_time < m.MaxIfaceTime() Then
+					SetFileTimeNow(m.iface_path2)
+					m.iface_time = time_(Null)
+				End If
+			End If
+	
+			If update Then
+				m.SetRequiresBuild(True)
+				m.iface_time = time_(Null)
+				m.gen_time = time_(Null)
+			End If
+		
+		End If
+
 	End Method
 	
 End Type

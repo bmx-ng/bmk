@@ -47,6 +47,8 @@ Type TBMK
 	Field commands:TMap = New TMap
 
 	Field buildLog:TList
+	
+	Field callback:TCallback
 
 	Method New()
 		LuaRegisterObject Self,"bmk"
@@ -398,9 +400,9 @@ Type TBMK
 		
 		If Not opt_standalone Or (opt_standalone And opt_nolog) Then
 ?threaded
-		processManager.DoSystem(cmd, src)
+			processManager.DoSystem(cmd, src)
 ?Not threaded
-		Return  system_( cmd )
+			Return  system_( cmd )
 ?
 		End If
 	End Method
@@ -770,6 +772,12 @@ Type TBMK
 	
 	Method AppDet:String()
 		Return StripExt(StripDir(app_main)) + "." + opt_apptype + opt_configmung + processor.CPU()
+	End Method
+	
+	Method DoCallback(src:String)
+		If callback Then
+			callback.DoCallback(src)
+		End If
 	End Method
 	
 End Type
@@ -1351,8 +1359,18 @@ Type TProcessTask
 			Local s:String = "Build Error: failed to compile (" + res + ") " + source
 			Throw s
 		End If
+		
+		If source.EndsWith(".bmx") Then
+			processor.DoCallback(source)
+		End If
 	End Method
 
+End Type
+
+Type TCallback
+
+	Method DoCallback(src:String) Abstract
+	
 End Type
 
 ?threaded

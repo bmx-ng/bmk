@@ -45,6 +45,7 @@ Type TSourceFile
 	Field processed:Int
 	Field arc_path:String
 	Field iface_path:String
+	Field iface_path2:String
 	Field obj_path:String
 	Field time:Int
 	Field obj_time:Int
@@ -77,6 +78,7 @@ Type TSourceFile
 	Field doneLinks:Int
 	'cache calculated MaxLinkTime()-value for faster lookups
 	Field maxLinkTimeCache:Int = -1
+	Field maxIfaceTimeCache:Int = -1
 	
 	' add cc_opts or ld_opts
 	Method AddModOpt(opt:String)
@@ -121,6 +123,7 @@ Type TSourceFile
 			'seems our information is outdated now
 			If requiresBuild Then
 				maxLinkTimeCache = -1
+				maxIfaceTimeCache = -1
 			End If
 		End If
 	End Method
@@ -315,16 +318,30 @@ Type TSourceFile
 	End Method
 
 	Method MaxIfaceTime:Int()
-		Local t:Int = iface_time
-		If depsList Then
-			For Local s:TSourceFile = EachIn depsList
-				Local st:Int = s.MaxIFaceTime()
-				If st > t Then
-					t = st
-				End If
-			Next
+		If maxIfaceTimeCache = -1 Then
+			Local t:Int = iface_time
+			If depsList Then
+				For Local s:TSourceFile = EachIn depsList
+					Local st:Int = s.MaxIFaceTime()
+					If st > t Then
+						t = st
+					End If
+				Next
+			End If
+			If moddeps Then
+				For Local s:TSourceFile = EachIn moddeps.Values()
+					Local st:Int = s.MaxIFaceTime()
+					If st > t Then
+						t = st
+					End If
+				Next
+			End If
+			
+			maxIfaceTimeCache = t
+			
 		End If
-		Return t
+
+		Return maxIfaceTimeCache
 	End Method
 
 	Method CopyInfo(source:TSourceFile)
@@ -337,6 +354,7 @@ Type TSourceFile
 		source.processed = processed
 		source.arc_path = arc_path
 		source.iface_path = iface_path
+		source.iface_path2 = iface_path2
 		source.obj_path = obj_path
 		source.time = time
 		source.obj_time = obj_time
@@ -353,6 +371,7 @@ Type TSourceFile
 		source.c_opts = c_opts
 		source.CopyIncludePaths(includePaths)
 		source.maxLinkTimeCache = maxLinkTimeCache
+		source.maxIfaceTimeCache = maxIfaceTimeCache
 	End Method
 	
 	Method GetSourcePath:String()

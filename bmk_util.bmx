@@ -2,6 +2,7 @@ Strict
 
 Import "bmk_config.bmx"
 Import "bmk_ng.bmx"
+Import "file_util.c"
 
 'OS X Nasm doesn't work? Used to produce incorrect reloc offsets - haven't checked for a while 
 Const USE_NASM=False
@@ -1614,3 +1615,10 @@ Type TOrderedMap Extends TMap
 
 End Type
 
+Extern
+	Function bmx_setfiletimenow(path:String)
+End Extern
+
+Function SetFileTimeNow(path:String)
+	bmx_setfiletimenow(path)
+End Function
