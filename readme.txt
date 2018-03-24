@@ -9,7 +9,7 @@ Compiling BMK
 
 bmk.bmx is the main source-file.
 
-BMK should be compiled in Non-GUI and Relese mode. 
+BMK should be compiled in Non-GUI and Release mode. 
 
 You can also compile BMK in either Threaded or Non-threaded modes.
 
