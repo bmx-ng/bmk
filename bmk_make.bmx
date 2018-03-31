@@ -503,11 +503,29 @@ Type TBuildManager Extends TCallback
 								If Not opt_outfile Then
 									Throw "Build Error: Did not expect to link against " + m.path
 								End If
-							
+
 								' an app!
 								Local max_lnk_time:Int = m.MaxLinkTime()
+								
+								' include settings and icon times in calculation
+								If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
+									Local settings:String = ExtractDir(opt_outfile) + "/" + StripDir(StripExt(opt_outfile)) + ".settings"
+									max_lnk_time = Max(FileTime(settings), max_lnk_time)
+									max_lnk_time = Max(FileTime(StripDir(StripExt(opt_outfile)) + ".ico"), max_lnk_time)
+								End If
 							
 								If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
+
+									' generate manifest for app
+									If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
+										processor.RunCommand("make_win32_resource", Null)
+										Local s:TSourceFile = New TSourceFile
+										s.obj_path = BlitzMaxPath() + "/tmp/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+										s.stage = STAGE_LINK
+										s.exti = SOURCE_RES
+										m.depslist.AddLast(s)
+									End If
+
 									If Not opt_quiet Then
 										Print ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
 									End If

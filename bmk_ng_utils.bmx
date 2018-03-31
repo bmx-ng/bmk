@@ -6,6 +6,7 @@ Import BRL.FileSystem
 Import BRL.System
 ?
 Import BRL.MaxLua
+Import BRL.TextStream
 
 ?linux
 Import "bmk_cores_linux.bmx"
@@ -17,6 +18,7 @@ Import "bmk_cores_win32.bmx"
 
 Global utils:TMaxUtils = New TMaxUtils
 Global fsys:TSystem = New TSystem
+Global futils:TFileUtils = New TFileUtils
 
 ' Access to BRL.MaxUtil
 Type TMaxUtils
@@ -170,3 +172,19 @@ Type TSystem
 ?
 End Type
 
+' Access to BRL.MaxUtil
+Type TFileUtils
+
+	Method New()
+		LuaRegisterObject Self,"futils"
+	End Method
+
+	Method SaveText:Int(filename:String, text:String)
+		Try
+			Return BRL.TextStream.SaveText(text, filename)
+		Catch e:TStreamWriteException
+			Return False
+		End Try
+	End Method
+	
+End Type

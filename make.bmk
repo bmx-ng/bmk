@@ -491,3 +491,122 @@
 	
 	return 0
 @end
+
+@define make_win32_resource
+
+	local windres = bmk.MinGWBinPath() .. "/windres.exe"
+	
+	if sys.FileType(windres) == 0 then
+		if bmk.VerboseBuild() then
+			print("windres.exe not found in '" .. bmk.MinGWBinPath() .. "'")
+		end
+		return
+	end
+	
+	windres = bmk.Quote(windres)
+	
+	if bmk.VerboseBuild() == 1 then
+		print("Compiling resources...")
+	end
+
+	local arch = "amd64"
+
+	if bmk.CPU() == "x86" then
+		arch = "x86"
+	end
+	
+	local tmp_path = utils.BlitzMaxPath() .. "/tmp/"
+	
+	local manifest_path = tmp_path .. %outfile% .. "." .. bmk.CPU() .. ".manifest"
+	local resource_path = tmp_path .. %outfile% .. "." .. bmk.CPU() .. ".rc"
+	local object_path = bmk.Quote(tmp_path .. %outfile% .. "." .. bmk.CPU() .. ".res.o")
+	local icon_path = %outfile% .. ".ico"
+	
+	local manifest = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" ..
+			"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">" ..
+			"<asmv3:application xmlns:asmv3=\"urn:schemas-microsoft-com:asm.v3\">" ..
+			"<asmv3:windowsSettings xmlns=\"http://schemas.microsoft.com/SMI/2005/WindowsSettings\">" ..
+			"<dpiAware>true</dpiAware>" ..
+			"</asmv3:windowsSettings>" ..
+			"</asmv3:application>" ..
+			"<assemblyIdentity version=\"1.0.0.0\" processorArchitecture=\"" ..
+			arch ..
+			"\" name=\"Application\" type=\"win32\"/>" ..
+			"<description>" .. %outfile% .. "</description>" ..
+			"<dependency>" ..
+			"<dependentAssembly>" ..
+			"<assemblyIdentity type=\"win32\" name=\"Microsoft.Windows.Common-Controls\" version=\"6.0.0.0\" processorArchitecture=\"" ..
+			arch ..
+			"\" publicKeyToken=\"6595b64144ccf1df\" language=\"*\" />" ..
+			"</dependentAssembly>" ..
+			"</dependency>" ..
+			"</assembly>"
+
+	local resource = "1 24 \"" .. manifest_path .. "\"\n" ..
+			"\n"
+	
+	if sys.FileType(icon_path) == 1 then
+		resource = resource .. "101 ICON \"" .. icon_path .. "\"\n" ..
+			"\n"
+	end
+	
+	resource = resource .. "1 VERSIONINFO\n" ..
+			"FILEVERSION 1,0,0,0\n" ..
+			"PRODUCTVERSION 1,0,0,0\n" ..
+			"FILEOS 0x40004\n" ..
+			"FILETYPE 0x1\n" ..
+			"{\n" ..
+			"BLOCK \"StringFileInfo\"\n" .. 
+			"{\n" ..
+			"BLOCK \"040904b0\"\n" .. 
+			"{\n"
+	if bmk.AppSetting("app.comments") ~= "" then
+		resource = resource .. "VALUE \"Comments\", \"" .. bmk.AppSetting("app.comments") .. "\"\n"
+	end
+	
+	if bmk.AppSetting("app.company") ~= "" then
+		resource = resource .. "VALUE \"CompanyName\", \"" .. bmk.AppSetting("app.company") .. "\"\n"
+	end
+	
+	if bmk.AppSetting("app.version.name") ~= "" then
+		resource = resource .. "VALUE \"FileVersion\", \"" .. bmk.AppSetting("app.version.name") .. "\"\n" ..
+			"VALUE \"ProductVersion\", \"" .. bmk.AppSetting("app.version.name") .. "\"\n"
+	end
+	
+	if bmk.AppSetting("app.description") ~= "" then
+		resource = resource .. "VALUE \"FileDescription\", \"" .. bmk.AppSetting("app.description") .. "\"\n"
+	end
+	
+	if bmk.AppSetting("app.name") ~= "" then
+		resource = resource .. "VALUE \"InternalName\", \"" .. bmk.AppSetting("app.name") .. "\"\n" ..
+			"VALUE \"ProductName\", \"" .. bmk.AppSetting("app.name") .. "\"\n"
+	end
+	
+	if bmk.AppSetting("app.copyright") ~= "" then
+		resource = resource .. "VALUE \"LegalCopyright\", \"" .. bmk.AppSetting("app.copyright") .. "\"\n"
+	end
+	
+	if bmk.AppSetting("app.trademarks") ~= "" then
+		resource = resource .. "VALUE \"LegalTrademarks\", \"" .. bmk.AppSetting("app.trademarks") .. "\"\n"
+	end
+	
+	resource = resource .. "VALUE \"OriginalFilename\", \"" .. %outfile% .. ".exe\"\n" ..
+			"}\n" ..
+			"}\n" ..
+			"BLOCK \"VarFileInfo\"\n" ..
+			"{\n" ..
+			"VALUE \"Translation\", 0x0409, 0\n" ..
+			"}\n" ..
+			"}"
+
+	if futils.SaveText(manifest_path, manifest) then
+	
+		if futils.SaveText(resource_path, resource) then
+		
+			local cmd = windres .. " -i " .. bmk.Quote(resource_path) .. " -o " .. object_path
+		
+			bmk.Sys(cmd)
+		end
+	end
+	
+@end

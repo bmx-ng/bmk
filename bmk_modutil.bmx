@@ -12,6 +12,7 @@ Const SOURCE_IFACE:Int = $02
 Const SOURCE_C:Int = $04
 Const SOURCE_HEADER:Int = $08
 Const SOURCE_ASM:Int = $10
+Const SOURCE_RES:Int = $20
 'Const SOURCE_PYTHON:Int = $20
 'Const SOURCE_PERL:Int = $40
 'Const SOURCE_RUBY:Int = $80
@@ -238,7 +239,7 @@ Type TSourceFile
 						End If
 					End If
 
-					If s.exti = SOURCE_BMX Or s.exti = SOURCE_IFACE Or s.modid Then
+					If s.exti = SOURCE_BMX Or s.exti = SOURCE_IFACE Or s.modid Or s.exti = SOURCE_RES Then
 						s.GetLinks(list, opts, modsOnly, linksCache, optsCache)
 					End If
 	

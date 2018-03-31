@@ -685,7 +685,7 @@ Function DeployAndroidProject()
 		End If
 	End If
 	
-	Local projectSettings:TMap = ParseAndroidIniFile()
+	Local projectSettings:TMap = ParseApplicationIniFile()
 	
 	Local appPackage:String = String(projectSettings.ValueForKey("app.package"))
 	
@@ -797,69 +797,6 @@ Function CopyAndroidResources(buildDir:String, assetsDir:String)
 		Next
 	End If
 
-End Function
-
-Function ParseAndroidIniFile:TMap()
-	Local appId:String = StripDir(StripExt(opt_outfile))
-	Local buildDir:String = ExtractDir(opt_outfile)
-
-	Local path:String = ExtractDir(opt_outfile) + "/" + appId + ".android"
-
-	Local settings:TMap = New TMap
-	
-	If Not FileType(path) Then
-		Print "Not Found : application settings file '" + appId + ".android'. Using defaults..."
-		Return DefaultAndroidSettings()
-	End If
-
-	Local file:TStream = ReadFile(path)
-	If Not file
-		Return Null
-	EndIf
-
-	Local line:String
-	Local pos:Int
-	While Not Eof(file)
-		line = ReadLine(file).Trim()
-
-		If line.Find("#") = 0 Then
-			Continue
-		End If
-
-		pos = line.Find("=")
-
-		If pos = -1 Then
-			Continue
-		End If
-
-		settings.Insert(line[..pos], line[pos+1..])
-	Wend
-
-	file.Close()
-
-	Local id:String = StripDir(StripExt(opt_outfile))
-	If opt_debug And opt_outfile.EndsWith(".debug") Then
-		id :+ ".debug"
-	End If
-	settings.Insert("app.id", id)
-	
-	Return settings
-End Function
-
-Function DefaultAndroidSettings:TMap()
-	Local settings:TMap = New TMap
-	settings.Insert("app.package", "com.blitzmax.android")
-	settings.Insert("app.version.code", "1")
-	settings.Insert("app.version.name", "1.0")
-	settings.Insert("app.name", "BlitzMax Application")
-	settings.Insert("app.orientation", "landscape")
-
-	Local appId:String = StripDir(StripExt(opt_outfile))
-	If opt_debug And opt_outfile.EndsWith(".debug") Then
-		appId :+ ".debug"
-	End If
-	settings.Insert("app.id", appId)
-	Return settings
 End Function
 
 Function GetAndroidSDKTarget:String()

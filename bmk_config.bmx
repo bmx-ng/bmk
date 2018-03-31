@@ -6,10 +6,11 @@ Import BRL.StandardIO
 ?macos
 Import Pub.MacOS
 ?
+Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.22"
+Const BMK_VERSION:String = "3.23"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -53,6 +54,7 @@ Global opt_musl=False
 Global opt_musl_set=False
 Global opt_static=False
 Global opt_static_set=False
+Global opt_manifest:Int = True
 
 Global opt_dumpbuild
 
@@ -228,6 +230,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 		Case "static"
 			opt_static = True
 			opt_static_set = True
+		Case "nomanifest"
+			opt_manifest = False
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -352,6 +356,11 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-musl~n"
 		s:+ "~t~tEnable musl libc compatibility. (Linux NG only)"
+		s:+ "~n~n"
+		s:+ "~t-nomanifest~n"
+		s:+ "~t~tDon't add an automatically generated manifest and resources to a Win32 application. (Win32 only)~n"
+		s:+ "~t~tName .ico file as <app name>.ico to be included in the the resource.~n"
+		s:+ "~t~tConfigurable application details are placed in the file <app name>.settings"
 		s:+ "~n~n"
 		s:+ "~t-nostrictupgrade~n"
 		s:+ "~t~tDon't upgrade strict method void return types, if required. (NG only)~n"
@@ -590,3 +599,72 @@ Function ValidatePlatform(platform:String)
 			CmdError "Not valid platform : '" + platform + "'"
 	End Select
 End Function
+
+Function ParseApplicationIniFile:TMap()
+	Local appId:String = StripDir(StripExt(opt_outfile))
+	Local buildDir:String = ExtractDir(opt_outfile)
+
+	Local path:String = buildDir + "/" + appId + ".settings"
+
+	Local settings:TMap = New TMap
+	
+	If Not FileType(path) Then
+		Print "Not Found : application settings file '" + appId + ".settings'. Using defaults..."
+		Return DefaultApplicationSettings()
+	End If
+
+	Local file:TStream = ReadFile(path)
+	If Not file
+		Return Null
+	EndIf
+
+	Local line:String
+	Local pos:Int
+	While Not Eof(file)
+		line = ReadLine(file).Trim()
+
+		If line.Find("#") = 0 Then
+			Continue
+		End If
+
+		pos = line.Find("=")
+
+		If pos = -1 Then
+			Continue
+		End If
+
+		settings.Insert(line[..pos], line[pos+1..])
+	Wend
+
+	file.Close()
+
+	Local id:String = StripDir(StripExt(opt_outfile))
+	If opt_debug And opt_outfile.EndsWith(".debug") Then
+		id :+ ".debug"
+	End If
+	settings.Insert("app.id", id)
+	
+	Return settings
+End Function
+
+Function DefaultApplicationSettings:TMap()
+	Local settings:TMap = New TMap
+	settings.Insert("app.package", "com.blitzmax.app")
+	settings.Insert("app.version.code", "1")
+	settings.Insert("app.version.name", "1.0")
+	settings.Insert("app.name", "BlitzMax Application")
+	settings.Insert("app.orientation", "landscape")
+	settings.Insert("app.comments", "landscape")
+	settings.Insert("app.company", "My company")
+	settings.Insert("app.description", "App description")
+	settings.Insert("app.copyright", "Copyright")
+	settings.Insert("app.trademarks", "All rights reserved")
+
+	Local appId:String = StripDir(StripExt(opt_outfile))
+	If opt_debug And opt_outfile.EndsWith(".debug") Then
+		appId :+ ".debug"
+	End If
+	settings.Insert("app.id", appId)
+	Return settings
+End Function
+

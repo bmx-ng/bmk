@@ -49,6 +49,7 @@ Type TBMK
 	Field buildLog:TList
 	
 	Field callback:TCallback
+	Field _appSettings:TMap
 
 	Method New()
 		LuaRegisterObject Self,"bmk"
@@ -778,6 +779,18 @@ Type TBMK
 		If callback Then
 			callback.DoCallback(src)
 		End If
+	End Method
+	
+	Method VerboseBuild:Int()
+		Return opt_verbose
+	End Method
+	
+	Method AppSetting:String(key:String)
+		If Not _appSettings Then
+			_appSettings = ParseApplicationIniFile()
+		End If
+		
+		Return String(_appSettings.ValueForKey(key))
 	End Method
 	
 End Type

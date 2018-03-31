@@ -1,3 +1,7 @@
+## [3.23] - 2018-03-31
+### Added
+ - Generate manifest and resources for win32 GUI apps.
+ 
 ## [3.22] - 2018-03-21
 ### Changed
  - Further build tree enhancements to significantly improve partial build times.
