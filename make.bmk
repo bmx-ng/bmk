@@ -496,6 +496,12 @@
 
 	local windres = bmk.MinGWBinPath() .. "/windres.exe"
 	
+	local outfile = %outfile%
+	
+	if bmk.IsDebugBuild() == 1 then
+		outfile = outfile .. ".debug"
+	end
+
 	if sys.FileType(windres) == 0 then
 		if bmk.VerboseBuild() then
 			print("windres.exe not found in '" .. bmk.MinGWBinPath() .. "'")
@@ -517,10 +523,10 @@
 	
 	local tmp_path = utils.BlitzMaxPath() .. "/tmp/"
 	
-	local manifest_path = tmp_path .. %outfile% .. "." .. bmk.CPU() .. ".manifest"
-	local resource_path = tmp_path .. %outfile% .. "." .. bmk.CPU() .. ".rc"
-	local object_path = bmk.Quote(tmp_path .. %outfile% .. "." .. bmk.CPU() .. ".res.o")
-	local icon_path = %outfile% .. ".ico"
+	local manifest_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".manifest"
+	local resource_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".rc"
+	local object_path = bmk.Quote(tmp_path .. outfile .. "." .. bmk.CPU() .. ".res.o")
+	local icon_path = outfile .. ".ico"
 	
 	local manifest = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" ..
 			"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">" ..
@@ -532,7 +538,7 @@
 			"<assemblyIdentity version=\"1.0.0.0\" processorArchitecture=\"" ..
 			arch ..
 			"\" name=\"Application\" type=\"win32\"/>" ..
-			"<description>" .. %outfile% .. "</description>" ..
+			"<description>" .. outfile .. "</description>" ..
 			"<dependency>" ..
 			"<dependentAssembly>" ..
 			"<assemblyIdentity type=\"win32\" name=\"Microsoft.Windows.Common-Controls\" version=\"6.0.0.0\" processorArchitecture=\"" ..
@@ -590,7 +596,7 @@
 		resource = resource .. "VALUE \"LegalTrademarks\", \"" .. bmk.AppSetting("app.trademarks") .. "\"\n"
 	end
 	
-	resource = resource .. "VALUE \"OriginalFilename\", \"" .. %outfile% .. ".exe\"\n" ..
+	resource = resource .. "VALUE \"OriginalFilename\", \"" .. outfile .. ".exe\"\n" ..
 			"}\n" ..
 			"}\n" ..
 			"BLOCK \"VarFileInfo\"\n" ..

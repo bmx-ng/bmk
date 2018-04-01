@@ -519,11 +519,14 @@ Type TBuildManager Extends TCallback
 									' generate manifest for app
 									If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
 										processor.RunCommand("make_win32_resource", Null)
-										Local s:TSourceFile = New TSourceFile
-										s.obj_path = BlitzMaxPath() + "/tmp/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
-										s.stage = STAGE_LINK
-										s.exti = SOURCE_RES
-										m.depslist.AddLast(s)
+										Local res:String = StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+										If FileType(res) = FILETYPE_FILE Then
+											Local s:TSourceFile = New TSourceFile
+											s.obj_path = BlitzMaxPath() + "/tmp/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+											s.stage = STAGE_LINK
+											s.exti = SOURCE_RES
+											m.depslist.AddLast(s)
+										End If
 									End If
 
 									If Not opt_quiet Then

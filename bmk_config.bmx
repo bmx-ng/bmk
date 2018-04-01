@@ -609,7 +609,9 @@ Function ParseApplicationIniFile:TMap()
 	Local settings:TMap = New TMap
 	
 	If Not FileType(path) Then
-		Print "Not Found : application settings file '" + appId + ".settings'. Using defaults..."
+		If opt_verbose Then
+			Print "Not Found : application settings file '" + appId + ".settings'. Using defaults..."
+		End If
 		Return DefaultApplicationSettings()
 	End If
 
