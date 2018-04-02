@@ -739,6 +739,30 @@ Type TBMK
 		Return opt_debug
 	End Method
 
+	Method IsReleaseBuild:Int()
+		Return opt_release
+	End Method
+
+	Method IsThreadedBuild:Int()
+		Return opt_threaded
+	End Method
+
+	Method IsQuickscanBuild:Int()
+		Return opt_quickscan
+	End Method
+
+	Method IsUniversalBuild:Int()
+		Return opt_universal
+	End Method
+
+	Method GetModFilter:String()
+		return opt_modfilter
+	End Method
+
+	Method GetConfigMung:String()
+		return opt_configmung
+	End Method
+
 	Method RunCommand:Object(command:String, args:String[])
 		Local cmd:TBMKCommand = TBMKCommand(commands.ValueForKey(command.ToLower()))
 		If cmd Then
