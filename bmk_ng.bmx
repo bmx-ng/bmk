@@ -1331,12 +1331,8 @@ Type TProcessManager
 	
 	Method New()
 		cpuCount = GetCoreCount()
-		' single cpu boost...
-		If cpuCount = 1 Then
-			cpuCount = 2
-		End If
 		
-		pool = TThreadPool.Create(cpuCount, cpuCount * 3)
+		pool = TThreadPool.Create(Max(1, cpuCount - 1), cpuCount * 3)
 		
 	End Method
 
@@ -1560,6 +1556,7 @@ Type TThreadPool
 			
 			While pool._count = 0 And Not pool._shutdown
 				pool._waitVar.Wait(pool._lock)
+				Delay 5
 			Wend
 			
 			If pool._shutdown And pool._count = 0 Then
