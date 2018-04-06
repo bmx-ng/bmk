@@ -23,6 +23,7 @@ Const STAGE_FASM2AS:Int = 1
 Const STAGE_OBJECT:Int = 2
 Const STAGE_LINK:Int = 3
 Const STAGE_MERGE:Int = 4
+Const STAGE_APP_LINK:Int = 5
 
 Type TSourceFile
 	Field ext$		'one of: "bmx", "i", "c", "cpp", "m", "s", "h"
@@ -207,7 +208,7 @@ Type TSourceFile
 			lastCache = modsOnly
 		
 
-			If list And stage = STAGE_LINK Then
+			If list And (stage = STAGE_LINK Or stage = STAGE_APP_LINK) Then
 				If Not modid Then
 					If Not list.Contains(obj_path) Then
 						list.AddLast(obj_path)
@@ -384,7 +385,7 @@ Type TSourceFile
 				p = StripExt(obj_path) + ".s"
 			Case STAGE_OBJECT
 				p = StripExt(obj_path) + ".c"
-			Case STAGE_LINK
+			Case STAGE_LINK, STAGE_APP_LINK
 				p = obj_path
 			Case STAGE_MERGE
 				p = arc_path

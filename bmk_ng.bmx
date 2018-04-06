@@ -1355,6 +1355,12 @@ Type TProcessManager
 
 	End Method
 
+	Method AddTask:Int(func:Object(data:Object), data:Object)
+		CheckTasks()
+
+		pool.AddTask(func, data)
+	End Method
+	
 End Type
 
 ?Not win32

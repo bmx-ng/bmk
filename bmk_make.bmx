@@ -236,6 +236,7 @@ Type TBuildManager Extends TCallback
 	Field buildAll:Int
 	
 	Field framework_mods:TList
+	Field app_iface:String
 	
 	Method New()
 		' pre build checks
@@ -277,6 +278,8 @@ Type TBuildManager Extends TCallback
 		source.obj_time = FileTime(source.obj_path)
 		source.iface_path = StripExt(source.obj_path) + ".i"
 		source.iface_time = FileTime(source.iface_path)
+		
+		app_iface = source.iface_path
 	
 		Local cc_opts:String
 		source.AddIncludePath(" -I" + CQuote(ModulePath("")))
@@ -350,7 +353,7 @@ Type TBuildManager Extends TCallback
 			gen = CreateGenStage(source)
 		End If
 		If Not compileOnly Then
-			Local link:TSourceFile = CreateLinkStage(gen)
+			Local link:TSourceFile = CreateLinkStage(gen, STAGE_APP_LINK)
 		End If
 	End Method
 	
@@ -479,77 +482,78 @@ Type TBuildManager Extends TCallback
 							End If
 						Case STAGE_LINK
 
-							' a module?
-							If m.modid Then
-								Local max_obj_time:Int = m.MaxObjTime()
+							Local max_obj_time:Int = m.MaxObjTime()
 
-								If max_obj_time > m.arc_time And Not m.dontbuild Then
-									Local objs:TList = New TList
-									m.GetObjs(objs)
-		
-									If Not opt_quiet Then
-										Print ShowPct(m.pct) + "Archiving:" + StripDir(m.arc_path)
-									End If
-
-									CreateArc m.arc_path, objs
-
-									m.arc_time = time_(Null)
-									m.obj_time = time_(Null)
-									
-								End If
-							Else
-								' this probably should never happen.
-								' may be a bad module?
-								If Not opt_outfile Then
-									Throw "Build Error: Did not expect to link against " + m.path
+							If max_obj_time > m.arc_time And Not m.dontbuild Then
+								Local objs:TList = New TList
+								m.GetObjs(objs)
+	
+								If Not opt_quiet Then
+									Print ShowPct(m.pct) + "Archiving:" + StripDir(m.arc_path)
 								End If
 
-								' an app!
-								Local max_lnk_time:Int = m.MaxLinkTime()
+								Local at:TArcTask = New TArcTask.Create(m, m.arc_path, objs)
 								
-								' include settings and icon times in calculation
-								If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
-									Local settings:String = ExtractDir(opt_outfile) + "/" + StripDir(StripExt(opt_outfile)) + ".settings"
-									max_lnk_time = Max(FileTime(settings), max_lnk_time)
-									max_lnk_time = Max(FileTime(StripDir(StripExt(opt_outfile)) + ".ico"), max_lnk_time)
-								End If
+								?threaded
+									processManager.AddTask(TArcTask._CreateArc, at)
+								?Not threaded
+									at.CreateArc()
+								?
+								
+							End If
+						
+						Case STAGE_APP_LINK
+
+							' this probably should never happen.
+							' may be a bad module?
+							If Not opt_outfile Then
+								Throw "Build Error: Did not expect to link against " + m.path
+							End If
+
+							' an app!
+							Local max_lnk_time:Int = m.MaxLinkTime()
 							
-								If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
+							' include settings and icon times in calculation
+							If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
+								Local settings:String = ExtractDir(opt_outfile) + "/" + StripDir(StripExt(opt_outfile)) + ".settings"
+								max_lnk_time = Max(FileTime(settings), max_lnk_time)
+								max_lnk_time = Max(FileTime(StripDir(StripExt(opt_outfile)) + ".ico"), max_lnk_time)
+							End If
+						
+							If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
 
-									' generate manifest for app
-									If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
-										processor.RunCommand("make_win32_resource", Null)
-										Local res:String = StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
-										If FileType(res) = FILETYPE_FILE Then
-											Local s:TSourceFile = New TSourceFile
-											s.obj_path = BlitzMaxPath() + "/tmp/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
-											s.stage = STAGE_LINK
-											s.exti = SOURCE_RES
-											m.depslist.AddLast(s)
-										End If
+								' generate manifest for app
+								If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
+									processor.RunCommand("make_win32_resource", Null)
+									Local res:String = StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+									If FileType(res) = FILETYPE_FILE Then
+										Local s:TSourceFile = New TSourceFile
+										s.obj_path = BlitzMaxPath() + "/tmp/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+										s.stage = STAGE_LINK
+										s.exti = SOURCE_RES
+										m.depslist.AddLast(s)
 									End If
-
-									If Not opt_quiet Then
-										Print ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
-									End If
-
-									Local links:TList = New TList
-									Local opts:TList = New TList
-									m.GetLinks(links, opts)
-
-									For Local arc:String = EachIn arc_order
-										links.AddLast(arc)
-									Next
-									
-									For Local o:String = EachIn opts
-										links.AddLast(o)
-									Next
-
-									LinkApp opt_outfile, links, False, globals.Get("ld_opts")
-
-									m.obj_time = time_(Null)
 								End If
 
+								If Not opt_quiet Then
+									Print ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
+								End If
+
+								Local links:TList = New TList
+								Local opts:TList = New TList
+								m.GetLinks(links, opts)
+
+								For Local arc:String = EachIn arc_order
+									links.AddLast(arc)
+								Next
+								
+								For Local o:String = EachIn opts
+									links.AddLast(o)
+								Next
+
+								LinkApp opt_outfile, links, False, globals.Get("ld_opts")
+
+								m.obj_time = time_(Null)
 							End If
 
 						Case STAGE_MERGE
@@ -1175,13 +1179,13 @@ Type TBuildManager Extends TCallback
 		Return gen
 	End Method
 	
-	Method CreateLinkStage:TSourceFile(source:TSourceFile)
+	Method CreateLinkStage:TSourceFile(source:TSourceFile, stage:Int = STAGE_LINK)
 		Local link:TSourceFile = New TSourceFile
 		
 		source.CopyInfo(link)
 		
 		link.deps.Insert(StripExt(link.obj_path) + ".c", source)
-		link.stage = STAGE_LINK
+		link.stage = stage
 		link.processed = True
 		link.depsList = New TList
 		link.depsList.AddLast(source)		
@@ -1277,12 +1281,17 @@ Type TBuildManager Extends TCallback
 
 		' post process batches
 		Local suffix:String[]
-		For Local i:Int = 0 Until 2
+		Local stage:Int
+		For Local i:Int = 0 Until 3
 			Select i
 				Case 0
 					suffix = ["c", "cpp", "cc", "cxx"]
 				Case 1
 					suffix = ["o"]
+					stage = STAGE_LINK
+				Case 2
+					suffix = ["o"]
+					stage = STAGE_APP_LINK
 			End Select
 			
 			Local newList:TList = New TList
@@ -1296,6 +1305,11 @@ Type TBuildManager Extends TCallback
 					If Not p.EndsWith("bmx") Then
 						For Local s:String = EachIn suffix
 							If p.EndsWith(s) Then
+								If app_iface And stage Then
+									If (stage = STAGE_LINK And app_iface = f.iface_path) Or (stage = STAGE_APP_LINK And app_iface <> f.iface_path) Then
+										Continue
+									End If
+								End If
 								newList.AddLast(f)
 								list.Remove(f)
 								If list.IsEmpty() Then
@@ -1309,7 +1323,9 @@ Type TBuildManager Extends TCallback
 				Next
 			Next
 			
-			batches.AddLast(newList)
+			If Not newList.IsEmpty() Then
+				batches.AddLast(newList)
+			End If
 		Next
 		
 		For Local list:TList = EachIn batches
@@ -1360,8 +1376,7 @@ Type TBuildManager Extends TCallback
 		
 		If m Then
 
-			If Not opt_all And FileType(m.iface_path) = FILETYPE_FILE Then
-			
+			If FileType(m.iface_path) = FILETYPE_FILE Then
 				' has the interface/api changed since the last build?
 				If FileType(m.iface_path2) = FILETYPE_FILE And m.time = FileTime( m.path ) Then
 
@@ -1383,16 +1398,116 @@ Type TBuildManager Extends TCallback
 				Else If m.iface_time < m.MaxIfaceTime() Then
 					SetFileTimeNow(m.iface_path2)
 					m.iface_time = time_(Null)
+					m.maxIfaceTimeCache = -1
 				End If
 			End If
 	
 			If update Then
 				m.SetRequiresBuild(True)
 				m.iface_time = time_(Null)
+				m.maxIfaceTimeCache = -1
 				m.gen_time = time_(Null)
 			End If
 		
 		End If
+
+	End Method
+	
+End Type
+
+
+Type TArcTask
+
+	Field m:TSourceFile
+	Field path:String
+	Field oobjs:TList
+
+	Method Create:TArcTask(m:TSourceFile, path$ , oobjs:TList )
+		Self.m = m
+		Self.path = path
+		Self.oobjs = oobjs
+		Return Self
+	End Method
+
+	Function _CreateArc:Object(data:Object)
+		Return TArcTask(data).CreateArc()
+	End Function
+	
+	Method CreateArc:Object()
+		DeleteFile path
+		Local cmd$,t$
+	
+		If processor.Platform() = "win32"
+			For t$=EachIn oobjs
+				If Len(cmd)+Len(t)>1000
+
+					If opt_standalone And Not opt_nolog processor.PushLog(cmd)
+
+					If processor.Sys( cmd )
+						DeleteFile path
+						Throw "Build Error: Failed to create archive "+path
+					EndIf
+					cmd=""
+				EndIf
+				If Not cmd cmd= processor.Option("path_to_ar", processor.MinGWBinPath() + "/ar.exe") + " -r "+CQuote(path)
+				cmd:+" "+CQuote(t)
+			Next
+		End If
+		
+		If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
+			cmd="libtool -o "+CQuote(path)
+			For Local t$=EachIn oobjs
+				cmd:+" "+CQuote(t)
+			Next
+		End If
+	
+		If processor.Platform() = "ios" Then
+			Local proc:String = processor.CPU()
+			Select proc
+				Case "x86"
+					proc = "i386"
+				Case "x64"
+					proc = "x86_64"
+			End Select
+		
+			cmd="libtool -static -arch_only " + proc + " -o "+CQuote(path)
+			For Local t$=EachIn oobjs
+				cmd:+" "+CQuote(t)
+			Next
+		End If
+		
+		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten"
+			For Local t$=EachIn oobjs
+				If Len(cmd)+Len(t)>1000
+				
+					If opt_standalone And Not opt_nolog processor.PushLog(cmd)
+
+					If processor.Sys( cmd )
+						DeleteFile path
+						Throw "Build Error: Failed to create archive "+path
+					EndIf
+					cmd=""
+				EndIf
+				If processor.Platform() = "emscripten" Then
+					If Not cmd cmd=processor.Option(processor.BuildName("ar"), "emar") + " r "+CQuote(path)
+				Else
+					If Not cmd cmd=processor.Option(processor.BuildName("ar"), "ar") + " -r "+CQuote(path)
+				End If
+				cmd:+" "+CQuote(t)
+			Next
+		End If
+	
+		If cmd
+			If opt_standalone And Not opt_nolog processor.PushLog(cmd)
+
+			If processor.Sys( cmd )
+				DeleteFile path
+				Throw "Build Error: Failed to create archive "+path
+			End If
+		EndIf
+		
+		m.arc_time = time_(Null)
+		m.obj_time = time_(Null)
 
 	End Method
 	
