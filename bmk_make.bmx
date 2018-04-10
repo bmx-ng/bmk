@@ -525,10 +525,10 @@ Type TBuildManager Extends TCallback
 								' generate manifest for app
 								If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
 									processor.RunCommand("make_win32_resource", Null)
-									Local res:String = StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+									Local res:String = ExtractDir(opt_outfile) + "/.bmx/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
 									If FileType(res) = FILETYPE_FILE Then
 										Local s:TSourceFile = New TSourceFile
-										s.obj_path = BlitzMaxPath() + "/tmp/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+										s.obj_path = res
 										s.stage = STAGE_LINK
 										s.exti = SOURCE_RES
 										m.depslist.AddLast(s)

@@ -503,7 +503,7 @@
 	end
 
 	if sys.FileType(windres) == 0 then
-		if bmk.VerboseBuild() then
+		if bmk.VerboseBuild() == 1 then
 			print("windres.exe not found in '" .. bmk.MinGWBinPath() .. "'")
 		end
 		return
@@ -521,7 +521,7 @@
 		arch = "x86"
 	end
 	
-	local tmp_path = utils.BlitzMaxPath() .. "/tmp/"
+	local tmp_path = %exepath% .. "/.bmx/"
 	
 	local manifest_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".manifest"
 	local resource_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".rc"
