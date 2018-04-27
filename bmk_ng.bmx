@@ -386,7 +386,7 @@ Type TBMK
 		End If
 	End Method
 
-	Method MultiSys:Int(cmd:String, src:String)
+	Method MultiSys:Int(cmd:String, src:String, obj:String, supp:String)
 		If Int(globals.Get("verbose")) Or opt_verbose
 			Print cmd
 		Else If Int(globals.Get("dumpbuild"))
@@ -401,8 +401,16 @@ Type TBMK
 		
 		If Not opt_standalone Or (opt_standalone And opt_nolog) Then
 ?threaded
-			processManager.DoSystem(cmd, src)
+			processManager.DoSystem(cmd, src, obj, supp)
 ?Not threaded
+			If obj Then
+				DeleteFile obj
+			End If
+			
+			If supp Then
+				DeleteFile supp
+			End If
+
 			Return  system_( cmd )
 ?
 		End If
@@ -1257,7 +1265,7 @@ Type TBMKCommand
 			Next
 		End If
 		
-		args :+ " = unpack(arg)~n"
+		args :+ " = unpack({...})~n"
 		args :+ rep
 
 		Return args
@@ -1348,10 +1356,10 @@ Type TProcessManager
 		Wend
 	End Method
 	
-	Method DoSystem(cmd:String, src:String)
+	Method DoSystem(cmd:String, src:String, obj:String, supp:String)
 		CheckTasks()
 
-		pool.AddTask(TProcessTask._DoTasks, New TProcessTask.Create(cmd, src))
+		pool.AddTask(TProcessTask._DoTasks, New TProcessTask.Create(cmd, src, obj, supp))
 
 	End Method
 
@@ -1374,9 +1382,14 @@ Type TProcessTask
 	Field command:String
 	Field source:String
 	
-	Method Create:TProcessTask(cmd:String, src:String)
+	Field obj:String
+	Field supp:String
+	
+	Method Create:TProcessTask(cmd:String, src:String, obj:String, supp:String)
 		command = cmd
 		source = src
+		Self.obj = obj
+		Self.supp = supp
 		Return Self
 	End Method
 
@@ -1386,6 +1399,14 @@ Type TProcessTask
 	
 	Method DoTasks:Object()
 		Local res:Int
+		
+		If obj Then
+			DeleteFile(obj)
+		End If
+		
+		If supp Then
+			DeleteFile(supp)
+		End If
 		
 ?Not win32
 		Local s:Byte Ptr = command.ToUtf8String()

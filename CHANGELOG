@@ -1,4 +1,10 @@
-## [3.24] - 2018-04-06
+## [3.25] - 2018-04-27
+### Fixed
+ - Generate correct code for luajit.
+### Changed
+ - Delete files in task, rather than linearly.
+
+ ## [3.24] - 2018-04-06
 ### Fixed
  - App link should always be last.
 ### Changed

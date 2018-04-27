@@ -117,25 +117,14 @@ Function CompileC( src$,obj$,opts$ )
 End Function
 
 Function CompileBMX( src$,obj$,opts$ )
-	DeleteFile obj
-
-	Local azm$=StripExt(obj)
 	
-	If processor.BCCVersion() = "BlitzMax" Then
-		' remove any "NG" generated source.
-		DeleteFile azm + ".c"
-		
-		azm :+ ".s"
-	Else
-		' remove any "legacy" generated source.
-		DeleteFile azm + ".s"
-	
+	If processor.BCCVersion() <> "BlitzMax" Then
 		opts :+ " -p " + processor.Platform()
 	End If
 	
 	If opt_standalone opt_nolog = True
 	
-	processor.RunCommand("CompileBMX", [src, azm, opts])
+	processor.RunCommand("CompileBMX", [src, obj, opts])
 
 	If opt_standalone opt_nolog = False
 
@@ -174,7 +163,7 @@ Function CreateMergeArc( path$ , arc_path:String )
 		cmd :+ " -output " + CQuote(path)
 	End If
 
-	If cmd And processor.MultiSys( cmd, path )
+	If cmd And processor.MultiSys( cmd, path, Null, Null )
 		DeleteFile path
 		Throw "Build Error: Failed to merge archive " + path
 	EndIf
