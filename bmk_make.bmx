@@ -713,6 +713,11 @@ Type TBuildManager Extends TCallback
 				End If
 			Next
 
+			Local ib:TSourceFile
+			If processor.BCCVersion() <> "BlitzMax" And Not source.incbins.IsEmpty() Then
+				ib = CreateIncBin(source)
+			End If
+
 			For Local f:String = EachIn source.imports
 				If f[0] <> Asc("-") Then
 					Local path:String = CheckPath(ExtractDir(source.path), f)
@@ -857,9 +862,27 @@ Type TBuildManager Extends TCallback
 				If time > source.time Then
 					source.time = time
 				End If
-					
+				
 			Next
-
+			
+			' incbin file
+			If ib Then
+				' missing source.. generate and compile
+				If Not ib.time Then
+					ib.SetRequiresBuild(True)
+					source.SetRequiresBuild(True)
+				End If
+				
+				' sync timestamps
+				If ib.time > source.time Then
+					source.time = ib.time
+				End If
+				
+				If ib.obj_time > source.time Then
+					source.time = ib.obj_time
+				End If
+			End If
+						
 			If source.depsList Then			
 				For Local s:TSourceFile = EachIn source.depsList
 					If Not Match(s.ext, "bmx") Then
@@ -1177,6 +1200,30 @@ Type TBuildManager Extends TCallback
 		sources.Insert(StripExt(gen.obj_path) + ".c", gen)
 
 		Return gen
+	End Method
+
+	Method CreateIncBin:TSourceFile(source:TSourceFile)
+	
+		Local path:String = StripDir(source.path) + opt_configmung +  processor.CPU() + ".incbin.c"
+
+		Local ib:TSourceFile = GetSourceFile(path)
+		
+		If Not ib Then
+			ib = New TSourceFile
+			ib.path = ExtractDir(source.path) + "/.bmx/" + path
+			ib.obj_path = StripExt(ib.path) + ".o"
+			ib.ext = "c"
+			ib.exti = String(processor.RunCommand("source_type", [ib.ext])).ToInt()
+
+			source.imports.AddLast(".bmx/" + StripDir(path) )
+		End If
+		
+		ib.time = FileTime(ib.path)
+		ib.obj_time = FileTime(ib.obj_path)
+
+		sources.Insert(ib.path, ib)
+
+		Return ib
 	End Method
 	
 	Method CreateLinkStage:TSourceFile(source:TSourceFile, stage:Int = STAGE_LINK)

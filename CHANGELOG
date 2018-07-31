@@ -1,10 +1,14 @@
+## [3.26] - 2018-07-31
+### Changed
+ - NG incbins are now wrapped in own object file.
+
 ## [3.25] - 2018-04-27
 ### Fixed
  - Generate correct code for luajit.
 ### Changed
  - Delete files in task, rather than linearly.
 
- ## [3.24] - 2018-04-06
+## [3.24] - 2018-04-06
 ### Fixed
  - App link should always be last.
 ### Changed
