@@ -1,4 +1,6 @@
 ## [3.26] - 2018-07-31
+### Fixed
+ - Potential task race issue.
 ### Changed
  - NG incbins are now wrapped in own object file.
 
