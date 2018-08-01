@@ -714,8 +714,12 @@ Type TBuildManager Extends TCallback
 			Next
 
 			Local ib:TSourceFile
-			If processor.BCCVersion() <> "BlitzMax" And Not source.isInclude And Not source.incbins.IsEmpty() Then
-				ib = CreateIncBin(source)
+			If processor.BCCVersion() <> "BlitzMax" And Not source.incbins.IsEmpty() Then
+				If source.owner_path Then
+					ib = CreateIncBin(source, source.owner_path)
+				Else
+					ib = CreateIncBin(source, source.path)
+				End If
 			End If
 
 			For Local f:String = EachIn source.imports
@@ -838,6 +842,8 @@ Type TBuildManager Extends TCallback
 
 				Local s:TSourceFile = GetSourceFile(path, isMod, rebuildImports, True)
 				If s Then
+					s.owner_path = source.path
+					
 					' calculate included file dependencies
 					CalculateDependencies(s, isMod, rebuildImports)
 
@@ -1204,15 +1210,15 @@ Type TBuildManager Extends TCallback
 		Return gen
 	End Method
 
-	Method CreateIncBin:TSourceFile(source:TSourceFile)
+	Method CreateIncBin:TSourceFile(source:TSourceFile, sourcePath:String)
 	
-		Local path:String = StripDir(source.path) + opt_configmung +  processor.CPU() + ".incbin.c"
+		Local path:String = StripDir(sourcePath) + opt_configmung +  processor.CPU() + ".incbin.c"
 
 		Local ib:TSourceFile = GetSourceFile(path)
 		
 		If Not ib Then
 			ib = New TSourceFile
-			ib.path = ExtractDir(source.path) + "/.bmx/" + path
+			ib.path = ExtractDir(sourcePath) + "/.bmx/" + path
 			ib.obj_path = StripExt(ib.path) + ".o"
 			ib.ext = "c"
 			ib.exti = String(processor.RunCommand("source_type", [ib.ext])).ToInt()

@@ -83,6 +83,7 @@ Type TSourceFile
 	Field maxIfaceTimeCache:Int = -1
 	
 	Field isInclude:Int
+	Field owner_path:String
 	
 	' add cc_opts or ld_opts
 	Method AddModOpt(opt:String)
