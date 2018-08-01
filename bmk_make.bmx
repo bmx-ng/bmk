@@ -714,7 +714,7 @@ Type TBuildManager Extends TCallback
 			Next
 
 			Local ib:TSourceFile
-			If processor.BCCVersion() <> "BlitzMax" And Not source.incbins.IsEmpty() Then
+			If processor.BCCVersion() <> "BlitzMax" And Not source.isInclude And Not source.incbins.IsEmpty() Then
 				ib = CreateIncBin(source)
 			End If
 
@@ -940,6 +940,8 @@ Type TBuildManager Extends TCallback
 								source.gen_time = FileTime(p)
 							End If
 						End If
+					Else
+						source.isInclude = True
 					End If
 				End If
 			End If

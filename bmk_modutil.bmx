@@ -82,6 +82,8 @@ Type TSourceFile
 	Field maxLinkTimeCache:Int = -1
 	Field maxIfaceTimeCache:Int = -1
 	
+	Field isInclude:Int
+	
 	' add cc_opts or ld_opts
 	Method AddModOpt(opt:String)
 		If Not mod_opts Then
