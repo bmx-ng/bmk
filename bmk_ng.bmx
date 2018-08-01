@@ -1593,6 +1593,9 @@ Type TThreadPool
 			
 			Local task:TThreadPoolTask = pool._queue[pool._head]
 			
+			Local func:Object(data:Object) = task.func
+			Local data:Object = task.data
+			
 			pool._head :+ 1
 			
 			If pool._head = pool._queue.length Then
@@ -1607,7 +1610,7 @@ Type TThreadPool
 			pool._lock.Unlock()
 			
 			' perform a task
-			task.func(task.data)
+			func(data)
 			
 			pool._lock.Lock()
 			pool._running :- 1
