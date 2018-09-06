@@ -5,6 +5,7 @@ Import BRL.MaxUtil
 Import BRL.TextStream
 
 Import "bmk_util.bmx"
+Import "options_parser.bmx"
 
 Const SOURCE_UNKNOWN:Int = 0
 Const SOURCE_BMX:Int = $01
@@ -448,6 +449,8 @@ Function ParseSourceFile:TSourceFile( path$ )
 
 	Local pos,in_rem,cc=True
 
+	SetCompilerValues()
+	
 	While pos<Len(str)
 
 		Local eol=str.Find( "~n",pos )
@@ -482,214 +485,10 @@ Function ParseSourceFile:TSourceFile( path$ )
 				Continue
 			EndIf
 
-			If lline[..1]="?"
-				Local t$=lline[1..].Trim()
-				
-				Local cNot
-				If t.StartsWith( "not " )
-					cNot=True
-					t=t[4..].Trim()
-				EndIf
-
-				t = t.toLower()
-				Select t
-				Case ""
-					cc=True
-				Case "debug"
-					cc=opt_debug
-				Case "threaded"
-					cc=opt_threaded
-'?x86
-				Case "x86" cc=processor.CPU()="x86"
-'?ppc
-				Case "ppc" cc=processor.CPU()="ppc"
-				Case "x64" cc=processor.CPU()="x64"
-				Case "arm" cc=processor.CPU()="arm"
-				Case "armeabi" cc=processor.CPU()="armeabi"
-				Case "armeabiv7a" cc=processor.CPU()="armeabiv7a"
-				Case "arm64v8a" cc=processor.CPU()="arm64v8a"
-				Case "armv7" cc=processor.CPU()="armv7"
-				Case "arm64" cc=processor.CPU()="arm64"
-				Case "js" cc=processor.CPU()="js"
-
-				Case "ptr32" cc=(processor.CPU()="x86" Or processor.CPU()="ppc" Or processor.CPU()="arm" Or processor.CPU()="armeabi" Or processor.CPU()="armeabiv7a" Or processor.CPU()="armv7" Or processor.CPU()="js")
-				Case "ptr64" cc=(processor.CPU()="x64" Or processor.CPU()="arm64v8a" Or processor.CPU()="arm64")
-''?
-				Case "win32" 
-					cc=False
-					If processor.Platform() = "win32"
-						cc=True
-					End If
-				Case "win32x86"
-					cc=False
-					If processor.Platform() = "win32"
-						cc=processor.CPU()="x86"
-					End If
-				Case "win32ppc"
-					cc=False
-					If processor.Platform() = "win32"
-						cc=processor.CPU()="ppc"
-					End If
-				Case "win32x64"
-					cc=False
-					If processor.Platform() = "win32"
-						cc=processor.CPU()="x64"
-					End If
-				Case "linux"
-					cc=False
-					If processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi"
-						 cc=True
-					End If
-				Case "linuxx86"
-					cc=False
-					If processor.Platform() = "linux" Or processor.Platform() = "android"
-						 cc=processor.CPU()="x86"
-					End If
-				Case "linuxppc"
-					cc=False
-					If processor.Platform() = "linux"
-						 cc=processor.CPU()="ppc"
-					End If
-				Case "linuxx64"
-					cc=False
-					If processor.Platform() = "linux" Or processor.Platform() = "android"
-						 cc=processor.CPU()="x64"
-					End If
-				Case "linuxarm"
-					cc=False
-					If processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi"
-						 cc=processor.CPU()="arm"
-					End If
-				Case "macos"
-					cc=False
-					If processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios"
-						cc=True
-					End If
-				Case "macosx86"
-					cc=False
-					If processor.Platform() = "macos"Or processor.Platform() = "osx" Or processor.Platform() = "ios"
-						 cc=processor.CPU()="x86"
-					End If
-				Case "macosppc"
-					cc=False
-					If processor.Platform() = "macos" Or processor.Platform() = "osx"
-						 cc=processor.CPU()="ppc"
-					End If
-				Case "macosx64"
-					cc=False
-					If processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios"
-						 cc=processor.CPU()="x64"
-					End If
-				Case "osx"
-					cc=False
-					If processor.Platform() = "macos" Or processor.Platform() = "osx"
-						cc=True
-					End If
-				Case "osxx86"
-					cc=False
-					If processor.Platform() = "macos"Or processor.Platform() = "osx"
-						 cc=processor.CPU()="x86"
-					End If
-				Case "osxx64"
-					cc=False
-					If processor.Platform() = "macos" Or processor.Platform() = "osx"
-						 cc=processor.CPU()="x64"
-					End If
-				Case "ios"
-					cc=False
-					If processor.Platform() = "ios"
-						cc=True
-					End If
-				Case "iosx86"
-					cc=False
-					If processor.Platform() = "ios"
-						 cc=processor.CPU()="x86"
-					End If
-				Case "iosx64"
-					cc=False
-					If processor.Platform() = "ios"
-						 cc=processor.CPU()="x64"
-					End If
-				Case "iosarmv7"
-					cc=False
-					If processor.Platform() = "ios"
-						 cc=processor.CPU()="armv7"
-					End If
-				Case "iosarm64"
-					cc=False
-					If processor.Platform() = "ios"
-						 cc=processor.CPU()="arm64"
-					End If
-				Case "android"
-					cc=False
-					If processor.Platform() = "android"
-						 cc=True
-					End If
-				Case "androidarm"
-					cc=False
-					If processor.Platform() = "android"
-						 cc=processor.CPU()="arm"
-					End If
-				Case "androidarmeabi"
-					cc=False
-					If processor.Platform() = "android"
-						 cc=processor.CPU()="armeabi"
-					End If
-				Case "androidarmeabiv7a"
-					cc=False
-					If processor.Platform() = "android"
-						 cc=processor.CPU()="armeabiv7a"
-					End If
-				Case "androidarm64v8a"
-					cc=False
-					If processor.Platform() = "android"
-						 cc=processor.CPU()="arm64v8a"
-					End If
-				Case "raspberrypi"
-					cc=False
-					If processor.Platform() = "raspberrypi"
-						 cc=True
-					End If
-				Case "raspberrypiarm"
-					cc=False
-					If processor.Platform() = "raspberrypi"
-						 cc=processor.CPU()="arm"
-					End If
-				Case "raspberrypiarm64"
-					cc=False
-					If processor.Platform() = "raspberrypi"
-						 cc=processor.CPU()="arm64"
-					End If
-				Case "emscripten"
-					cc=False
-					If processor.Platform() = "emscripten"
-						 cc=True
-					End If
-				Case "emscriptenjs"
-					cc=False
-					If processor.Platform() = "emscripten"
-						 cc=processor.CPU()="js"
-					End If
-				Case "opengles"
-					cc=False
-					If processor.Platform() = "android" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "emscripten" Or processor.Platform() = "ios" 
-						 cc=True
-					End If
-				Case "bmxng"
-					cc=False
-					If processor.BCCVersion() <> "BlitzMax" Then
-						cc=True
-					End If
-				Case "musl"
-					cc=False
-					If processor.Platform() = "linux" Or processor.Platform() ="raspberrypi"
-						 cc=True
-					End If
-				Default
-					cc=False
-				End Select
-				If cNot cc=Not cc
-				Continue
+			Local cmopt:String = lline.Trim()
+			If cmopt[..1]="?"
+				Local t$=cmopt[1..]
+				cc = EvalOption(t)
 			EndIf
 
 			If Not cc Continue
@@ -866,9 +665,84 @@ Function ValidatePlatformArchitecture()
 			If arch = "js" Then
 				valid = True
 			End If
+		Case "nx"
+			If arch = "arm64" Then
+				valid = True
+			End If
 	End Select
 	
 	If Not valid Then
 		CmdError "Invalid Platform/Architecture configuration : " + platform + "/" + arch
 	End If
 End Function
+
+Function SetCompilerValues()
+
+	compilerOptions = New TValues
+
+	compilerOptions.Add("debug", opt_debug)
+	compilerOptions.Add("threaded", opt_threaded)
+
+	compilerOptions.Add("x86", processor.CPU()="x86")
+
+	compilerOptions.Add("ppc", processor.CPU()="ppc")
+	compilerOptions.Add("x64", processor.CPU()="x64")
+	compilerOptions.Add("arm", processor.CPU()="arm")
+	compilerOptions.Add("armeabi", processor.CPU()="armeabi")
+	compilerOptions.Add("armeabiv7a", processor.CPU()="armeabiv7a")
+	compilerOptions.Add("arm64v8a", processor.CPU()="arm64v8a")
+	compilerOptions.Add("armv7", processor.CPU()="armv7")
+	compilerOptions.Add("arm64", processor.CPU()="arm64")
+	compilerOptions.Add("js", processor.CPU()="js")
+
+	compilerOptions.Add("ptr32", processor.CPU()="x86" Or processor.CPU()="ppc" Or processor.CPU()="arm" Or processor.CPU()="armeabi" Or processor.CPU()="armeabiv7a" Or processor.CPU()="armv7" Or processor.CPU()="js")
+	compilerOptions.Add("ptr64", processor.CPU()="x64" Or processor.CPU()="arm64v8a" Or processor.CPU()="arm64")
+
+	compilerOptions.Add("win32", processor.Platform() = "win32")
+	compilerOptions.Add("win32x86", processor.Platform() = "win32" And processor.CPU()="x86")
+	compilerOptions.Add("win32ppc", processor.Platform() = "win32" And processor.CPU()="ppc")
+	compilerOptions.Add("win32x64", processor.Platform() = "win32" And processor.CPU()="x64")
+
+	compilerOptions.Add("linux", processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi")
+	compilerOptions.Add("linuxx86", (processor.Platform() = "linux" Or processor.Platform() = "android") And processor.CPU()="x86")
+	compilerOptions.Add("linuxppc", processor.Platform() = "linux" And processor.CPU()="ppc")
+	compilerOptions.Add("linuxx64", (processor.Platform() = "linux" Or processor.Platform() = "android") And processor.CPU()="x64")
+	compilerOptions.Add("linuxarm", (processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi") And processor.CPU()="arm")
+
+	compilerOptions.Add("macos", processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios")
+	compilerOptions.Add("macosx86", (processor.Platform() = "macos"Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x86")
+	compilerOptions.Add("macosppc", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="ppc")
+	compilerOptions.Add("macosx64", (processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x64")
+	compilerOptions.Add("osx", processor.Platform() = "macos" Or processor.Platform() = "osx")
+	compilerOptions.Add("osxx86", (processor.Platform() = "macos"Or processor.Platform() = "osx") And processor.CPU()="x86")
+	compilerOptions.Add("osxx64", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="x64")
+	compilerOptions.Add("ios", processor.Platform() = "ios")
+	compilerOptions.Add("iosx86", processor.Platform() = "ios" And processor.CPU()="x86")
+	compilerOptions.Add("iosx64", processor.Platform() = "ios" And processor.CPU()="x64")
+	compilerOptions.Add("iosarmv7", processor.Platform() = "ios" And processor.CPU()="armv7")
+	compilerOptions.Add("iosarm64", processor.Platform() = "ios" And processor.CPU()="arm64")
+
+	compilerOptions.Add("android", processor.Platform() = "android")
+	compilerOptions.Add("androidarm", processor.Platform() = "android" And processor.CPU()="arm")
+	compilerOptions.Add("androidarmeabi", processor.Platform() = "android" And processor.CPU()="armeabi")
+	compilerOptions.Add("androidarmeabiv7a", processor.Platform() = "android" And processor.CPU()="armeabiv7a")
+	compilerOptions.Add("androidarm64v8a", processor.Platform() = "android" And processor.CPU()="arm64v8a")
+
+	compilerOptions.Add("raspberrypi", processor.Platform() = "raspberrypi")
+	compilerOptions.Add("raspberrypiarm", processor.Platform() = "raspberrypi" And processor.CPU()="arm")
+	compilerOptions.Add("raspberrypiarm64", processor.Platform() = "raspberrypi" And processor.CPU()="arm64")
+	
+	compilerOptions.Add("emscripten", processor.Platform() = "emscripten")
+	compilerOptions.Add("emscriptenjs", processor.Platform() = "emscripten" And processor.CPU()="js")
+
+	compilerOptions.Add("opengles", processor.Platform() = "android" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "emscripten" Or processor.Platform() = "ios")
+
+	compilerOptions.Add("bmxng", processor.BCCVersion() <> "BlitzMax")
+
+	compilerOptions.Add("musl", processor.Platform() = "linux" Or processor.Platform() ="raspberrypi")
+
+	compilerOptions.Add("nx", processor.Platform() = "nx")
+	compilerOptions.Add("nxarm64", processor.Platform() = "nx" And processor.CPU()="arm64")
+
+End Function
+

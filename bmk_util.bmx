@@ -54,7 +54,21 @@ Type TModOpt ' BaH
 	End Method
 
 	Function setPath:String(value:String, path:String)
-		Return value.Replace("%PWD%", path)
+		If value.Contains("%PWD%") Then
+			Return value.Replace("%PWD%", path)
+		End If
+		
+		' var replace
+		Local s:Int = value.Find("%")
+		If s >= 0 Then
+			Local e:Int = value.Find("%", s + 1)
+			If e >= 0 Then
+				Local v:String = value[s+1..e]
+				value = value[..s] + processor.option(v, "NA") + value[e+1..]
+			End If
+		End If
+		
+		Return value
 	End Function
 	
 End Type
@@ -495,6 +509,44 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		fb.Insert(0,"INPUT(").Append(")")
 	End If
 	
+	If processor.Platform() = "nx" Then
+		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
+		
+		Local libso:String = StripDir(path)
+		sb.Append(" -MMD -MP -MF ")
+		sb.Append(" -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE ")
+		
+		sb.Append(" -specs=").Append(processor.Option("nx.devkitpro", "")).Append("/libnx/switch.specs")
+		sb.Append(" -g")
+		'sb.Append(" -Wl,-Map,").Append(StripExt(path)).Append(".map")
+		
+		sb.Append(" -L").Append(NXLibDir())
+	
+		sb.Append(" -o ").Append(CQuote( path ))
+		sb.Append(" ").Append(CQuote( tmpfile ))
+		
+		Local endLinks:TList = New TList
+		
+		For Local t$=EachIn lnk_files
+			t=CQuote(t)
+			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
+				sb.Append(" ").Append(t)
+			Else
+				If t.Contains("appstub") Or t.Contains("blitz.mod") Then
+					endLinks.AddLast(t)
+					Continue
+				End If
+				fb.Append(" ").Append(t)
+			EndIf
+		Next
+
+		fb.Append(" -lnx -lm")
+		For Local t:String = EachIn endLinks
+			fb.Append(" ").Append(t)
+		Next
+
+		fb.Insert(0,"INPUT(").Append(")")
+	End If
 
 	Local t$=getenv_( "BMK_LD_OPTS" )
 	If t 
@@ -758,6 +810,123 @@ Function GetAndroidSDKTarget:String()
 		Return high
 	End If
 	
+End Function
+
+Function NXLibDir:String()
+	Return processor.Option("nx.devkitpro", "") + "/libnx/lib"
+End Function
+
+Function NxToolsDir:String()
+	Return processor.Option("nx.devkitpro", "") + "/tools/bin"
+End Function
+
+Function BuildNxDependencies()
+	
+	BuildNxNso()
+	BuildNxNacp()
+	BuildNxNro()
+	
+End Function
+
+Function BuildNxNso()
+
+	If Not opt_quiet Print "Building:" + StripDir(StripExt(opt_outfile)) + ".nso"
+
+	Local elf2nso:String = NxToolsDir() + "/elf2nso"
+?win32
+	elf2nso :+ ".exe"
+?
+	If Not FileType(elf2nso) Then
+		Throw "elf2nso tool not present at " + elf2nso
+	End If
+
+	Local app:String = StripExt(opt_outfile)
+	
+	Local cmd:String = elf2nso + " " + CQuote(app + ".elf")
+	cmd :+ " " + CQuote(app + ".nso")
+	
+	Sys(cmd)
+End Function
+
+Function BuildNxNacp()
+
+	If Not opt_quiet Print "Building:" + StripDir(StripExt(opt_outfile)) + ".nacp"
+
+	Local nacptool:String = NxToolsDir() + "/nacptool"
+?win32
+	nacptool :+ ".exe"
+?
+	If Not FileType(nacptool) Then
+		Throw "nacptool tool not present at " + nacptool
+	End If
+
+	Local app:String = StripExt(opt_outfile)
+	
+	Local cmd:String = nacptool + " --create"
+	Local name:String = processor.AppSetting("app.name")
+	If Not name Then
+		name = StripDir(StripExt(opt_outfile))
+	End If
+	cmd :+ " " + CQuote(name)
+	
+	Local auth:String = processor.AppSetting("app.company")
+	If Not auth Then
+		auth = "Unspecified Author"
+	End If
+	cmd :+ " " + CQuote(auth)
+	
+	Local ver:String = processor.AppSetting("app.version.name")
+	If Not ver Then
+		ver = "1.0.0"
+	End If
+	cmd :+ " " + CQuote(ver)
+	
+	cmd :+ " " + CQuote(app + ".nacp")
+
+	Sys(cmd)
+End Function
+
+Function BuildNxNro()
+
+	If Not opt_quiet Print "Building:" + StripDir(StripExt(opt_outfile)) + ".nro"
+
+	Local elf2nro:String = NxToolsDir() + "/elf2nro"
+?win32
+	elf2nro :+ ".exe"
+?
+
+	If Not FileType(elf2nro) Then
+		Throw "elf2nro tool not present at " + elf2nro
+	End If
+
+	' get icon
+	Local icon:String
+	' app.jpg
+	' TODO
+	' icon.jpg
+	' TODO
+	' default icon
+	If Not icon Then
+		icon = processor.Option("nx.devkitpro", "") + "/libnx/default_icon.jpg"
+		If Not FileType(icon) Then
+			Throw "Default icon not found at " + icon
+		End If
+	End If
+	
+	Local app:String = StripExt(opt_outfile)
+	
+	Local cmd:String = elf2nro + " " + CQuote(app + ".elf")
+	cmd :+ " " + CQuote(app + ".nro")
+	cmd :+ " --icon=" + CQuote(icon)
+	cmd :+ " --nacp=" + CQuote(app + ".nacp")
+	
+	Local romfsDir:String = ExtractDir(opt_outfile) + "/romfs"
+	
+	If FileType(romfsDir) = FILETYPE_DIR Then
+		cmd :+ " --romfsdir=" + CQuote(romfsDir)
+	End If
+	
+	Sys(cmd)	
 End Function
 
 Function PathFromPackage:String(package:String)

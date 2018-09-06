@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.26"
+Const BMK_VERSION:String = "3.27"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -337,6 +337,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm, arm64~n"
 		s:+ "~t~t~tEmscripten : js~n"
+		s:+ "~t~t~tnx : arm64~n"
 		s:+ "~n~n"
 		s:+ "~t-gdb~n"
 		s:+ "~t~tGenerates line mappings suitable for GDB debugging.~n"
@@ -594,6 +595,7 @@ Function ValidatePlatform(platform:String)
 		Case "android"
 		Case "raspberrypi"
 		Case "emscripten"
+		Case "nx"
 		Default
 			' oops
 			CmdError "Not valid platform : '" + platform + "'"

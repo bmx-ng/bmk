@@ -229,6 +229,83 @@ Function ConfigureIOSPaths()
 
 End Function
 
+Function ConfigureNXPaths()
+	CheckNXPaths()
+	
+	Local toolchainBin:String
+	
+	Select processor.CPU()
+		Case "arm64"
+			toolchainBin = "aarch64-none-elf-"
+	End Select
+	
+	Local native:String
+?macos
+	native = "darwin"
+?linux
+	native = "linux"
+?win32
+	native = "windows"
+?
+
+	Local toolchainDir:String = processor.Option("nx.devkitpro", "") + "/devkitA64/"
+	
+	If FileType(toolchainDir) <> FILETYPE_DIR Then
+		Throw "Cannot determine toolchain dir for NX, at '" + toolchainDir + "'"
+	End If
+
+	Local exe:String	
+?win32
+	exe = ".exe"
+?
+	Local gccPath:String = toolchainDir + "/bin/" + toolchainBin + "gcc" + exe
+	Local gppPath:String = toolchainDir + "/bin/" + toolchainBin + "g++" + exe
+	Local arPath:String = toolchainDir + "/bin/" + toolchainBin + "ar" + exe
+	Local libPath:String = toolchainDir + "/lib"
+
+	' check paths
+	If Not FileType(RealPath(gccPath)) Then
+		Throw "gcc not found at '" + gccPath + "'"
+	End If
+
+	If Not FileType(RealPath(gppPath)) Then
+		Throw "g++ not found at '" + gppPath + "'"
+	End If
+
+	If Not FileType(RealPath(gccPath)) Then
+		Throw "ar not found at '" + arPath + "'"
+	End If
+	
+	globals.SetVar("nx." + processor.CPU() + ".gcc", gccPath)
+	globals.SetVar("nx." + processor.CPU() + ".gpp", gppPath)
+	globals.SetVar("nx." + processor.CPU() + ".ar", arPath)
+	globals.SetVar("nx." + processor.CPU() + ".lib", "-L" + libPath)
+
+?Not win32	
+	Local pathSeparator:String = ":"
+	Local dirSeparator:String = "/"
+?win32
+	Local pathSeparator:String = ";"
+	Local dirSeparator:String = "\"
+?
+	Local path:String = getenv_("PATH")
+	path = toolchainDir + dirSeparator + "bin" + pathSeparator + path
+	putenv_("PATH=" + path)
+
+End Function
+
+Function CheckNXPaths()
+	' check envs and paths
+	Local devkitpro:String = processor.Option("nx.devkitpro", getenv_("DEVKITPRO")).Trim()
+	If Not devkitpro Then
+		Throw "DEVKITPRO or 'nx.devkitpro' config option not set"
+	End If
+		
+	putenv_("DEVKITPRO=" + devkitpro)
+	globals.SetVar("nx.devkitpro", devkitpro)
+		
+End Function
+
 Type TBuildManager Extends TCallback
 
 	Field sources:TMap = New TMap
@@ -244,6 +321,8 @@ Type TBuildManager Extends TCallback
 			ConfigureAndroidPaths()
 		Else If processor.Platform() = "ios" Then
 			ConfigureIOSPaths()
+		Else If processor.Platform() = "nx" Then
+			ConfigureNXPaths()
 		End If
 		
 		processor.callback = Self
@@ -636,7 +715,8 @@ Type TBuildManager Extends TCallback
 			' post process
 			LoadBMK(ExtractDir(app_main) + "/post.bmk")
 
-			If processor.Platform() = "android"
+			Select processor.Platform()
+			Case "android"
 				' create the apk
 				
 				' copy shared object
@@ -679,16 +759,19 @@ Type TBuildManager Extends TCallback
 				
 				ChangeDir(dir)
 		
-			End If
+			'End If
 		
-		Else If processor.Platform() = "ios" Then
-		
-			Local iosSimulator:Int = (processor.CPU() = "x86")
+			Case "ios"
 			
-			' TODO - other stuff ?
+				Local iosSimulator:Int = (processor.CPU() = "x86")
+				
+				' TODO - other stuff ?
+			Case "nx"
 			
+				' TODO - build nro, nso, psf0 and nacp
+				
+			End Select
 		End If
-
 	End Method
 	
 	Method CalculateDependencies(source:TSourceFile, isMod:Int = False, rebuildImports:Int = False, isInclude:Int = False)
@@ -1531,7 +1614,7 @@ Type TArcTask
 			Next
 		End If
 		
-		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten"
+		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten" Or processor.Platform() = "nx"
 			For Local t$=EachIn oobjs
 				If Len(cmd)+Len(t)>1000
 				

@@ -367,6 +367,10 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	If processor.Platform() = "emscripten" Then
 		If ExtractExt(opt_outfile).ToLower()<>"html" opt_outfile:+".html"
 	End If
+
+	If processor.Platform() = "nx" Then
+		If ExtractExt(opt_outfile).ToLower()<>"elf" opt_outfile:+".elf"
+	End If
 	
 	BeginMake
 	
@@ -414,6 +418,11 @@ Rem
 		opt_outfile = previousOutfile
 	End If
 End Rem
+
+	If processor.Platform() = "nx" And Not compileOnly Then
+		BuildNxDependencies()
+	End If
+
 	If opt_standalone And Not compileOnly
 		Local buildScript:String = String(globals.GetRawVar("EXEPATH")) + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + ".build"
 		Local ldScript:String = "$APP_ROOT/ld." + processor.AppDet() + ".txt"

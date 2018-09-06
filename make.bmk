@@ -151,7 +151,7 @@
 			cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
 			
 			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-				cmd = bmk.Option(bmk.BuildName("g++"), "g++")
+				cmd = bmk.Option(bmk.BuildName("gpp"), "g++")
 			end
 		end
 		
@@ -190,15 +190,30 @@
 		cmd = bmk.Option(bmk.BuildName("gcc"), "emcc")
 		
 		cmd = cmd .. " -Wno-warn-absolute-paths "
+	elseif bmk.Platform() == "nx" then
+		cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
+		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
+			cmd = bmk.Option(bmk.BuildName("gpp"), "g++")
+		end
 	end
 
+	if bmk.Platform() == "nx" then
+		cmd = cmd .. " -ffunction-sections"
+		cmd = cmd .. " -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE"
+		cmd = cmd .. " -I" .. bmk.Option("nx.devkitpro", "") .. "/libnx/include"
+		cmd = cmd .. " -I" .. bmk.Option("nx.devkitpro", "")
+	end
+	
 	# disable warnings ?
 	if %CC_WARNINGS% == "" then
 		opts = opts .. " -w"
 	end
-	
+
 	if bmk.BCCVersion() ~= "BlitzMax" then
 		opts = opts .. " -DBMX_NG"
+		if bmk.Platform() == "nx" then
+			opts = opts .. " -D__SWITCH__"
+		end
 	end
 	
 	local genDebug = ""
@@ -459,7 +474,11 @@
 
 	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")
 	globals.SetOption("cc_opts", "linker", "-c")
-	globals.SetOption("cc_opts", "optimization", "-O3")
+	if bmk.Platform() ~= "nx" then
+		globals.SetOption("cc_opts", "optimization", "-O3")
+	else
+		globals.SetOption("cc_opts", "optimization", "-O2")
+	end
 	if bmk.CPU() == "x64" then
 		globals.SetOption("cc_opts", "simd", "-msse3")
 	end

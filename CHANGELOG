@@ -1,3 +1,8 @@
+## [3.27] - 2018-09-06
+### Fixed
+ - Fixed conditional compiler processing.
+### Added
+ - NX platform support.
 ## [3.26] - 2018-07-31
 ### Fixed
  - Potential task race issue.
