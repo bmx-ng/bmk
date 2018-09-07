@@ -436,7 +436,7 @@ Type TBuildManager Extends TCallback
 		End If
 	End Method
 	
-	Method DoBuild(app_build:Int = False)
+	Method DoBuild(makelib:Int, app_build:Int = False)
 		Local arc_order:TList = New TList
 	
 		Local files:TList = New TList

@@ -157,7 +157,7 @@ Function MakeModules( args$[] )
 	Local buildManager:TBuildManager = New TBuildManager
 
 	buildManager.MakeMods(mods, opt_all)
-	buildManager.DoBuild()
+	buildManager.DoBuild(False)
 	
 End Function
 
@@ -382,9 +382,9 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	If processor.Platform() = "android" And Not compileOnly Then
 		DeployAndroidProject()
 	End If
-
+	
 	buildManager.MakeApp(Main, makelib, compileOnly)
-	buildManager.DoBuild(Not compileOnly)
+	buildManager.DoBuild(makelib, Not compileOnly)
 
 	If opt_universal And processor.Platform() = "ios" Then
 
@@ -395,7 +395,7 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 
 		Local buildManager:TBuildManager = New TBuildManager
 		buildManager.MakeApp(Main, makelib, compileOnly)
-		buildManager.DoBuild(True)
+		buildManager.DoBuild(False, True)
 
 		processor.ToggleCPU()
 		LoadOptions(True)
