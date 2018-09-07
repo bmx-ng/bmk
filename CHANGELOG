@@ -1,6 +1,7 @@
 ## [3.27] - 2018-09-06
 ### Fixed
  - Fixed conditional compiler processing.
+ - makelib now correctly builds dlls.
 ### Added
  - NX platform support.
 ## [3.26] - 2018-07-31
