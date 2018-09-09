@@ -332,7 +332,7 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			Local imp$=StripExt(path)+".a"
 
 			If FileType( def )<>FILETYPE_FILE Then
-				Print "Cannot locate .def file. Exporting ALL symbols"
+				Print "Warning: Cannot locate .def file (" + def + "). Exporting ALL symbols."
 			Else
 				sb.Append(" ").Append(def)
 			End If
