@@ -174,7 +174,7 @@ Type TOptTokenizer
 	End Method
 	
 	Method IsAlphaNumeric:Int(char:Int)
-		Return (char >= Asc("A") And char <= Asc("Z")) Or (char >= Asc("a") And char <= Asc("z")) Or (char >= Asc("0") And char <= Asc("9"))
+		Return (char >= Asc("A") And char <= Asc("Z")) Or (char >= Asc("a") And char <= Asc("z")) Or (char >= Asc("0") And char <= Asc("9")) Or char = Asc("_")
 	End Method
 	
 	Method IsWhitespace:Int(char:Int)
