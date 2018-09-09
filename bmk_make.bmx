@@ -630,7 +630,7 @@ Type TBuildManager Extends TCallback
 									links.AddLast(o)
 								Next
 
-								LinkApp opt_outfile, links, False, globals.Get("ld_opts")
+								LinkApp opt_outfile, links, makelib, globals.Get("ld_opts")
 
 								m.obj_time = time_(Null)
 							End If
