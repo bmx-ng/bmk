@@ -451,10 +451,14 @@ Function ParseSourceFile:TSourceFile( path$ )
 
 	SetCompilerValues()
 	
+	Local lineCount:Int
+	
 	While pos<Len(str)
 
 		Local eol=str.Find( "~n",pos )
 		If eol=-1 eol=Len(str)
+
+		lineCount :+ 1
 
 		Local line$=str[pos..eol].Trim()
 		pos=eol+1
@@ -488,7 +492,12 @@ Function ParseSourceFile:TSourceFile( path$ )
 			Local cmopt:String = lline.Trim()
 			If cmopt[..1]="?"
 				Local t$=cmopt[1..]
-				cc = EvalOption(t)
+				Try
+					cc = EvalOption(t)
+				Catch e:String
+					WriteStderr "Compile Error: " + e + "~n[" + path + ";" + lineCount + ";1]~n"
+					Throw e
+				End Try
 			EndIf
 
 			If Not cc Continue
