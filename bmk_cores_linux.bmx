@@ -16,9 +16,9 @@ Function GetCoreCount:Int()
 	If Not count Then
 		Local buf:Byte[128]
 ?bmxng
-		Local fp:Byte Ptr = popen("/bin/cat /proc/cpuinfo |grep -c '^processor'", "r")
+		Local fp:Byte Ptr = popen("cat /proc/cpuinfo |grep -c '^processor'", "r")
 ?Not bmxng
-		Local fp:Int = popen("/bin/cat /proc/cpuinfo |grep -c '^processor'", "r")
+		Local fp:Int = popen("cat /proc/cpuinfo |grep -c '^processor'", "r")
 ?
 		fread_(buf, 1, 127, fp)
 		fclose_(fp)
