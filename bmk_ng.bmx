@@ -411,7 +411,14 @@ Type TBMK
 				DeleteFile supp
 			End If
 
-			Return  system_( cmd )
+			Local res:Int = system_( cmd )
+			If Not res Then
+				If src.EndsWith(".bmx") Then
+					processor.DoCallback(src)
+				End If
+			End If
+			
+			Return res
 ?
 		End If
 	End Method
