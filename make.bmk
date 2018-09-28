@@ -202,6 +202,7 @@
 		cmd = cmd .. " -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE"
 		cmd = cmd .. " -I" .. bmk.Option("nx.devkitpro", "") .. "/libnx/include"
 		cmd = cmd .. " -I" .. bmk.Option("nx.devkitpro", "")
+		cmd = cmd .. " -I" .. bmk.Option("nx.devkitpro", "") .. "/portlibs/switch/include"
 	end
 	
 	# disable warnings ?
