@@ -15,13 +15,13 @@ Type TModOpt ' BaH
 	Field cpp_opts:String = ""
 	Field c_opts:String = ""
 	
-	Method addOption(qval:String)
+	Method addOption(qval:String, path:String)
 		If qval.startswith("CC_OPTS") Then
-			cc_opts:+ " " + ReQuote(qval[qval.find(":") + 1..].Trim())
+			cc_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
 		ElseIf qval.startswith("CPP_OPTS") Then
-			cpp_opts:+ " " + ReQuote(qval[qval.find(":") + 1..].Trim())
+			cpp_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
 		ElseIf qval.startswith("C_OPTS") Then
-			c_opts:+ " " + ReQuote(qval[qval.find(":") + 1..].Trim())
+			c_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
 		ElseIf qval.startswith("LD_OPTS") Then
 			Local opt:String = ReQuote(qval[qval.find(":") + 1..].Trim())
 			

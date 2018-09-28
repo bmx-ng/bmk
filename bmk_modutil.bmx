@@ -91,7 +91,7 @@ Type TSourceFile
 		If Not mod_opts Then
 			mod_opts = New TModOpt
 		End If
-		mod_opts.AddOption(opt)
+		mod_opts.AddOption(opt, path)
 	End Method
 	
 	Method MaxObjTime:Int()
