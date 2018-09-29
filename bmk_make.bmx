@@ -386,6 +386,9 @@ Type TBuildManager Extends TCallback
 			If opt_musl Then
 				sb.Append(" -musl")
 			End If
+			If makelib Then
+				sb.Append(" -def")
+			End If
 		End If
 
 		source.cc_opts :+ cc_opts
