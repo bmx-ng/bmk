@@ -426,8 +426,9 @@
 		
 		if tonumber(%macos_version%) >= 4240 then
 			# macos version >= 0x1090 ?
-			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.7")
-			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.7")
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.9")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.9")
+			globals.SetOption("ld_opts", "stdlib", "-stdlib=libc++")
 		elseif tonumber(%macos_version%) >= 4224 then
 			# macos version >= 0x1080 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.5")
