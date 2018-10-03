@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.27"
+Const BMK_VERSION:String = "3.28"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -66,8 +66,15 @@ Global app_type$
 
 ?MacOS
 
-'cfg_platform="macos"
-Gestalt Asc("s")Shl 24|Asc("y")Shl 16|Asc("s")Shl 8|Asc("v"),macos_version
+Function GetVersion:Int()
+	Local major:Int
+	Local minor:Int
+	Local patch:Int
+	NSOSVersion(major, minor, patch)
+	Return major Shl 8 | minor Shl 4 | patch
+End Function
+
+macos_version = GetVersion()
 
 ?MacOsPPC
 If is_pid_native(0) opt_arch="ppc" Else opt_arch="x86"

@@ -1,5 +1,11 @@
 SuperStrict
 
+?Not bmxng
+Import "macos/*.h"
+Import "macos/macos.m"
+Import "macos/NSProcessInfo_PECocoaBackports.m"
+?
+
 Extern
 ?x64
 	Function sysctlbyname:Int(name:Byte Ptr, count:Int Ptr, size:Long Ptr, a:Byte Ptr, b:Int)
