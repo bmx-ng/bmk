@@ -382,7 +382,14 @@ Type TBMK
 		If opt_standalone And Not opt_nolog PushLog(cmd)
 
 		If Not opt_standalone Or (opt_standalone And opt_nolog) Then
+?win32
 			Return system_( cmd )
+?Not win32
+			Local s:Byte Ptr = cmd.ToUtf8String()
+			Local res:Int = bmx_system(s)
+			MemFree(s)
+			Return res
+?
 		End If
 	End Method
 
@@ -771,11 +778,11 @@ Type TBMK
 	End Method
 
 	Method GetModFilter:String()
-		return opt_modfilter
+		Return opt_modfilter
 	End Method
 
 	Method GetConfigMung:String()
-		return opt_configmung
+		Return opt_configmung
 	End Method
 
 	Method RunCommand:Object(command:String, args:String[])
@@ -1347,7 +1354,7 @@ Type TProcessManager
 	Method New()
 		cpuCount = GetCoreCount()
 		
-		pool = TThreadPool.Create(Max(1, cpuCount - 1), cpuCount * 3)
+		pool = TThreadPool.Create(Max(1, cpuCount - 1), cpuCount * 6)
 		
 	End Method
 
