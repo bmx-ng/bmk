@@ -238,15 +238,6 @@ Function ConfigureNXPaths()
 		Case "arm64"
 			toolchainBin = "aarch64-none-elf-"
 	End Select
-	
-	Local native:String
-?macos
-	native = "darwin"
-?linux
-	native = "linux"
-?win32
-	native = "windows"
-?
 
 	Local toolchainDir:String = processor.Option("nx.devkitpro", "") + "/devkitA64/"
 	
@@ -457,7 +448,6 @@ Type TBuildManager Extends TCallback
 		For Local batch:TList = EachIn batches
 			Local s:String
 			For Local m:TSourceFile = EachIn batch
-
 				' sort archives for app linkage
 				If m.modid Then
 					Local path:String = m.arc_path
@@ -541,7 +531,14 @@ Type TBuildManager Extends TCallback
 									Local cobj_path:String = StripExt(m.obj_path) + ".o"
 
 									If Not opt_quiet Then
-										Print ShowPct(m.pct) + "Compiling:" + StripDir(csrc_path)
+										Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(csrc_path)
+										If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
+										Print s
+									End If
+									
+									If opt_standalone And opt_boot Then
+										processor.PushSource(csrc_path)
+										processor.PushSource(StripExt(m.obj_path) + ".h")
 									End If
 
 									CompileC csrc_path,cobj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.c_opts
@@ -571,7 +568,9 @@ Type TBuildManager Extends TCallback
 								m.GetObjs(objs)
 	
 								If Not opt_quiet Then
-									Print ShowPct(m.pct) + "Archiving:" + StripDir(m.arc_path)
+									Local s:String = ShowPct(m.pct) + "Archiving:" + StripDir(m.arc_path)
+									If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
+									Print s
 								End If
 
 								Local at:TArcTask = New TArcTask.Create(m, m.arc_path, objs)
@@ -618,7 +617,9 @@ Type TBuildManager Extends TCallback
 								End If
 
 								If Not opt_quiet Then
-									Print ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
+									Local s:String = ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
+									If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
+									Print s
 								End If
 
 								Local links:TList = New TList
@@ -667,7 +668,9 @@ Type TBuildManager Extends TCallback
 					If m.requiresBuild Then
 
 						If Not opt_quiet Then
-							Print ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+							Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+							If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
+							Print s
 						End If
 					
 						If processor.BCCVersion() = "BlitzMax" Then
@@ -689,7 +692,9 @@ Type TBuildManager Extends TCallback
 						If m.requiresBuild Then
 	
 							If Not opt_quiet Then
-								Print ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+								Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+								If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
+								Print s
 							End If
 
 							If m.path.EndsWith(".cpp") Or m.path.EndsWith("cc") Then
@@ -1495,6 +1500,14 @@ Type TBuildManager Extends TCallback
 				s :+ " "
 		End Select
 		Return s + p + "%] "
+	End Method
+	
+	Method FixPct:String(pct:String)
+		If processor.Platform() = "win32" Then
+			Return pct.Replace("%", "%%")
+		Else
+			Return pct
+		End If
 	End Method
 
 	Method CheckPath:String(basePath:String, path:String)

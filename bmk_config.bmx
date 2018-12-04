@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.29"
+Const BMK_VERSION:String = "3.30"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -54,6 +54,7 @@ Global opt_musl=False
 Global opt_musl_set=False
 Global opt_static=False
 Global opt_static_set=False
+Global opt_boot:Int
 Global opt_manifest:Int = True
 
 Global opt_dumpbuild

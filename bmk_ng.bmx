@@ -47,12 +47,29 @@ Type TBMK
 	Field commands:TMap = New TMap
 
 	Field buildLog:TList
+	Field sourceList:TList
+
+	Field _minGWBinPath:String
+	Field _minGWPath:String
+	Field _minGWLinkPaths:String
+	Field _minGWDLLCrtPath:String
+	Field _minGWCrtPath:String
 	
 	Field callback:TCallback
 	Field _appSettings:TMap
 
 	Method New()
 		LuaRegisterObject Self,"bmk"
+	End Method
+	
+	Method Reset()
+		buildLog = Null
+		sourceList = Null
+		_minGWBinPath = Null
+		_minGWPath = Null
+		_minGWLinkPaths = Null
+		_minGWDLLCrtPath = Null
+		_minGWCrtPath = Null
 	End Method
 
 	' loads a .bmk, stores any functions, and runs any commands.
@@ -594,24 +611,20 @@ Type TBMK
 	End Method
 
 	Method MinGWBinPath:String()
-		Global _path:String
-
-		If Not _path Then
-			_path = MinGWPath() + "/bin"
+		If Not _minGWBinPath Then
+			_minGWBinPath = MinGWPath() + "/bin"
 ?win32
 			Local PATH:String = _wgetenv("PATH")
-			PATH = _path + ";" + PATH
+			PATH = _minGWBinPath + ";" + PATH
 			_wputenv("PATH=" + PATH)
 ?
 		End If
 		
-		Return _path
+		Return _minGWBinPath
 	End Method
 	
 	Method MinGWPath:String()
-		Global _path:String
-
-		If Not _path Then
+		If Not _minGWPath Then
 			Local path:String
 			' look for local MinGW32 dir
 			' some distros (eg. MinGW-w64) only support a single target architecture - x86 or x64
@@ -625,15 +638,15 @@ Type TBMK
 			path = BlitzMaxPath() + cpuMinGW + "/bin"
 			If FileType(path) = FILETYPE_DIR Then
 				' bin dir exists, go with that
-				_path = BlitzMaxPath() + cpuMinGW 
-				Return _path
+				_minGWPath = BlitzMaxPath() + cpuMinGW 
+				Return _minGWPath
 			End If
 			
 			path = BlitzMaxPath() + "/MinGW32/bin"
 			If FileType(path) = FILETYPE_DIR Then
 				' bin dir exists, go with that
-				_path = BlitzMaxPath() + "/MinGW32"
-				Return _path
+				_minGWPath = BlitzMaxPath() + "/MinGW32"
+				Return _minGWPath
 			End If
 
 			' try MINGW environment variable
@@ -642,22 +655,20 @@ Type TBMK
 				' check for bin dir
 				If FileType(path + "/bin") = FILETYPE_DIR Then
 					' go with that
-					_path = path
-					Return _path
+					_minGWPath = path
+					Return _minGWPath
 				End If
 			End If
 
 			' none of the above? fallback to BlitzMax dir (for bin and lib)
-			_path = BlitzMaxPath()
+			_minGWPath = BlitzMaxPath()
 		End If
 		
-		Return _path
+		Return _minGWPath
 	End Method
 	
 	Method MinGWLinkPaths:String()
-		Global _links:String
-		
-		If Not _links Then
+		If Not _minGWLinkPaths Then
 			Local links:String
 			
 			If processor.HasTarget("x86_64") Then
@@ -673,17 +684,15 @@ Type TBMK
 				links :+ " -L" + CQuote(RealPath(MinGWPath() +"/lib/gcc/mingw32/" + GCCVersion(True, True)))
 			End If
 			
-			_links = links
+			_minGWLinkPaths = links
 		End If
 		
-		Return _links
+		Return _minGWLinkPaths
 	End Method
 	
 	' the path where dllcrt2.o resides
 	Method MinGWDLLCrtPath:String()
-		Global _path:String
-		
-		If Not _path Then
+		If Not _minGWDLLCrtPath Then
 			' mingw64 ?
 			Local path:String = MinGWPath() + "/"
 			If processor.HasTarget("x86_64") Then
@@ -700,7 +709,7 @@ Type TBMK
 					Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
 				End If
 				
-				_path = path
+				_minGWDLLCrtPath = path
 			Else
 				path :+ "lib"
 
@@ -708,18 +717,16 @@ Type TBMK
 					Throw "Could not determine MinGWDLLCrtPath : Expecting '" + path + "'"
 				End If
 				
-				_path = path
+				_minGWDLLCrtPath = path
 			End If
 		End If
 		
-		Return RealPath(_path)
+		Return RealPath(_minGWDLLCrtPath)
 	End Method
 	
 	' the path where crtbegin.o resides
 	Method MinGWCrtPath:String()
-		Global _path:String
-		
-		If Not _path Then
+		If Not _minGWCrtPath Then
 			' mingw64 ?
 			Local path:String = MinGWPath() + "/"
 			If processor.HasTarget("x86_64") Then
@@ -736,7 +743,7 @@ Type TBMK
 					Throw "Could not determine MinGWCrtPath: Expecting '" + path + "'"
 				End If
 				
-				_path = path
+				_minGWCrtPath = path
 			Else
 			
 				Local p:String = path +  "lib/gcc/mingw32/" + GCCVersion(True, True)
@@ -750,11 +757,11 @@ Type TBMK
 					Throw "Could not determine MinGWCrtPath: Expecting '" + p + "' or '" + path + "'"
 				End If
 				
-				_path = path
+				_minGWCrtPath = path
 			End If
 		End If
 		
-		Return RealPath(_path)
+		Return RealPath(_minGWCrtPath)
 	End Method
 	
 	Method IsDebugBuild:Int()
@@ -809,11 +816,33 @@ Type TBMK
 
 		buildLog.AddLast(p)
 	End Method
+
+	Method PushSource(src:String)
+		If Not sourceList Then
+			sourceList = New TList
+		End If
+
+		Local p:String = FixPaths(src)
+
+		sourceList.AddLast(p)
+	End Method
+
+	Method PushEcho(cmd:String)
+		PushLog("echo " + cmd)
+	End Method
 	
 	Method FixPaths:String(Text:String)
 		Local p:String = Text
-		p = p.Replace(BlitzMaxPath()+"/","$BMX_ROOT/")
-		p = p.Replace(String(globals.GetRawVar("EXEPATH")), "$APP_ROOT")
+		Local bmxRoot:String = "$BMX_ROOT"
+		If Platform() = "win32" Then
+			bmxRoot = "%BMX_ROOT%"
+		End If
+		Local appRoot:String = "$APP_ROOT"
+		If Platform() = "win32" Then
+			appRoot = "%APP_ROOT%"
+		End If
+		p = p.Replace(BlitzMaxPath()+"/", bmxRoot + "/")
+		p = p.Replace(String(globals.GetRawVar("EXEPATH")), appRoot)
 		Return p
 	End Method
 	
@@ -1649,3 +1678,4 @@ Type TThreadPoolTask
 End Type
 
 ?
+

@@ -1655,6 +1655,195 @@ Type TOrderedMap Extends TMap
 
 End Type
 
+Type TBootstrapConfig
+	Field assets:TBootstrapAsset[]
+	Field targets:TBootstrapTarget[]
+	
+	Method CopyAssets(dest:String)
+	
+		For Local asset:TBootstrapAsset = EachIn assets
+		
+			Print "processing " + asset.name
+			
+			Local basePath:String
+			
+			Select asset.assetType
+				Case "m"
+					basePath = "mod/" + asset.name.Replace(".",".mod/")+".mod"
+				Case "a"
+					basePath = "src/" + asset.name
+				Default
+					Continue
+			End Select
+
+			Local maxBase:String = BlitzMaxPath() + "/" + basePath
+			
+			If Not FileType(maxBase) Throw "Expected dir missing : " + basePath
+			If FileType(maxBase) <> FILETYPE_DIR Throw "Not a dir : " + basePath
+			
+			Local destBase:String = dest + "/" + basePath
+			If Not CreateDir(destBase, True) Throw "Error creating " + basePath
+			
+			For Local part:String = EachIn asset.parts
+				
+				If part.StartsWith("*") Then
+					' copy files
+					FileCopy(maxBase, destBase, part[1..])
+				Else
+					' copy dir
+					Local srcDir:String = maxBase + "/" + part
+					Local destDir:String = destBase + "/" + part
+					
+					DirCopy(srcDir, destDir)
+				End If
+				
+			Next
+			
+		Next
+	
+	End Method
+	
+	Method DirCopy(src:String, dest:String)
+		If Not FileType(src) Throw "Source dir not found : " + src
+		If Not CreateDir(dest, True) Throw "Unable to create " + dest
+		
+		If Not CreateDir(dest + "/.bmx") Throw "Unable to create " + dest + "/.bmx"
+	
+		For Local file:String = EachIn LoadDir( src )
+			If file.EndsWith(".bmx") Then
+				Continue
+			End If
+			
+			Local filePath:String = src + "/" + file
+			
+			Select FileType( filePath )
+				Case FILETYPE_DIR
+					DirCopy( filePath, dest + "/" + file )
+				Case FILETYPE_FILE
+					CopyFile( filePath, dest + "/" + file )
+			End Select
+		Next
+	End Method
+	
+	Method FileCopy(src:String, dest:String, suffix:String)
+		
+		If Not CreateDir(dest + "/.bmx") Throw "Unable to create " + dest + "/.bmx"
+	
+		For Local file:String = EachIn LoadDir( src )
+			If Not file.EndsWith(suffix) Then
+				Continue
+			End If
+			
+			Local filePath:String = src + "/" + file
+			
+			If FileType(filePath) = FILETYPE_FILE Then
+				CopyFile(filePath, dest + "/" + file)
+			End If
+		Next
+	End Method
+	
+	Method CopySources(dest:String, sources:TList)
+		Local bmxRoot:String = "$BMX_ROOT"
+		If processor.Platform() = "win32" Then
+			bmxRoot = "%BMX_ROOT%"
+		End If
+	
+		For Local path:String = EachIn sources
+			Local srcPath:String = path.Replace(bmxRoot, BlitzMaxPath())
+			Local destPath:String = path.Replace(bmxRoot, dest)
+			
+			CreateDir(ExtractDir(destPath), True)
+			
+			If Not FileType(srcPath) Throw "Not found : " + srcPath
+			
+			CopyFile(srcPath, destPath)
+		Next
+	End Method
+	
+	Method CopyScripts(dest:String, app:TBootstrapAsset)
+		dest = dest + "/src/" + app.name
+		Local src:String = BlitzMaxPath() + "/src/" + app.name
+		
+		Local ld:String = "/ld." + processor.AppDet() + ".txt"
+		Local build:String = "/" + processor.AppDet() + ".build"
+		
+		Local ldSrcPath:String = src + ld
+		Local buildSrcPath:String = src + build
+		
+		If Not FileType(ldSrcPath) Throw "ld script missing : " + ldSrcPath
+		If Not FileType(buildSrcPath) Throw "build script missing : " + buildSrcPath
+		
+		CopyFile(ldSrcPath, dest + ld)
+		CopyFile(buildSrcPath, dest + build)
+	End Method
+	
+End Type
+
+Type TBootstrapAsset
+	Field assetType:String
+	Field name:String
+	Field parts:String[]
+End Type
+
+Type TBootstrapTarget
+	Field platform:String
+	Field arch:String
+End Type
+
+Function LoadBootstrapConfig:TBootstrapConfig()
+	Const CONFIG:String = "bin/bootstrap.cfg"
+	
+	Local file:String = BlitzMaxPath() + "/" + CONFIG
+	If Not FileType(file) Then
+		Throw CONFIG + " not found"
+	End If
+	
+	Local cfg:String = LoadText(file).Trim()
+	If cfg Then
+		Local LINES:String[] = cfg.Split("~n")
+		Local assets:String[]
+		
+		For Local line:String = EachIn LINES
+			line = line.Trim()
+			If line And Not line.StartsWith("#") Then
+				assets :+ [line]
+			End If
+		Next
+		
+		Local boot:TBootstrapConfig = New TBootstrapConfig
+		'boot.assets = New TBootstrapAsset[assets.length]
+		
+		'Local i:Int
+		For Local assetLine:String = EachIn assets
+			Local parts:String[] = assetLine.Split("~t")
+			If parts Then
+				Select parts[0]
+					Case "t"
+						Local target:TBootstrapTarget = New TBootstrapTarget
+						target.platform = parts[1]
+						target.arch = parts[2]
+						
+						boot.targets :+ [target]
+					Default
+						Local asset:TBootstrapAsset = New TBootstrapAsset
+						asset.assetType = parts[0]
+						asset.name = parts[1]
+						asset.parts = parts[2..]
+						
+						boot.assets :+ [asset]
+						
+						'i :+ 1
+				End Select
+			End If
+		Next
+		
+		Return boot
+	Else
+		Throw "Could not load " + CONFIG
+	End If
+	
+End Function
+
 Extern
 	Function bmx_setfiletimenow(path:String)
 End Extern

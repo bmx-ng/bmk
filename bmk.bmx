@@ -74,6 +74,25 @@ Case "makemods"
 			LoadOptions(True)
 		End If
 	EndIf
+Case "makebootstrap"
+	' copy sources
+	'   pub ->
+	'          stdc, lua, win32, zlib, freeprocess
+	'
+	'   brl ->
+	'          blitz, appstub, stream, filesystem, bank, ramstream, map, linkedlist, system, systemdefault, threads, stringbuilder, standardio
+	'
+	'   bah ->
+	'          libcurl, mbedtls, libarchive, libxml, xz, libiconv
+	'
+	'
+	' create folder in src -> bootstrap
+	' create sub folders as per blitzmax layout
+	' copy required mod sources
+	' copy bmk/bcc/etc sources
+	' make standalone's for each app, for all required target platforms.
+	opt_boot = True
+	MakeBootstrap
 Case "compile"
 	SetConfigMung
 	MakeApplication args,False,True
@@ -424,38 +443,90 @@ End Rem
 	End If
 
 	If opt_standalone And Not compileOnly
-		Local buildScript:String = String(globals.GetRawVar("EXEPATH")) + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + ".build"
-		Local ldScript:String = "$APP_ROOT/ld." + processor.AppDet() + ".txt"
+
+		Local suffix:String = ".build"
+		If processor.Platform() = "win32" Then
+			suffix :+ ".bat"
+		End If
+		
+		Local buildScript:String = String(globals.GetRawVar("EXEPATH")) + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + suffix
 		
 		Local stream:TStream = WriteStream(buildScript)
 		
-		stream.WriteString("echo ~qBuilding " + String(globals.GetRawVar("OUTFILE")) + "...~q~n~n")
-		
-		stream.WriteString("if [ -z ~q${APP_ROOT}~q ]; then~n")
-		stream.WriteString("~tAPP_ROOT=" + String(globals.GetRawVar("EXEPATH")) + "~n")
-		stream.WriteString("fi~n~n")
+		If processor.Platform() <> "win32" Then
+			Local ldScript:String = "$APP_ROOT/ld." + processor.AppDet() + ".txt"
 
-		stream.WriteString("if [ -z ~q${BMX_ROOT}~q ]; then~n")
-		stream.WriteString("~tBMX_ROOT=" + BlitzMaxPath() + "~n")
-		stream.WriteString("fi~n")
-		stream.WriteString("~n~n")
-		
-		stream.WriteString("cp " + ldScript + " " + ldScript + ".tmp~n")
-		
-		stream.WriteString("sed -i -- 's=\$BMX_ROOT='$BMX_ROOT'=g' " + ldScript + ".tmp~n")
-		stream.WriteString("sed -i -- 's=\$APP_ROOT='$APP_ROOT'=g' " + ldScript + ".tmp~n")
-		
-		stream.WriteString("~n~n")
+			stream.WriteString("echo ~qBuilding " + String(globals.GetRawVar("OUTFILE")) + "...~q~n~n")
+			
+			stream.WriteString("if [ -z ~q${APP_ROOT}~q ]; then~n")
+			If opt_boot Then
+				stream.WriteString("~tAPP_ROOT=`pwd`~n")
+			Else
+				stream.WriteString("~tAPP_ROOT=" + String(globals.GetRawVar("EXEPATH")) + "~n")
+			End If
+			stream.WriteString("fi~n~n")
+	
+			stream.WriteString("if [ -z ~q${BMX_ROOT}~q ]; then~n")
+			If opt_boot Then
+				stream.WriteString("~tBMX_ROOT=$(dirname $(dirname `pwd`))~n")
+			Else
+				stream.WriteString("~tBMX_ROOT=" + BlitzMaxPath() + "~n")
+			End If
+			stream.WriteString("fi~n")
+			stream.WriteString("~n~n")
+			
+			stream.WriteString("cp " + ldScript + " " + ldScript + ".tmp~n")
+			
+			stream.WriteString("sed -i -- 's=\$BMX_ROOT='$BMX_ROOT'=g' " + ldScript + ".tmp~n")
+			stream.WriteString("sed -i -- 's=\$APP_ROOT='$APP_ROOT'=g' " + ldScript + ".tmp~n")
+			
+			stream.WriteString("~n~n")
+		Else
+			Local ldScript:String = "%APP_ROOT%/ld." + processor.AppDet() + ".txt"
 
+			stream.WriteString("@ECHO OFF~n")
+			stream.WriteString("SETLOCAL ENABLEEXTENSIONS~n")
+			stream.WriteString("SET PARENT=%~dp0~n~n")
+
+			stream.WriteString("echo Building " + String(globals.GetRawVar("OUTFILE")) + "...~n")
+
+			stream.WriteString("If Not DEFINED APP_ROOT (~n")
+			If opt_boot Then
+				stream.WriteString("~tSET APP_ROOT=%PARENT%~n")
+			Else
+				stream.WriteString("~tSET APP_ROOT=" + String(globals.GetRawVar("EXEPATH")) + "~n")
+			End If
+			stream.WriteString(")~n~n")
+	
+			stream.WriteString("If Not DEFINED BMX_ROOT (~n")
+			If opt_boot Then
+				stream.WriteString("~tSET BMX_ROOT=%PARENT%..\..~n")
+			Else
+				stream.WriteString("~tSET BMX_ROOT=" + BlitzMaxPath() + "~n")
+			End If
+			stream.WriteString(")~n~n")
+	
+			stream.WriteString("set PATH=%PATH%;" + processor.FixPaths(processor.MinGWBinPath()) + "~n~n");
+	
+			stream.WriteString("%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe -Command ~q((get-content \~q" + ldScript + "\~q) -replace '%%BMX_ROOT%%','%BMX_ROOT%') | set-content \~q" + ldScript + ".tmp\~q~q~n~n")
+		End If
+				
 		If processor.buildLog Then
 			For Local s:String = EachIn processor.buildLog
 				stream.WriteString(s + "~n")
 			Next
 		End If
 		
-		stream.WriteString("~n")
-		stream.WriteString("echo ~qFinished.~q~n")
-		
+		If processor.Platform() <> "win32" Then
+			stream.WriteString("unset APP_ROOT~n")
+			stream.WriteString("~necho ~qFinished.~q~n")
+
+		Else
+			stream.WriteString("echo Finished.~n")
+			stream.WriteString("ENDLOCAL~n")
+			stream.WriteString("Goto :Eof~n")
+		End If
+
 		stream.Close()
 		
 	End If
@@ -544,4 +615,53 @@ Function LoadOptions(reload:Int = False)
 	LoadBMK(AppDir + "/custom.bmk")
 End Function
 
+Function MakeBootstrap()
+
+	Local config:TBootstrapConfig = LoadBootstrapConfig()
+
+	Local bootstrapPath:String = BlitzMaxPath() + "/dist/bootstrap"
+	
+	If Not CreateDir(bootstrapPath, True) Throw "Error creating bootstrap folder"
+	
+	If Not CreateDir(bootstrapPath + "/bin") Throw "Error creating boostrap/bin folder"
+	If Not CreateDir(bootstrapPath + "/mod") Throw "Error creating boostrap/mod folder"
+	If Not CreateDir(bootstrapPath + "/src") Throw "Error creating boostrap/src folder"
+	
+	config.CopyAssets(bootstrapPath)
+	
+	opt_release = True
+	
+	For Local target:TBootstrapTarget = EachIn config.targets
+		For Local app:TBootstrapAsset = EachIn config.assets
+			If app.assetType <> "a" Then
+				Continue
+			End If
+			
+			Local appPath:String = BlitzMaxPath() + "/src/" + app.name + "/" + app.name + ".bmx"
+			
+			If Not FileType(appPath) Throw "App not found : " + app.name
+			
+			opt_outfile = Null
+			opt_standalone = True
+			opt_warnover = True
+
+			opt_target_platform = target.platform
+			opt_arch = target.arch
+			
+			Print "Generating " + app.name + " : " + target.platform + "/" + target.arch
+
+			Local args:String[] = [appPath]
+
+			processor.Reset()
+			
+			SetConfigMung
+			LoadOptions(True)
+			MakeApplication args,False
+
+			config.CopySources(bootstrapPath, processor.sourceList)
+			config.CopyScripts(bootstrapPath, app)
+		Next
+	Next
+	
+End Function
 
