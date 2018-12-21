@@ -47,7 +47,7 @@ Case "makemods"
 			processor.ToggleCPU()
 			LoadOptions(True)
 		End If
-	
+
 	Else
 		opt_debug=True
 		opt_release=False
@@ -106,7 +106,7 @@ Case "listmods"
 	ListModules args
 Case "modstatus"
 	ModuleStatus args
-Case "syncmods" 
+Case "syncmods"
 	SyncModules args
 Case "ranlibdir"
 	RanlibDir args
@@ -144,7 +144,7 @@ Function SetModfilter( t$ )
 	Else If opt_modfilter[opt_modfilter.length-1]<>"."  And opt_modfilter.Find(".") < 0 Then
 		opt_modfilter:+"."
 	EndIf
-	
+
 End Function
 
 Function MakeModules( args$[] )
@@ -152,9 +152,9 @@ Function MakeModules( args$[] )
 	If opt_standalone CmdError "Standalone build not available for makemods"
 
 	If args.length>1 CmdError "Expecting only 1 argument for makemods"
-	
+
 	Local mods:TList
-	
+
 	If args.length Then
 		Local m:String = args[0]
 		If m.find(".") > 0 And m[m.length-1]<>"." Then
@@ -170,39 +170,39 @@ Function MakeModules( args$[] )
 		opt_modfilter=""
 		mods = EnumModules()
 	End If
-	
+
 	BeginMake
 
 	Local buildManager:TBuildManager = New TBuildManager
 
 	buildManager.MakeMods(mods, opt_all)
 	buildManager.DoBuild(False)
-	
+
 End Function
 
 Function CleanModules( args$[] )
 
 	If args.length>1 CmdError "Expecting only 1 argument for cleanmods"
-	
+
 	If args.length SetModfilter args[0] Else opt_modfilter=""
-	
+
 	Local mods:TList=EnumModules()
 
 	Local name$
 	For name=EachIn mods
-	
+
 		If (name+".").Find(opt_modfilter)<>0 Continue
-		
+
 		Print "Cleaning:"+name
 
 		Local path$=ModulePath(name)
-		
+
 		DeleteDir path+"/.bmx",True
-		
+
 		If Not opt_kill Continue
-		
+
 		For Local f$=EachIn LoadDir( path )
-		
+
 			Local p$=path+"/"+f
 			Select FileType(p)
 			Case FILETYPE_DIR
@@ -238,7 +238,7 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	EndIf
 
 	Local Main$=RealPath( args[0] )
-	
+
 	Select ExtractExt(Main).ToLower()
 	Case ""
 		Main:+".bmx"
@@ -248,7 +248,7 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	End Select
 
 	If FileType(Main)<>FILETYPE_FILE Throw "Unable to open source file '"+Main+"'"
-	
+
 	If Not opt_outfile Then
 		opt_outfile = StripExt( Main )
 	Else
@@ -259,17 +259,17 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	globals.SetVar("BUILDPATH", ExtractDir(opt_outfile))
 	globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
 	globals.SetVar("OUTFILE", StripDir(StripExt(opt_outfile)))
-	
-	
+
+
 	' some more useful globals
 	If processor.Platform() = "macos" And opt_apptype="gui" And Not compileOnly Then
 		Local appId$=StripDir( opt_outfile )
-		
+
 		globals.SetVar("APPID", appId)
 		' modify for bundle
 		globals.SetVar("EXEPATH", ExtractDir(opt_outfile+".app/Contents/MacOS/"+appId))
-		
-		
+
+
 		' make bundle dirs
 		Local exeDir$=opt_outfile+".app",d$
 
@@ -284,7 +284,7 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 			Throw "Unable to create application directory"
 		Case FILETYPE_DIR
 		End Select
-		
+
 		d=exeDir+"/Contents/Resources"
 		Select FileType( d )
 		Case FILETYPE_NONE
@@ -296,17 +296,17 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 			Throw "Unable to create resources directory"
 		Case FILETYPE_DIR
 		End Select
-		
-		
+
+
 	End If
-	
-	
+
+
 	' generic pre process
 	LoadBMK(ExtractDir(Main) + "/pre.bmk")
-	
+
 	' project-specific pre process
 	LoadBMK(ExtractDir(Main) + "/" + StripDir( opt_outfile ) + ".bmk")
-	
+
 	If processor.Platform() = "win32" Then
 		If makelib
 			If ExtractExt(opt_outfile).ToLower()<>"dll" opt_outfile:+".dll"
@@ -317,10 +317,10 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 
 	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
 		If opt_apptype="gui" And Not compileOnly
-	
+
 			'Local appId$=StripDir( opt_outfile )
 			Local appId$ = globals.Get("APPID")
-	
+
 			Local exeDir$=opt_outfile+".app",d$,t:TStream
 	Rem
 			d=exeDir+"/Contents/MacOS"
@@ -334,7 +334,7 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 				Throw "Unable to create application directory"
 			Case FILETYPE_DIR
 			End Select
-			
+
 			d=exeDir+"/Contents/Resources"
 			Select FileType( d )
 			Case FILETYPE_NONE
@@ -365,24 +365,24 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 			t.WriteLine "</dict>"
 			t.WriteLine "</plist>"
 			t.Close
-	
+
 			t=WriteStream( exeDir+"/Contents/Resources/"+appId+".icns" )
 			If Not t Throw "Unable to create icons"
 			Local in:TStream=ReadStream( "incbin::macos.icns" )
 			CopyStream in,t
 			in.Close
 			t.Close
-			
+
 			opt_outfile=exeDir+"/Contents/MacOS/"+appId
-			
+
 			' Mac GUI exepath is in the bundle...
 			'globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
 			'globals.SetVar("APPID", appId)
-			
+
 		EndIf
 	End If
 
-	
+
 	If processor.Platform() = "emscripten" Then
 		If ExtractExt(opt_outfile).ToLower()<>"html" opt_outfile:+".html"
 	End If
@@ -390,9 +390,9 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	If processor.Platform() = "nx" Then
 		If ExtractExt(opt_outfile).ToLower()<>"elf" opt_outfile:+".elf"
 	End If
-	
+
 	BeginMake
-	
+
 	'MakeApp Main,makelib
 
 	Local buildManager:TBuildManager = New TBuildManager
@@ -401,7 +401,7 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	If processor.Platform() = "android" And Not compileOnly Then
 		DeployAndroidProject()
 	End If
-	
+
 	buildManager.MakeApp(Main, makelib, compileOnly)
 	buildManager.DoBuild(makelib, Not compileOnly)
 
@@ -431,9 +431,9 @@ Rem
 		MakeApp Main,makelib
 		processor.ToggleCPU()
 		LoadOptions(True)
-		
+
 		MergeApp opt_outfile, previousOutfile
-		
+
 		opt_outfile = previousOutfile
 	End If
 End Rem
@@ -448,16 +448,16 @@ End Rem
 		If processor.Platform() = "win32" Then
 			suffix :+ ".bat"
 		End If
-		
+
 		Local buildScript:String = String(globals.GetRawVar("EXEPATH")) + "/" + StripExt(StripDir( app_main )) + "." + opt_apptype + opt_configmung + processor.CPU() + suffix
-		
+
 		Local stream:TStream = WriteStream(buildScript)
-		
+
 		If processor.Platform() <> "win32" Then
 			Local ldScript:String = "$APP_ROOT/ld." + processor.AppDet() + ".txt"
 
 			stream.WriteString("echo ~qBuilding " + String(globals.GetRawVar("OUTFILE")) + "...~q~n~n")
-			
+
 			stream.WriteString("if [ -z ~q${APP_ROOT}~q ]; then~n")
 			If opt_boot Then
 				stream.WriteString("~tAPP_ROOT=`pwd`~n")
@@ -465,7 +465,7 @@ End Rem
 				stream.WriteString("~tAPP_ROOT=" + String(globals.GetRawVar("EXEPATH")) + "~n")
 			End If
 			stream.WriteString("fi~n~n")
-	
+
 			stream.WriteString("if [ -z ~q${BMX_ROOT}~q ]; then~n")
 			If opt_boot Then
 				stream.WriteString("~tBMX_ROOT=$(dirname $(dirname `pwd`))~n")
@@ -474,19 +474,19 @@ End Rem
 			End If
 			stream.WriteString("fi~n")
 			stream.WriteString("~n~n")
-			
+
 			stream.WriteString("cp " + ldScript + " " + ldScript + ".tmp~n")
-			
+
 			stream.WriteString("sed -i -- 's=\$BMX_ROOT='$BMX_ROOT'=g' " + ldScript + ".tmp~n")
 			stream.WriteString("sed -i -- 's=\$APP_ROOT='$APP_ROOT'=g' " + ldScript + ".tmp~n")
-			
+
 			stream.WriteString("~n~n")
 		Else
 			Local ldScript:String = "%APP_ROOT%/ld." + processor.AppDet() + ".txt"
 
 			stream.WriteString("@ECHO OFF~n")
 			stream.WriteString("SETLOCAL ENABLEEXTENSIONS~n")
-			stream.WriteString("SET PARENT=%~dp0~n~n")
+			stream.WriteString("SET PARENT=%~~dp0~n~n")
 
 			stream.WriteString("echo Building " + String(globals.GetRawVar("OUTFILE")) + "...~n")
 
@@ -497,7 +497,7 @@ End Rem
 				stream.WriteString("~tSET APP_ROOT=" + String(globals.GetRawVar("EXEPATH")) + "~n")
 			End If
 			stream.WriteString(")~n~n")
-	
+
 			stream.WriteString("If Not DEFINED BMX_ROOT (~n")
 			If opt_boot Then
 				stream.WriteString("~tSET BMX_ROOT=%PARENT%..\..~n")
@@ -505,18 +505,18 @@ End Rem
 				stream.WriteString("~tSET BMX_ROOT=" + BlitzMaxPath() + "~n")
 			End If
 			stream.WriteString(")~n~n")
-	
+
 			stream.WriteString("set PATH=%PATH%;" + processor.FixPaths(processor.MinGWBinPath()) + "~n~n");
-	
+
 			stream.WriteString("%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe -Command ~q((get-content \~q" + ldScript + "\~q) -replace '%%BMX_ROOT%%','%BMX_ROOT%') | set-content \~q" + ldScript + ".tmp\~q~q~n~n")
 		End If
-				
+
 		If processor.buildLog Then
 			For Local s:String = EachIn processor.buildLog
 				stream.WriteString(s + "~n")
 			Next
 		End If
-		
+
 		If processor.Platform() <> "win32" Then
 			stream.WriteString("unset APP_ROOT~n")
 			stream.WriteString("~necho ~qFinished.~q~n")
@@ -528,7 +528,7 @@ End Rem
 		End If
 
 		stream.Close()
-		
+
 	End If
 
 	If opt_execute And Not compileOnly
@@ -540,14 +540,14 @@ End Rem
 		For Local i=1 Until args.length
 			cmd:+" "+CQuote( args[i] )
 		Next
-		
+
 		Sys cmd
 ?android
 		' on android we'll deploy the apk
 
 ?
 
-		
+
 	EndIf
 
 End Function
@@ -560,49 +560,49 @@ Function ZapModule( args$[] )
 
 	Local stream:TStream=WriteStream( outfile )
 	If Not stream Throw "Unable to open output file"
-	
+
 	ZapMod modname,stream
-	
+
 	stream.Close
 End Function
 
 Function UnzapModule( args$[] )
 	If Len(args)<>1 CmdError "Expecting 1 argument for unzapmod"
-	
+
 	Local infile$=args[0]
-	
+
 	Local stream:TStream=ReadStream( infile )
 	If Not stream Throw "Unable to open input file"
-	
+
 	UnzapMod stream
-	
+
 	stream.Close
 End Function
 
 Function ListModules( args$[],modid$="" )
 	If Len(args)<>0 CmdError
-	
+
 	Throw "Todo!"
 
 End Function
 
 Function ModuleStatus( args$[] )
 	If Len(args)<>1 CmdError
-	
+
 	ListModules Null,args[0]
 
 End Function
 
 Function SyncModules( args$[] )
 	If args.length CmdError
-	
+
 	If Sys( BlitzMaxPath()+"/bin/syncmods" ) Throw "SyncMods error"
-	
+
 End Function
 
 Function RanlibDir( args$[] )
 	If args.length<>1 CmdError "Expecting 1 argument for ranlibdir"
-	
+
 	Ranlib args[0]
 
 End Function
@@ -620,40 +620,40 @@ Function MakeBootstrap()
 	Local config:TBootstrapConfig = LoadBootstrapConfig()
 
 	Local bootstrapPath:String = BlitzMaxPath() + "/dist/bootstrap"
-	
+
 	If Not CreateDir(bootstrapPath, True) Throw "Error creating bootstrap folder"
-	
+
 	If Not CreateDir(bootstrapPath + "/bin") Throw "Error creating boostrap/bin folder"
 	If Not CreateDir(bootstrapPath + "/mod") Throw "Error creating boostrap/mod folder"
 	If Not CreateDir(bootstrapPath + "/src") Throw "Error creating boostrap/src folder"
-	
+
 	config.CopyAssets(bootstrapPath)
-	
+
 	opt_release = True
-	
+
 	For Local target:TBootstrapTarget = EachIn config.targets
 		For Local app:TBootstrapAsset = EachIn config.assets
 			If app.assetType <> "a" Then
 				Continue
 			End If
-			
+
 			Local appPath:String = BlitzMaxPath() + "/src/" + app.name + "/" + app.name + ".bmx"
-			
+
 			If Not FileType(appPath) Throw "App not found : " + app.name
-			
+
 			opt_outfile = Null
 			opt_standalone = True
 			opt_warnover = True
 
 			opt_target_platform = target.platform
 			opt_arch = target.arch
-			
+
 			Print "Generating " + app.name + " : " + target.platform + "/" + target.arch
 
 			Local args:String[] = [appPath]
 
 			processor.Reset()
-			
+
 			SetConfigMung
 			LoadOptions(True)
 			MakeApplication args,False
@@ -662,6 +662,6 @@ Function MakeBootstrap()
 			config.CopyScripts(bootstrapPath, app)
 		Next
 	Next
-	
+
 End Function
 
