@@ -16,7 +16,7 @@ Function CompressBank:TBank( bank:TBank )
 	Local out_size:ULong=size+size/10+32
 ?bmxng
 	Local out:TBank=TBank.Create( Size_T(out_size) )
-?Not bmkng
+?Not bmxng
 	Local size=bank.Size()
 	Local out_size=size+size/10+32
 	Local out:TBank=TBank.Create( out_size )
@@ -42,7 +42,7 @@ Function UncompressBank:TBank( bank:TBank )
 	Local out_size:UInt
 ?bmxng And ptr64 And Not win32
 	Local out_size:ULong
-?Not bmkng
+?Not bmxng
 	Local out_size
 ?
 	out_size:|bank.PeekByte(0)
