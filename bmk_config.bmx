@@ -124,21 +124,21 @@ Function CmdError(details:String = Null, fullUsage:Int = False)
 		s:+ " : " + details
 	End If
 	s:+ "~n"
-	
+
 	s:+ Usage(fullUsage)
-	
+
 	Throw s
 End Function
 
 Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 
 	Local n
-	
+
 	If getenv_( "BMKDUMPBUILD" )
 		opt_dumpbuild=1
 		opt_quiet=True
 	EndIf
-	
+
 	For n=0 Until args.length
 		Local arg$=args[n]
 		If arg[..1]<>"-" Exit
@@ -244,14 +244,14 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
 	Next
-	
+
 	If Not legacyMax Then
 		If opt_threaded And opt_verbose Then
 			Print "Note: NG builds are threaded by default."
 		End If
 		opt_threaded=True
 	End If
-	
+
 	Return args[n..]
 
 End Function
@@ -299,6 +299,9 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "Operations :~n"
 		s:+ "~tmakeapp~n"
 		s:+ "~t~tBuilds an application from a single root source file."
+		s:+ "~n~n"
+		s:+ "~tmakelib~n"
+		s:+ "~t~tBuilds a shared library/DLL file from a single root source file."
 		s:+ "~n~n"
 		s:+ "~tmakemods~n"
 		s:+ "~t~tBuilds a set of modules."
@@ -415,7 +418,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tExecute built application. (makeapp only)"
 		s:+ "~n~n"
 	End If
-	
+
 	Return s
 End Function
 
@@ -465,7 +468,7 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ " / " + gcc
 
 	s:+ " (cpu x" + cores + ")"
-	
+
 	Print s + "~n"
 End Function
 
@@ -617,7 +620,7 @@ Function ParseApplicationIniFile:TMap()
 	Local path:String = buildDir + "/" + appId + ".settings"
 
 	Local settings:TMap = New TMap
-	
+
 	If Not FileType(path) Then
 		If opt_verbose Then
 			Print "Not Found : application settings file '" + appId + ".settings'. Using defaults..."
@@ -655,7 +658,7 @@ Function ParseApplicationIniFile:TMap()
 		id :+ ".debug"
 	End If
 	settings.Insert("app.id", id)
-	
+
 	Return settings
 End Function
 
