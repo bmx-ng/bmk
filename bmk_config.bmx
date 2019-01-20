@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.30"
+Const BMK_VERSION:String = "3.31"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -56,6 +56,7 @@ Global opt_static=False
 Global opt_static_set=False
 Global opt_boot:Int
 Global opt_manifest:Int = True
+Global opt_single:Int
 
 Global opt_dumpbuild
 
@@ -240,6 +241,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_static_set = True
 		Case "nomanifest"
 			opt_manifest = False
+		Case "single"
+			opt_single = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -663,22 +666,23 @@ Function ParseApplicationIniFile:TMap()
 End Function
 
 Function DefaultApplicationSettings:TMap()
-	Local settings:TMap = New TMap
-	settings.Insert("app.package", "com.blitzmax.app")
-	settings.Insert("app.version.code", "1")
-	settings.Insert("app.version.name", "1.0")
-	settings.Insert("app.name", "BlitzMax Application")
-	settings.Insert("app.orientation", "landscape")
-	settings.Insert("app.comments", "landscape")
-	settings.Insert("app.company", "My company")
-	settings.Insert("app.description", "App description")
-	settings.Insert("app.copyright", "Copyright")
-	settings.Insert("app.trademarks", "All rights reserved")
-
 	Local appId:String = StripDir(StripExt(opt_outfile))
 	If opt_debug And opt_outfile.EndsWith(".debug") Then
 		appId :+ ".debug"
 	End If
+
+	Local settings:TMap = New TMap
+	settings.Insert("app.package", "com.blitzmax.app")
+	settings.Insert("app.version.code", "1")
+	settings.Insert("app.version.name", "1.0.0")
+	settings.Insert("app.name", appId)
+	settings.Insert("app.orientation", "landscape")
+	settings.Insert("app.comments", "BlitzMax Application")
+	settings.Insert("app.company", "My company")
+	settings.Insert("app.description", appId)
+	settings.Insert("app.copyright", "Copyright")
+	settings.Insert("app.trademarks", "All rights reserved")
+
 	settings.Insert("app.id", appId)
 	Return settings
 End Function

@@ -555,6 +555,7 @@
 	
 	local tmp_path = %exepath% .. "/.bmx/"
 	
+	local user_manifest_path = %exepath% .. outfile .. ".exe.manifest"
 	local manifest_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".manifest"
 	local resource_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".rc"
 	local object_path = bmk.Quote(tmp_path .. outfile .. "." .. bmk.CPU() .. ".res.o")
@@ -580,7 +581,15 @@
 			"</dependency>" ..
 			"</assembly>"
 
-	local resource = "1 24 \"" .. manifest_path .. "\"\n" ..
+	local resource = "1 24 \""
+	
+	if sys.FileType(user_manifest_path) == 1 then
+		resource = resource .. user_manifest_path
+	else
+		resource = resource .. manifest_path
+	end
+	
+	resource = resource .. "\"\n" ..
 			"\n"
 	
 	if sys.FileType(icon_path) == 1 then

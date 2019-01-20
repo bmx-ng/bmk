@@ -1,24 +1,36 @@
+## [3.31] - 2019-01-18
+### Added
+ - New 'single' option. Forces single-threaded build mode.
+ - Allow user-provided manifest files on Win32.
+ ### Changed
+ - Use application name for default application settings.
+
 ## [3.30] - 2018-12-04
 ### Added
  - Initial bootstrap implementation.
+
 ## [3.29] - 2018-11-20
 ### Fixed
  - Improved macOS .a processing.
+
 ## [3.28] - 2018-10-03
 ### Changed
  - macOS version calculation.
  - macOS stdlib changes.
+
 ## [3.27] - 2018-09-06
 ### Fixed
  - Fixed conditional compiler processing.
  - makelib now correctly builds dlls.
 ### Added
  - NX platform support.
+
 ## [3.26] - 2018-07-31
 ### Fixed
  - Potential task race issue.
 ### Changed
  - NG incbins are now wrapped in own object file.
+
 
 ## [3.25] - 2018-04-27
 ### Fixed

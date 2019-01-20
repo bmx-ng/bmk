@@ -576,7 +576,11 @@ Type TBuildManager Extends TCallback
 								Local at:TArcTask = New TArcTask.Create(m, m.arc_path, objs)
 								
 								?threaded
-									processManager.AddTask(TArcTask._CreateArc, at)
+									If opt_single Then
+										at.CreateArc()
+									Else
+										processManager.AddTask(TArcTask._CreateArc, at)
+									End If
 								?Not threaded
 									at.CreateArc()
 								?
@@ -713,7 +717,9 @@ Type TBuildManager Extends TCallback
 			Next
 
 ?threaded
-		processManager.WaitForTasks()
+		If Not opt_single Then
+			processManager.WaitForTasks()
+		End If
 ?
 
 		Next

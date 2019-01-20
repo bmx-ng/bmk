@@ -424,25 +424,32 @@ Type TBMK
 		If opt_standalone And Not opt_nolog PushLog(cmd)
 		
 		If Not opt_standalone Or (opt_standalone And opt_nolog) Then
+			Local threaded:Int
 ?threaded
-			processManager.DoSystem(cmd, src, obj, supp)
-?Not threaded
-			If obj Then
-				DeleteFile obj
-			End If
-			
-			If supp Then
-				DeleteFile supp
-			End If
+			threaded = True
 
-			Local res:Int = system_( cmd )
-			If Not res Then
-				If src.EndsWith(".bmx") Then
-					processor.DoCallback(src)
-				End If
+			If threaded And Not opt_single Then
+				processManager.DoSystem(cmd, src, obj, supp)
+			Else
+?
+					If obj Then
+						DeleteFile obj
+					End If
+					
+					If supp Then
+						DeleteFile supp
+					End If
+	
+					Local res:Int = system_( cmd )
+					If Not res Then
+						If src.EndsWith(".bmx") Then
+							processor.DoCallback(src)
+						End If
+					End If
+					
+					Return res
+?threaded
 			End If
-			
-			Return res
 ?
 		End If
 	End Method
