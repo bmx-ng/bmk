@@ -57,6 +57,8 @@ Global opt_static_set=False
 Global opt_boot:Int
 Global opt_manifest:Int = True
 Global opt_single:Int
+Global opt_nodef:Int
+Global opt_nohead:Int
 
 Global opt_dumpbuild
 
@@ -243,6 +245,10 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_manifest = False
 		Case "single"
 			opt_single = True
+		Case "nodef"
+			opt_nodef = True
+		Case "nohead"
+			opt_nohead = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select

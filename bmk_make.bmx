@@ -378,7 +378,13 @@ Type TBuildManager Extends TCallback
 				sb.Append(" -musl")
 			End If
 			If makelib Then
-				sb.Append(" -def")
+				sb.Append(" -makelib")
+				If opt_nodef Then
+					sb.append(" -nodef")
+				End If
+				If opt_nohead Then
+					sb.append(" -nohead")
+				End If
 			End If
 		End If
 
