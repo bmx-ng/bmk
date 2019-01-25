@@ -529,9 +529,20 @@
 	local windres = bmk.MinGWBinPath() .. "/windres.exe"
 	
 	local outfile = %outfile%
+	local undecorated_outfile = outfile
+	
+	local decoration = ""
 	
 	if bmk.IsDebugBuild() == 1 then
-		outfile = outfile .. ".debug"
+		decoration = ".debug"
+	end
+	
+	if bmk.IsThreadedBuild() == 1 and bmk.BCCVersion() == "BlitzMax" then
+		decoration = decoration .. ".mt"
+	end
+	
+	if string.sub( outfile, -string.len( decoration ) ) ~= decoration then
+		outfile = outfile .. decoration
 	end
 
 	if sys.FileType(windres) == 0 then
@@ -560,7 +571,11 @@
 	local resource_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".rc"
 	local object_path = bmk.Quote(tmp_path .. outfile .. "." .. bmk.CPU() .. ".res.o")
 	local icon_path = outfile .. ".ico"
-	
+	if sys.FileType(icon_path) == 0 then
+		-- fall back to undecorated icon file
+		icon_path = undecorated_outfile .. ".ico"
+	end
+
 	local manifest = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" ..
 			"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">" ..
 			"<asmv3:application xmlns:asmv3=\"urn:schemas-microsoft-com:asm.v3\">" ..
