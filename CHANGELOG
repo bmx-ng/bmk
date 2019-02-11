@@ -1,3 +1,7 @@
+## [3.32] - 2019-02-11
+### Added
+ - New 'override' and 'overerr' options for bcc Override support.
+ 
 ## [3.31] - 2019-01-18
 ### Added
  - New 'single' option. Forces single-threaded build mode.

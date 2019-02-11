@@ -386,6 +386,12 @@ Type TBuildManager Extends TCallback
 					sb.append(" -nohead")
 				End If
 			End If
+			If opt_require_override Then
+				sb.Append(" -override")
+				If opt_override_error Then
+					sb.Append(" -overerr")
+				End If
+			End If
 		End If
 
 		source.cc_opts :+ cc_opts
@@ -1224,6 +1230,12 @@ Type TBuildManager Extends TCallback
 				End If
 				If opt_musl Then
 					sb.Append(" -musl")
+				End If
+				If opt_require_override Then
+					sb.Append(" -override")
+					If opt_override_error Then
+						sb.Append(" -overerr")
+					End If
 				End If
 			End If
 	

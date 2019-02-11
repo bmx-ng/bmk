@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.31"
+Const BMK_VERSION:String = "3.32"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -59,6 +59,8 @@ Global opt_manifest:Int = True
 Global opt_single:Int
 Global opt_nodef:Int
 Global opt_nohead:Int
+Global opt_require_override:Int
+Global opt_override_error:Int
 
 Global opt_dumpbuild
 
@@ -249,6 +251,10 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_nodef = True
 		Case "nohead"
 			opt_nohead = True
+		Case "override"
+			opt_require_override = True
+		Case "overerr"
+			opt_override_error = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -393,6 +399,12 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t-o <output file>~n"
 		s:+ "~t~tSpecify output file. (makeapp only)~n"
 		s:+ "~t~tBy default, the output file is placed into the same directory as the root source file."
+		s:+ "~n~n"
+		s:+ "~t-override~n"
+		s:+ "~t~tWarn if overriding methods are not declared with Override property (NG only)~n"
+		s:+ "~n~n"
+		s:+ "~t-overerr~n"
+		s:+ "~t~tUpgrades -override warnings to errors. (NG only)~n"
 		s:+ "~n~n"
 		s:+ "~t-q~n"
 		s:+ "~t~tQuiet build."
