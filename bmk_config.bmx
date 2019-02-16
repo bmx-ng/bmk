@@ -371,7 +371,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-h~n"
 		s:+ "~t~tBuild multithreaded version. (This is the default on NG)~n"
-		s:+ "~t~tThe default on legacy BlitzMax is to build non-threaded. On legacy, using this option will also~m"
+		s:+ "~t~tThe default on legacy BlitzMax is to build non-threaded. On legacy, using this option will also~n"
 		s:+ "~t~tadd a .mt suffix to the executable."
 		s:+ "~n~n"
 		s:+ "~t-i~n"
