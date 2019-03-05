@@ -299,6 +299,9 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		End If
 		If makelib Then
 			sb.Append(" -shared")
+			If processor.Platform() = "win32" Then
+				sb.Append(" -static-libgcc")
+			End If
 		Else
 			sb.Append(" -static")
 		End If
