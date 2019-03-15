@@ -446,6 +446,9 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 		If opt_static Then
 			sb.Append(" -static")
 		End If
+		If Not opt_nopie Then
+			sb.Append(" -pie -fpie")
+		End If
 		sb.Append(" -pthread")
 		sb.Append(" -o ").Append(CQuote( path ))
 		sb.Append(" ").Append(CQuote( tmpfile ))

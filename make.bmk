@@ -186,6 +186,11 @@
 		
 	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
 		cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
+		
+		if bmk.Option("nopie", "") == "true" then
+			globals.SetOption("cc_opts", "pie", "")
+		end
+		
 	elseif bmk.Platform() == "emscripten" then
 		cmd = bmk.Option(bmk.BuildName("gcc"), "emcc")
 		
@@ -475,7 +480,7 @@
 			globals.SetOption("cc_opts", "arch", "-m32")
 			globals.SetOption("cc_opts", "fancymath", "-mfancy-math-387")
 		end
-	
+		globals.SetOption("cc_opts", "pie", "-fpie")
 	end
 
 	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")

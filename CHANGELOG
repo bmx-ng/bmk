@@ -1,3 +1,9 @@
+## [3.34] - 2019-03-15
+### Added
+ - New 'no-pie' option to disable PIE.
+### Changed
+ - Linux binaries are now built as position independent executables (PIE) as default.
+
 ## [3.33] - 2019-03-05
 ### Fixed
  - DLLs now statically link against libgcc.
@@ -10,7 +16,7 @@
 ### Added
  - New 'single' option. Forces single-threaded build mode.
  - Allow user-provided manifest files on Win32.
- ### Changed
+### Changed
  - Use application name for default application settings.
 
 ## [3.30] - 2018-12-04

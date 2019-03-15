@@ -316,6 +316,12 @@ Type TBuildManager Extends TCallback
 			ConfigureNXPaths()
 		End If
 		
+		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Then
+			If opt_nopie Then
+				globals.SetVar("nopie", "true")
+			End If
+		End If
+		
 		processor.callback = Self
 	End Method
 

@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.33"
+Const BMK_VERSION:String = "3.34"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -61,6 +61,8 @@ Global opt_nodef:Int
 Global opt_nohead:Int
 Global opt_require_override:Int
 Global opt_override_error:Int
+Global opt_nopie:Int
+Global opt_nopie_set:Int
 
 Global opt_dumpbuild
 
@@ -255,6 +257,9 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_require_override = True
 		Case "overerr"
 			opt_override_error = True
+		Case "no-pie"
+			opt_nopie = True
+			opt_nopie_set = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -405,6 +410,9 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-overerr~n"
 		s:+ "~t~tUpgrades -override warnings to errors. (NG only)~n"
+		s:+ "~n~n"
+		s:+ "~t-no-pie~n"
+		s:+ "~t~tDisables option to compile position independent executables. (NG & Linux only)~n"
 		s:+ "~n~n"
 		s:+ "~t-q~n"
 		s:+ "~t~tQuiet build."
@@ -587,6 +595,16 @@ Function AsConfigurable:Int(key:String, value:String)
 				set = 1
 			Else
 				If opt_static <> Int(value) Then
+					set = 2
+				End If
+			End If
+			config = True
+		Case "opt_nopie"
+			If Not opt_nopie_set Then
+				opt_nopie = Int(value)
+				set = 1
+			Else
+				If opt_nopie <> Int(value) Then
 					set = 2
 				End If
 			End If
