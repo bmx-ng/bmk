@@ -248,6 +248,8 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	End Select
 
 	If FileType(Main)<>FILETYPE_FILE Throw "Unable to open source file '"+Main+"'"
+	
+	opt_infile = Main
 
 	If Not opt_outfile Then
 		opt_outfile = StripExt( Main )
@@ -256,10 +258,10 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	End If
 
 	' set some useful global variables
-	globals.SetVar("BUILDPATH", ExtractDir(opt_outfile))
+	globals.SetVar("BUILDPATH", ExtractDir(opt_infile))
 	globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
 	globals.SetVar("OUTFILE", StripDir(StripExt(opt_outfile)))
-
+	globals.SetVar("INFILE", StripDir(StripExt(opt_infile)))
 
 	' some more useful globals
 	If processor.Platform() = "macos" And opt_apptype="gui" And Not compileOnly Then

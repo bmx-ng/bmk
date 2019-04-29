@@ -535,6 +535,7 @@
 	
 	local outfile = %outfile%
 	local undecorated_outfile = outfile
+	local infile = %infile%
 	
 	local decoration = ""
 	
@@ -569,9 +570,9 @@
 		arch = "x86"
 	end
 	
-	local tmp_path = %exepath% .. "/.bmx/"
+	local tmp_path = %buildpath% .. "/.bmx/"
 	
-	local user_manifest_path = %exepath% .. outfile .. ".exe.manifest"
+	local user_manifest_path = %buildpath% .. outfile .. ".exe.manifest"
 	local manifest_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".manifest"
 	local resource_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".rc"
 	local object_path = bmk.Quote(tmp_path .. outfile .. "." .. bmk.CPU() .. ".res.o")
@@ -579,6 +580,10 @@
 	if sys.FileType(icon_path) == 0 then
 		-- fall back to undecorated icon file
 		icon_path = undecorated_outfile .. ".ico"
+		
+		if sys.FileType(icon_path) == 0 then
+			icon_path = infile .. ".ico"
+		end
 	end
 
 	local manifest = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" ..

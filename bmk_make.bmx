@@ -618,9 +618,17 @@ Type TBuildManager Extends TCallback
 							
 							' include settings and icon times in calculation
 							If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
-								Local settings:String = ExtractDir(opt_outfile) + "/" + StripDir(StripExt(opt_outfile)) + ".settings"
+								Local settings:String = ExtractDir(opt_infile) + "/" + StripDir(StripExt(opt_outfile)) + ".settings"
+								If Not FileType(settings) Then
+									settings = ExtractDir(opt_infile) + "/" + StripDir(StripExt(opt_infile)) + ".settings"
+								End If
 								max_lnk_time = Max(FileTime(settings), max_lnk_time)
-								max_lnk_time = Max(FileTime(StripDir(StripExt(opt_outfile)) + ".ico"), max_lnk_time)
+								
+								Local icon:String = ExtractDir(opt_infile) + "/" + StripDir(StripExt(opt_outfile)) + ".ico"
+								If Not FileType(icon) Then
+									icon = ExtractDir(opt_infile) + "/" + StripDir(StripExt(opt_infile)) + ".ico"
+								End If
+								max_lnk_time = Max(FileTime(icon), max_lnk_time)
 							End If
 						
 							If max_lnk_time > FileTime(opt_outfile) Or opt_all Then
@@ -628,7 +636,10 @@ Type TBuildManager Extends TCallback
 								' generate manifest for app
 								If opt_manifest And processor.Platform() = "win32" And opt_apptype="gui" Then
 									processor.RunCommand("make_win32_resource", Null)
-									Local res:String = ExtractDir(opt_outfile) + "/.bmx/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+									Local res:String = ExtractDir(opt_infile) + "/.bmx/" + StripDir(StripExt(opt_outfile)) + "." + processor.CPU() + ".res.o"
+									If Not FileType(res) Then
+										res = ExtractDir(opt_infile) + "/.bmx/" + StripDir(StripExt(opt_infile)) + "." + processor.CPU() + ".res.o"
+									End If
 									If FileType(res) = FILETYPE_FILE Then
 										Local s:TSourceFile = New TSourceFile
 										s.obj_path = res

@@ -1,3 +1,7 @@
+## [3.35] - 2019-04-29
+### Fixed
+ - Improved Windows resource handling.
+
 ## [3.34] - 2019-03-15
 ### Added
  - New 'no-pie' option to disable PIE.

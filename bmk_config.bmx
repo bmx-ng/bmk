@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.34"
+Const BMK_VERSION:String = "3.35"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -18,6 +18,7 @@ Global opt_arch$
 Global opt_arch_set=False
 Global opt_server$
 Global opt_outfile$
+Global opt_infile:String
 Global opt_framework$
 Global opt_apptype$="console"
 Global opt_debug=False
@@ -655,17 +656,31 @@ Function ValidatePlatform(platform:String)
 End Function
 
 Function ParseApplicationIniFile:TMap()
-	Local appId:String = StripDir(StripExt(opt_outfile))
-	Local buildDir:String = ExtractDir(opt_outfile)
+	Local ids:String[] = [StripDir(StripExt(opt_outfile)), StripDir(StripExt(opt_infile))]
 
-	Local path:String = buildDir + "/" + appId + ".settings"
+	Local appId:String = ids[0]
+	Local buildDir:String = ExtractDir(opt_infile)
 
+	Local path:String
+	Local found:Int
 	Local settings:TMap = New TMap
+	
+	For Local id:String = EachIn ids
+		path = buildDir + "/" + id + ".settings"
 
-	If Not FileType(path) Then
-		If opt_verbose Then
-			Print "Not Found : application settings file '" + appId + ".settings'. Using defaults..."
+		If Not FileType(path) Then
+			If opt_verbose Then
+				Print "Not Found : application settings file '" + id + ".settings'."
+			End If
+			Continue
 		End If
+		
+		found = True
+		Exit
+	Next
+	
+	If Not found Then
+		Print "Using defaults."
 		Return DefaultApplicationSettings()
 	End If
 
