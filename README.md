@@ -11,6 +11,17 @@ bmk.bmx is the main source-file.
 
 BMK should be compiled in Non-GUI and Release mode. 
 
+Compilation with an older version of BMK:
+
+    $ mkdir -p build/
+    $ path/to/bmk makeapp -a -r -h -o ./build/bmk ./bmk.bmx
+
+You can optionally specify platform and CPU during compilation, e.g. 
+
+    PLATFORM="macos"
+    CPU="x64"
+    path/to/bmk makeapp -a -r -h -l $PLATFORM -g $CPU -o ./build/bmk ./bmk.bmx
+
 You can also compile BMK in either Threaded or Non-threaded modes.
 
 When compiled with Threading enabled, BMK will parallel compile C/C++ files
