@@ -337,16 +337,16 @@ Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
 			If FileType( def )<>FILETYPE_FILE Then
 				Print "Warning: Cannot locate .def file (" + def + "). Exporting ALL symbols."
 			Else
-				sb.Append(" ").Append(def)
+				sb.Append(" ").Append(CQuote( def ))
 			End If
 			
 			If version < 60000 Then
-				sb.Append(" --out-implib ").Append(imp)
+				sb.Append(" --out-implib ").Append(CQuote( imp ))
 				If usingLD Then
 					fb.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) ))
 				End If
 			Else
-				sb.Append(" -Wl,--out-implib,").Append(imp)
+				sb.Append(" -Wl,--out-implib,").Append(CQuote( imp ))
 			End If
 		Else
 			If usingLD
