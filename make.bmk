@@ -596,7 +596,15 @@
 			"<assemblyIdentity version=\"1.0.0.0\" processorArchitecture=\"" ..
 			arch ..
 			"\" name=\"Application\" type=\"win32\"/>" ..
-			"<description>" .. outfile .. "</description>" ..
+			"<description>"
+	
+	if bmk.AppSetting("app.description") ~= "" then
+		manifest = manifest .. bmk.AppSetting("app.description")
+	else
+		manifest = manifest .. outfile
+	end
+	
+	manifest = manifest .. "</description>" ..
 			"<dependency>" ..
 			"<dependentAssembly>" ..
 			"<assemblyIdentity type=\"win32\" name=\"Microsoft.Windows.Common-Controls\" version=\"6.0.0.0\" processorArchitecture=\"" ..
