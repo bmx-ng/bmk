@@ -532,6 +532,10 @@ End Rem
 		stream.Close()
 
 	End If
+	
+	If opt_upx And Not compileOnly Then
+		MakeUpx()
+	End If
 
 	If opt_execute And Not compileOnly
 
@@ -666,4 +670,3 @@ Function MakeBootstrap()
 	Next
 
 End Function
-

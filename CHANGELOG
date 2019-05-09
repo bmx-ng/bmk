@@ -1,4 +1,8 @@
-## [3.35] - 2019-04-29
+## [3.36] - 2019-05-09
+### Added
+ - New '-upx' option to pack executables.
+
+ ## [3.35] - 2019-04-29
 ### Fixed
  - Improved Windows resource handling.
 

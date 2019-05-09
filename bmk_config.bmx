@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.35"
+Const BMK_VERSION:String = "3.36"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -64,6 +64,7 @@ Global opt_require_override:Int
 Global opt_override_error:Int
 Global opt_nopie:Int
 Global opt_nopie_set:Int
+Global opt_upx:Int
 
 Global opt_dumpbuild
 
@@ -261,6 +262,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 		Case "no-pie"
 			opt_nopie = True
 			opt_nopie_set = True
+		Case "upx"
+			opt_upx = True
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -438,6 +441,9 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tSpecify application type. (makeapp only)~n"
 		s:+ "~t~tShould be either 'console' or 'gui' (without single quote!).~n"
 		s:+ "~t~tThe default is console."
+		s:+ "~n~n"
+		s:+ "~t-upx~n"
+		s:+ "~t~tPack binary using UPX. (makeapp only)."
 		s:+ "~n~n"
 		s:+ "~t-v~n"
 		s:+ "~t~tVerbose (noisy) build."

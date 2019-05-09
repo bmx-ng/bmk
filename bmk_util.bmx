@@ -1527,6 +1527,38 @@ Function iOSProjectLibSearchPaths:String(uuid:String, fileMap:TFileMap)
 	Return stack.Join(",~n")
 End Function
 
+Function MakeUpx()
+	If processor.Platform() = "emscripten" Or processor.Platform() = "nx" Or processor.Platform() = "ios" Then
+		Return
+	End If
+	
+	Local upx:String = BlitzMaxPath() + "/bin/upx"
+?win32
+	upx :+ ".exe"
+?
+	If Not opt_quiet Then
+		Print "Packing:" + StripDir(opt_outfile)
+	End If
+	
+	If Not FileType(upx) Then
+		If Not opt_quiet Then
+			Print "WARNING: Missing UPX : " + upx
+		End If
+		Return
+	End If
+	
+	Local cmd:String = upx + " -9 "
+	If Not opt_verbose Then
+		cmd :+ "-qqq "
+	Else
+		cmd :+ "-qq "
+	End If
+	
+	cmd :+ opt_outfile
+	
+	Sys(cmd)
+End Function
+
 Function FindEOL:Int(Text:String, substr:String, start:Int = 0)
 	Local i:Int = Text.Find(substr, start)
 	If i = -1 Then
