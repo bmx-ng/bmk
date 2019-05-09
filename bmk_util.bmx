@@ -1540,7 +1540,7 @@ Function MakeUpx()
 		Print "Packing:" + StripDir(opt_outfile)
 	End If
 	
-	If Not FileType(upx) Then
+	If FileType(upx) <> FILETYPE_FILE Then
 		If Not opt_quiet Then
 			Print "WARNING: Missing UPX : " + upx
 		End If
