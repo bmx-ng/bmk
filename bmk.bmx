@@ -307,7 +307,7 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	LoadBMK(ExtractDir(Main) + "/pre.bmk")
 
 	' project-specific pre process
-	LoadBMK(ExtractDir(Main) + "/" + StripDir( opt_outfile ) + ".bmk")
+	LoadBMK(ExtractDir(Main) + "/" + StripDir( opt_outfile ) + ".pre.bmk")
 
 	If processor.Platform() = "win32" Then
 		If makelib

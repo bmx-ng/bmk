@@ -755,8 +755,11 @@ Type TBuildManager Extends TCallback
 	
 		If app_build Then
 
-			' post process
+			' generic post process
 			LoadBMK(ExtractDir(app_main) + "/post.bmk")
+
+			' project-specific post process
+			LoadBMK(ExtractDir(app_main) + "/" + StripDir( opt_outfile ) + ".post.bmk")
 
 			Select processor.Platform()
 			Case "android"
