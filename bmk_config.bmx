@@ -686,7 +686,9 @@ Function ParseApplicationIniFile:TMap()
 	Next
 	
 	If Not found Then
-		Print "Using defaults."
+		If opt_verbose Then
+			Print "Using defaults."
+		End If
 		Return DefaultApplicationSettings()
 	End If
 
