@@ -241,7 +241,7 @@ Function ConfigureNXPaths()
 
 	Local toolchainDir:String = processor.Option("nx.devkitpro", "") + "/devkitA64/"
 	
-	If FileType(toolchainDir) <> FILETYPE_DIR Then
+	If FileType(RealPath(toolchainDir)) <> FILETYPE_DIR Then
 		Throw "Cannot determine toolchain dir for NX, at '" + toolchainDir + "'"
 	End If
 
