@@ -626,7 +626,7 @@
 			"\n"
 	
 	if sys.FileType(icon_path) == 1 then
-		resource = resource .. "101 ICON \"" .. icon_path .. "\"\n" ..
+		resource = resource .. "APP_ICON ICON \"" .. icon_path .. "\"\n" ..
 			"\n"
 	end
 	
