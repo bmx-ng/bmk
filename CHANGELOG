@@ -1,8 +1,17 @@
+## [3.37] - 2019-05-26
+### Fixed
+ - Wrapped upx arg path in quotes.
+ - Improved detection of nx toolchain dir.
+### Changed
+ - app-specific pre/post script names now require pre/post filename suffix.
+ - Removed unused options.
+ - Windows app icon in resource is now APP_ICON instead of 101.
+
 ## [3.36] - 2019-05-09
 ### Added
  - New '-upx' option to pack executables.
 
- ## [3.35] - 2019-04-29
+## [3.35] - 2019-04-29
 ### Fixed
  - Improved Windows resource handling.
 
