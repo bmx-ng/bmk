@@ -16,7 +16,6 @@ Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
 Global opt_arch$
 Global opt_arch_set=False
-Global opt_server$
 Global opt_outfile$
 Global opt_infile:String
 Global opt_framework$
@@ -26,16 +25,11 @@ Global opt_threaded=False
 Global opt_release=False
 Global opt_configmung$=""
 Global opt_kill=False
-Global opt_username$="nobody"
-Global opt_password$="anonymous"
 Global opt_modfilter$="."
 Global opt_all=False
 Global opt_quiet=False
 Global opt_verbose=False
 Global opt_execute=False
-Global opt_proxy$
-Global opt_proxyport
-Global opt_traceheaders
 Global opt_appstub$="brl.appstub" ' BaH 28/9/2007
 Global opt_universal=False
 Global opt_target_platform:String
@@ -170,17 +164,6 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_threaded=True
 		Case "k"
 			opt_kill=True
-		Case "z"
-			opt_traceheaders=True
-		Case "y"
-			n:+1
-			If n=args.length CmdError "Missing arg for '-y'"
-			opt_proxy=args[n]
-			Local i=opt_proxy.Find(":")
-			If i<>-1
-				opt_proxyport=Int( opt_proxy[i+1..] )
-				opt_proxy=opt_proxy[..i]
-			EndIf
 		Case "g"
 			n:+1
 			If n=args.length CmdError "Missing arg for '-g'"
@@ -199,18 +182,6 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			n:+1
 			If n=args.length CmdError "Missing arg for '-f'"
 			opt_framework=args[n]
-		Case "s"
-			n:+1
-			If n=args.length CmdError "Missing arg for '-s'"
-			opt_server=args[n]
-		Case "u"
-			n:+1
-			If n=args.length CmdError "Missing arg for '-u'"
-			opt_username=args[n]
-		Case "p"
-			n:+1
-			If n=args.length CmdError "Missing arg for '-p'"
-			opt_password=args[n]
 		Case "b"
 			n:+1
 			If n=args.length CmdError "Missing arg for '-b'"
