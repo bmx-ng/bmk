@@ -1554,7 +1554,7 @@ Function MakeUpx()
 		cmd :+ "-qq "
 	End If
 	
-	cmd :+ opt_outfile
+	cmd :+ CQuote(opt_outfile)
 	
 	Sys(cmd)
 End Function
