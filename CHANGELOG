@@ -1,3 +1,7 @@
+## [3.38] - 2019-05-29
+### Added
+ - New '-ud' option to add user defined compiler options. (bcc 0.108+)
+
 ## [3.37] - 2019-05-26
 ### Fixed
  - Wrapped upx arg path in quotes.

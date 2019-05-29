@@ -421,6 +421,10 @@
 	end
 @end
 
+@define adddef
+	globals.AddC("user_defs", arg1)
+@end
+
 # the default ccopts
 # used for compiling c-type files
 @define default_cc_opts

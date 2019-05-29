@@ -753,5 +753,36 @@ Function SetCompilerValues()
 	compilerOptions.Add("nx", processor.Platform() = "nx")
 	compilerOptions.Add("nxarm64", processor.Platform() = "nx" And processor.CPU()="arm64")
 
+	Local userdefs:String[] = GetUserDefs()
+	If userdefs Then
+		For Local def:String = EachIn userdefs
+			compilerOptions.Add(def, True)
+		Next
+	End If
 End Function
 
+Function GetUserDefs:String[]()
+	Local defs:String = opt_userdefs
+	If globals.Get("user_defs") Then
+		If defs Then
+			defs :+ ","
+		End If
+		defs :+ globals.Get("user_defs")
+	End If
+	
+	Local parts:String[] = defs.ToLower().Split(",")
+	Local userdefs:String[parts.length]
+	Local count:Int
+	For Local def:String = EachIn parts
+		def = def.Trim()
+		If Not def Then
+			Continue
+		End If
+		userdefs[count] = def
+		count :+ 1
+	Next
+	If count < parts.length Then
+		userdefs = userdefs[..count]
+	End If
+	Return userdefs
+End Function

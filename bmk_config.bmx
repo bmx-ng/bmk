@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.37"
+Const BMK_VERSION:String = "3.38"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -59,6 +59,7 @@ Global opt_override_error:Int
 Global opt_nopie:Int
 Global opt_nopie_set:Int
 Global opt_upx:Int
+Global opt_userdefs:String
 
 Global opt_dumpbuild
 
@@ -235,6 +236,10 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_nopie_set = True
 		Case "upx"
 			opt_upx = True
+		Case "ud"
+			n:+1
+			If n=args.length CmdError "Missing arg for '-ud'"
+			opt_userdefs=args[n]
 		Default
 			CmdError "Invalid option '" + arg[1..] + "'"
 		End Select
@@ -412,6 +417,11 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tSpecify application type. (makeapp only)~n"
 		s:+ "~t~tShould be either 'console' or 'gui' (without single quote!).~n"
 		s:+ "~t~tThe default is console."
+		s:+ "~n~n"
+		s:+ "~t-ud <definitions>~n"
+		s:+ "~t~tAdd user defined compiler options. (NG only)."
+		s:+ "~t~tA comma-separated list of compiler options that can be used in addition to the defaults.~n"
+		s:+ "~t~tAlternatively, the option 'adddef' can be used in build scripts to provide the same.~n"
 		s:+ "~n~n"
 		s:+ "~t-upx~n"
 		s:+ "~t~tPack binary using UPX. (makeapp only)."

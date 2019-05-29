@@ -398,6 +398,16 @@ Type TBuildManager Extends TCallback
 					sb.Append(" -overerr")
 				End If
 			End If
+			Local defs:String = opt_userdefs
+			If globals.Get("user_defs") Then
+				If defs Then
+					defs :+ ","
+				End If
+				defs :+ globals.Get("user_defs")
+			End If
+			If defs Then
+				sb.Append(" -ud ").Append(defs)
+			End If
 		End If
 
 		source.cc_opts :+ cc_opts
@@ -1256,6 +1266,16 @@ Type TBuildManager Extends TCallback
 					If opt_override_error Then
 						sb.Append(" -overerr")
 					End If
+				End If
+				Local defs:String = opt_userdefs
+				If globals.Get("user_defs") Then
+					If defs Then
+						defs :+ ","
+					End If
+					defs :+ globals.Get("user_defs")
+				End If
+				If defs Then
+					sb.Append(" -ud ").Append(defs)
 				End If
 			End If
 	
