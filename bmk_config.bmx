@@ -134,6 +134,10 @@ Function CmdError(details:String = Null, fullUsage:Int = False)
 	Throw s
 End Function
 
+Function MissingArg(arg:String)
+	CmdError "Missing arg for '-" + arg + "'"
+End Function
+
 Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 
 	Local n
@@ -146,8 +150,9 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 	For n=0 Until args.length
 		Local arg$=args[n]
 		If arg[..1]<>"-" Exit
-		Select arg[1..]
-		Case "a"
+		Local argv:String = arg[1..]
+		Select argv
+		Case "a", "all"
 			opt_all=True
 		Case "q"
 			opt_quiet=True
@@ -155,46 +160,46 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_verbose=True
 		Case "x"
 			opt_execute=True
-		Case "d"
+		Case "d", "debug"
 			opt_debug=True
 			opt_release=False
-		Case "r"
+		Case "r", "release"
 			opt_debug=False
 			opt_release=True
 		Case "h"
 			opt_threaded=True
 		Case "k"
 			opt_kill=True
-		Case "g"
+		Case "g", "arch"
 			n:+1
-			If n=args.length CmdError "Missing arg for '-g'"
+			If n=args.length MissingArg(argv)
 			opt_arch=args[n].ToLower()
 			ValidateArch(opt_arch)
 			opt_arch_set = True
-		Case "t"
+		Case "t", "type"
 			n:+1
-			If n=args.length CmdError "Missing arg for '-t'"
+			If n=args.length MissingArg(argv)
 			opt_apptype=args[n].ToLower()
-		Case "o"
+		Case "o", "output"
 			n:+1
-			If n=args.length CmdError "Missing arg for '-o'"
+			If n=args.length MissingArg(argv)
 			opt_outfile=args[n]
-		Case "f"
+		Case "f", "framework"
 			n:+1
-			If n=args.length CmdError "Missing arg for '-f'"
+			If n=args.length MissingArg(argv)
 			opt_framework=args[n]
 		Case "b"
 			n:+1
-			If n=args.length CmdError "Missing arg for '-b'"
+			If n=args.length MissingArg(argv)
 			opt_appstub=args[n]
 		Case "i"
 ?macos
 			' this is mac/ios only... pah!
 			opt_universal = True
 ?
-		Case "l"
+		Case "l", "platform"
 			n:+1
-			If n=args.length CmdError "Missing arg for '-l'"
+			If n=args.length MissingArg(argv)
 			opt_target_platform=args[n].ToLower()
 			ValidatePlatform(opt_target_platform)
 			opt_target_platform_set = True
@@ -238,10 +243,10 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_upx = True
 		Case "ud"
 			n:+1
-			If n=args.length CmdError "Missing arg for '-ud'"
+			If n=args.length MissingArg(argv)
 			opt_userdefs=args[n]
 		Default
-			CmdError "Invalid option '" + arg[1..] + "'"
+			CmdError "Invalid option '" + argv + "'"
 		End Select
 	Next
 
@@ -307,7 +312,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tBuilds a set of modules."
 		s:+ "~n~n"
 		s:+ "Options :~n"
-		s:+ "~t-a~n"
+		s:+ "~t-a | -all~n"
 		s:+ "~t~tRecompile all source/modules regardless of timestamp. By default, only those modified~n" + ..
 		    "~t~tsince the last build are recompiled."
 		s:+ "~n~n"
@@ -315,10 +320,10 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tBuilds an app using a custom appstub (i.e. not BRL.Appstub).~n"
 		s:+ "~t~tThis can be useful when you want more control over low-level application state."
 		s:+ "~n~n"
-		s:+ "~t-d~n"
+		s:+ "~t-d | -debug~n"
 		s:+ "~t~tBuilds a debug version. (This is the default for makeapp)."
 		s:+ "~n~n"
-		s:+ "~t-g <architecture>~n"
+		s:+ "~t-g <architecture> | -arch <architecture>~n"
 		s:+ "~t~tCompiles to the specified architecture. (the default is the native for this binary - "
 ?x86
 		s:+ "x86"
@@ -363,7 +368,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tCreates a Universal build for supported platforms.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
 		s:+ "~n~n"
-		s:+ "~t-l <target platfom>~n"
+		s:+ "~t-l <target platfom> | -platform <target platform>~n"
 		s:+ "~t~tCross-compiles to the specific target platform.~n"
 		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and emscripten.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
@@ -381,7 +386,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tIf a Strict sub type overrides the method of a SuperStrict type and the return type is void,~n"
 		s:+ "~t~tdon't upgrade the return type to void (i.e. none), and default it to Int."
 		s:+ "~n~n"
-		s:+ "~t-o <output file>~n"
+		s:+ "~t-o <output file> | -output <output file>~n"
 		s:+ "~t~tSpecify output file. (makeapp only)~n"
 		s:+ "~t~tBy default, the output file is placed into the same directory as the root source file."
 		s:+ "~n~n"
@@ -403,7 +408,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tThe default behaviour is to scan and build all requirements for the application,~n"
 		s:+ "~t~tincluding modules."
 		s:+ "~n~n"
-		s:+ "~t-r~n"
+		s:+ "~t-r | -release~n"
 		s:+ "~t~tBuilds a release version."
 		s:+ "~n~n"
 		s:+ "~t-standalone~n"
@@ -413,13 +418,13 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t-static~n"
 		s:+ "~t~tStatically link binary. (Linux NG only)"
 		s:+ "~n~n"
-		s:+ "~t-t <app type>~n"
+		s:+ "~t-t <app type> | -type <app type>~n"
 		s:+ "~t~tSpecify application type. (makeapp only)~n"
 		s:+ "~t~tShould be either 'console' or 'gui' (without single quote!).~n"
 		s:+ "~t~tThe default is console."
 		s:+ "~n~n"
 		s:+ "~t-ud <definitions>~n"
-		s:+ "~t~tAdd user defined compiler options. (NG only)."
+		s:+ "~t~tAdd user defined compiler options. (NG only).~n"
 		s:+ "~t~tA comma-separated list of compiler options that can be used in addition to the defaults.~n"
 		s:+ "~t~tAlternatively, the option 'adddef' can be used in build scripts to provide the same.~n"
 		s:+ "~n~n"
