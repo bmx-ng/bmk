@@ -257,6 +257,21 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 		opt_outfile = RealPath(opt_outfile)
 	End If
 
+
+	'create the output directory if not existing yet
+	Local outDirectory:String = ExtractDir(opt_outfile)
+	Select FileType( outDirectory )
+		Case FILETYPE_NONE
+			'try to recursively create all missing sub-directories
+			CreateDir( outDirectory, True )
+			If FileType( outDirectory ) <> FILETYPE_DIR
+				Throw "Unable to create output directory"
+			EndIf
+		Case FILETYPE_FILE
+			Throw "Unable to create output directory. File with same name exists already."
+	End Select
+
+
 	' set some useful global variables
 	globals.SetVar("BUILDPATH", ExtractDir(opt_infile))
 	globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
