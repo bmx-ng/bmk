@@ -299,7 +299,17 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 		Case FILETYPE_DIR
 		End Select
 
-
+	Else
+		Local d:String = ExtractDir(opt_outfile)
+		Select FileType(d)
+			Case FILETYPE_NONE
+				CreateDir d, True
+				If FileType(d) <> FILETYPE_DIR Then
+					Throw "Unable to create output directory : " + d
+				End If
+			Case FILETYPE_FILE
+				Throw "Invalid output directory : " + d
+		End Select
 	End If
 
 
