@@ -635,7 +635,27 @@
 	end
 	
 	resource = resource .. "1 VERSIONINFO\n" ..
-			"FILEVERSION 1,0,0,0\n" ..
+			"FILEVERSION "
+			
+	if bmk.AppSetting("app.version.major") ~= "" then
+		resource = resource .. bmk.AppSetting("app.version.major")
+	else
+		resource = resource .. "1"
+	end
+			
+	if bmk.AppSetting("app.version.minor") ~= "" then
+		resource = resource .. "," .. bmk.AppSetting("app.version.minor")
+	else
+		resource = resource .. ",0"
+	end
+
+	if bmk.AppSetting("app.version.patch") ~= "" then
+		resource = resource .. "," .. bmk.AppSetting("app.version.patch")
+	else
+		resource = resource .. ",0"
+	end
+	
+	resource = resource .. ",0\n" ..
 			"PRODUCTVERSION 1,0,0,0\n" ..
 			"FILEOS 0x40004\n" ..
 			"FILETYPE 0x1\n" ..

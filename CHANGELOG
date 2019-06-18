@@ -1,3 +1,7 @@
+## [3.39] - 2019-07-18
+### Fixed
+ - Correctly set file version on Win32.
+
 ## [3.38] - 2019-05-29
 ### Added
  - New '-ud' option to add user defined compiler options. (bcc 0.108+)

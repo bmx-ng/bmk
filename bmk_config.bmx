@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.38"
+Const BMK_VERSION:String = "3.39"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -708,6 +708,23 @@ Function ParseApplicationIniFile:TMap()
 		id :+ ".debug"
 	End If
 	settings.Insert("app.id", id)
+	
+	If Not settings.Contains("app.version.major") Then
+		Local version:String = String(settings.ValueForKey("app.version.name"))
+		If version Then
+			Local parts:String[] = version.Split(".")
+			For Local i:Int = 0 Until parts.length
+				Select i
+					Case 0
+						settings.Insert("app.version.major", String.FromInt(parts[i].ToInt()))
+					Case 1
+						settings.Insert("app.version.minor", String.FromInt(parts[i].ToInt()))
+					Case 2
+						settings.Insert("app.version.patch", String.FromInt(parts[i].ToInt()))
+				End Select
+			Next
+		End If
+	End If
 
 	Return settings
 End Function
