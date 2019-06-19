@@ -721,6 +721,8 @@ Function ParseApplicationIniFile:TMap()
 						settings.Insert("app.version.minor", String.FromInt(parts[i].ToInt()))
 					Case 2
 						settings.Insert("app.version.patch", String.FromInt(parts[i].ToInt()))
+					Case 3
+						settings.Insert("app.version.build", String.FromInt(parts[i].ToInt()))
 				End Select
 			Next
 		End If

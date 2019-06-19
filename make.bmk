@@ -654,8 +654,14 @@
 	else
 		resource = resource .. ",0"
 	end
+
+	if bmk.AppSetting("app.version.build") ~= "" then
+		resource = resource .. "," .. bmk.AppSetting("app.version.build")
+	else
+		resource = resource .. ",0"
+	end
 	
-	resource = resource .. ",0\n" ..
+	resource = resource .. "\n" ..
 			"PRODUCTVERSION 1,0,0,0\n" ..
 			"FILEOS 0x40004\n" ..
 			"FILETYPE 0x1\n" ..
