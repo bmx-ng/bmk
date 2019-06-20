@@ -2,6 +2,7 @@
 ### Fixed
  - Correctly set file version on Win32.
  - Don't use incbin object times to determine change.
+ - Compare incbin lists for differences.
 
 ## [3.38] - 2019-05-29
 ### Added

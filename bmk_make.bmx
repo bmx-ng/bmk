@@ -1016,12 +1016,19 @@ Type TBuildManager Extends TCallback
 			
 			' incbin file
 			If ib Then
+				Local requiresBuild:Int = False
 				' missing source.. generate and compile
 				If Not ib.time Then
+					requiresBuild = True
+				Else If IncbinsDifference(source.incbins, ib.incbins) Then
+					requiresBuild = True
+				End If
+				
+				If requiresBuild Then
 					ib.SetRequiresBuild(True)
 					source.SetRequiresBuild(True)
 				End If
-				
+
 				' sync timestamps
 				If ib.time > source.time Then
 					source.time = ib.time
@@ -1380,6 +1387,8 @@ Type TBuildManager Extends TCallback
 
 			source.imports.AddLast(".bmx/" + StripDir(path) )
 		End If
+
+		GetIncBinFileList(ib)
 		
 		ib.time = FileTime(ib.path)
 		ib.obj_time = FileTime(ib.obj_path)
@@ -1387,6 +1396,45 @@ Type TBuildManager Extends TCallback
 		sources.Insert(ib.path, ib)
 
 		Return ib
+	End Method
+	
+	Method GetIncBinFileList(source:TSourceFile)
+		Local stream:TStream = ReadStream(source.path)
+		If stream Then
+			While Not stream.Eof()
+				Local line:String = stream.ReadLine()
+				If line.StartsWith("// FILE : ") Then
+					Local ib:String = line[10..].Replace("~q", "")
+					If ib Then
+						source.incbins.AddLast(ib)
+					End If
+				Else If line.StartsWith("// ----") Then
+					Exit
+				EndIf
+			Wend
+			
+			stream.Close()
+		End If
+	End Method
+	
+	Method IncbinsDifference:Int(ib1:TList, ib2:TList)
+		If ib1.Count() <> ib2.Count() Then
+			Return True
+		End If
+
+		For Local ib:String = EachIn ib1
+			If Not ib2.Contains(ib) Then
+				Return True
+			End If
+		Next
+
+		For Local ib:String = EachIn ib2
+			If Not ib1.Contains(ib) Then
+				Return True
+			End If
+		Next
+		
+		Return False
 	End Method
 	
 	Method CreateLinkStage:TSourceFile(source:TSourceFile, stage:Int = STAGE_LINK)
