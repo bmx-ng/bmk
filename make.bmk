@@ -535,7 +535,11 @@
 
 @define make_win32_resource
 
-	local windres = bmk.MinGWBinPath() .. "/windres.exe"
+	-- windres should be run from its location in order to avoid issues with spaces in paths
+	local cwd = sys.CurrentDir()
+	sys.ChangeDir(bmk.MinGWBinPath())
+
+	local windres =  "windres.exe"
 	
 	local outfile = %outfile%
 	local undecorated_outfile = outfile
@@ -559,6 +563,7 @@
 		if bmk.VerboseBuild() == 1 then
 			print("windres.exe not found in '" .. bmk.MinGWBinPath() .. "'")
 		end
+		sys.ChangeDir(cwd)
 		return
 	end
 	
@@ -719,4 +724,5 @@
 		end
 	end
 	
+	sys.ChangeDir(cwd)
 @end
