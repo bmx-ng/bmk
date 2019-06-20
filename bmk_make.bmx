@@ -1008,6 +1008,10 @@ Type TBuildManager Extends TCallback
 					source.time = time
 				End If
 				
+				' update ib time to the latest incbin time
+				If ib And ib.time And ib.time < time Then
+					ib.time = time
+				End If
 			Next
 			
 			' incbin file
@@ -1021,10 +1025,6 @@ Type TBuildManager Extends TCallback
 				' sync timestamps
 				If ib.time > source.time Then
 					source.time = ib.time
-				End If
-				
-				If ib.obj_time > source.time Then
-					source.time = ib.obj_time
 				End If
 			End If
 						
