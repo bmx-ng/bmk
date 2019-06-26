@@ -102,12 +102,6 @@ Case "zapmod"
 	ZapModule args
 Case "unzapmod"
 	UnzapModule args
-Case "listmods"
-	ListModules args
-Case "modstatus"
-	ModuleStatus args
-Case "syncmods"
-	SyncModules args
 Case "ranlibdir"
 	RanlibDir args
 Case "-v"
@@ -593,27 +587,6 @@ Function UnzapModule( args$[] )
 	UnzapMod stream
 
 	stream.Close
-End Function
-
-Function ListModules( args$[],modid$="" )
-	If Len(args)<>0 CmdError
-
-	Throw "Todo!"
-
-End Function
-
-Function ModuleStatus( args$[] )
-	If Len(args)<>1 CmdError
-
-	ListModules Null,args[0]
-
-End Function
-
-Function SyncModules( args$[] )
-	If args.length CmdError
-
-	If Sys( BlitzMaxPath()+"/bin/syncmods" ) Throw "SyncMods error"
-
 End Function
 
 Function RanlibDir( args$[] )
