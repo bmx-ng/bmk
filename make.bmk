@@ -535,11 +535,8 @@
 
 @define make_win32_resource
 
-	-- windres should be run from its location in order to avoid issues with spaces in paths
-	local cwd = sys.CurrentDir()
-	sys.ChangeDir(bmk.MinGWBinPath())
-
 	local windres =  "windres.exe"
+	local windresPath = bmk.MinGWBinPath() .. "/" .. windres
 	
 	local outfile = %outfile%
 	local undecorated_outfile = outfile
@@ -559,11 +556,10 @@
 		outfile = outfile .. decoration
 	end
 
-	if sys.FileType(windres) == 0 then
+	if sys.FileType(windresPath) == 0 then
 		if bmk.VerboseBuild() == 1 then
 			print("windres.exe not found in '" .. bmk.MinGWBinPath() .. "'")
 		end
-		sys.ChangeDir(cwd)
 		return
 	end
 	
@@ -581,11 +577,11 @@
 	
 	local tmp_path = %buildpath% .. "/.bmx/"
 	
-	local user_manifest_path = %buildpath% .. outfile .. ".exe.manifest"
+	local user_manifest_path = %buildpath% .. "/" .. outfile .. ".exe.manifest"
 	local manifest_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".manifest"
 	local resource_path = tmp_path .. outfile .. "." .. bmk.CPU() .. ".rc"
 	local object_path = bmk.Quote(tmp_path .. outfile .. "." .. bmk.CPU() .. ".res.o")
-	local icon_path = outfile .. ".ico"
+	local icon_path = %buildpath% .. "/" .. outfile .. ".ico"
 	if sys.FileType(icon_path) == 0 then
 		-- fall back to undecorated icon file
 		icon_path = undecorated_outfile .. ".ico"
@@ -719,10 +715,14 @@
 		if futils.SaveText(resource_path, resource) then
 		
 			local cmd = windres .. " -i " .. bmk.Quote(resource_path) .. " -o " .. object_path
-		
+
+			-- windres should be run from its location in order to avoid issues with spaces in paths
+			local cwd = sys.CurrentDir()
+			sys.ChangeDir(bmk.MinGWBinPath())
+			
 			bmk.Sys(cmd)
+			
+			sys.ChangeDir(cwd)
 		end
 	end
-	
-	sys.ChangeDir(cwd)
 @end
