@@ -584,10 +584,10 @@
 	local icon_path = %buildpath% .. "/" .. outfile .. ".ico"
 	if sys.FileType(icon_path) == 0 then
 		-- fall back to undecorated icon file
-		icon_path = undecorated_outfile .. ".ico"
+		icon_path = %buildpath% .. "/" .. undecorated_outfile .. ".ico"
 		
 		if sys.FileType(icon_path) == 0 then
-			icon_path = infile .. ".ico"
+			icon_path = %buildpath% .. "/" .. infile .. ".ico"
 		end
 	end
 
