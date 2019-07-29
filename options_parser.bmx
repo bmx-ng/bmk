@@ -56,12 +56,25 @@ Type TOptParser
 	End Method
 	
 	Method ParseAndExpr:TExpr()
-		Local expr:TExpr = ParseNotExpr()
+		Local expr:TExpr = ParseCompareExpr()
 		Repeat
 			If token.tokType = TOK_AND Then
 				NextToke
 				Local rhs:TExpr = ParseNotExpr()
 				expr = New TBinaryExpr.Create(TOK_AND, expr, rhs)
+			Else
+				Return expr
+			End If
+		Forever
+	End Method
+
+	Method ParseCompareExpr:TExpr()
+		Local expr:TExpr = ParseNotExpr()
+		Repeat
+			If token.tokType = TOK_LT Or token.tokType = TOK_GT Or token.tokType = TOK_EQ Then
+				NextToke
+				Local rhs:TExpr = ParseNotExpr()
+				expr = New TBinaryCompareExpr.Create(token.tokType, expr, rhs)
 			Else
 				Return expr
 			End If
@@ -138,6 +151,12 @@ Type TOptTokenizer
 				Return New TOptToken.Create(TOK_LPAREN, "(")
 			Else If char = Asc(")") Then
 				Return New TOptToken.Create(TOK_RPAREN, ")")
+			Else If char = Asc("<") Then
+				Return New TOptToken.Create(TOK_LT, "<")
+			Else If char = Asc(">") Then
+				Return New TOptToken.Create(TOK_GT, ">")
+			Else If char = Asc("=") Then
+				Return New TOptToken.Create(TOK_EQ, "=")
 			Else If IsAlphaNumeric(char) Then
 				Return NextIdentToken(char)
 			Else If Not IsWhitespace(char) Then
@@ -204,6 +223,9 @@ Type TNotExpr Extends TExpr
 	End Method
 	
 	Method Eval:Int()
+		If Not expr Then
+			Throw "Missing expression"
+		End If
 		Return Not expr.Eval()
 	End Method
 	
@@ -222,11 +244,32 @@ Type TBinaryExpr Extends TExpr
 	End Method
 	
 	Method Eval:Int()
+		If Not lhs Or Not rhs Then
+			Throw "Missing expression"
+		End If
 		Select op
 			Case TOK_OR
 				Return lhs.Eval() Or rhs.Eval()
 			Case TOK_AND
 				Return lhs.Eval() And rhs.Eval()
+		End Select
+	End Method
+	
+End Type
+
+Type TBinaryCompareExpr Extends TBinaryExpr
+	
+	Method Eval:Int()
+		If Not lhs Or Not rhs Then
+			Throw "Missing expression"
+		End If
+		Select op
+			Case TOK_LT
+				Return lhs.Eval() < rhs.Eval()
+			Case TOK_GT
+				Return lhs.Eval() > rhs.Eval()
+			Case TOK_EQ
+				Return lhs.Eval() = rhs.Eval()
 		End Select
 	End Method
 	
@@ -280,4 +323,6 @@ Const TOK_OR:Int = 3
 Const TOK_LPAREN:Int = 4
 Const TOK_RPAREN:Int = 5
 Const TOK_EOL:Int = 6
-
+Const TOK_LT:Int = 7
+Const TOK_GT:Int = 8
+Const TOK_EQ:Int = 9

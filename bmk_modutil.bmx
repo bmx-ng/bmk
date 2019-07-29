@@ -753,15 +753,15 @@ Function SetCompilerValues()
 	compilerOptions.Add("nx", processor.Platform() = "nx")
 	compilerOptions.Add("nxarm64", processor.Platform() = "nx" And processor.CPU()="arm64")
 
-	Local userdefs:String[] = GetUserDefs()
+	Local userdefs:TUserDef[] = GetUserDefs()
 	If userdefs Then
-		For Local def:String = EachIn userdefs
-			compilerOptions.Add(def, True)
+		For Local def:TUserDef = EachIn userdefs
+			compilerOptions.Add(def.name, def.value)
 		Next
 	End If
 End Function
 
-Function GetUserDefs:String[]()
+Function GetUserDefs:TUserDef[]()
 	Local defs:String = opt_userdefs
 	If globals.Get("user_defs") Then
 		If defs Then
@@ -778,6 +778,19 @@ Function GetUserDefs:String[]()
 		If Not def Then
 			Continue
 		End If
+
+		Local name:String = def
+		Local value:Int = 1
+		
+		Local dp:String[] = def.Split("=")
+		If dp.length = 2 Then
+			name = dp[0]
+			value = Int(dp[1])
+		End If
+		Local ud:TUserDef = New TUserDef
+		ud.name = name
+		ud.value = value
+		
 		userdefs[count] = def
 		count :+ 1
 	Next
@@ -786,3 +799,8 @@ Function GetUserDefs:String[]()
 	End If
 	Return userdefs
 End Function
+
+Type TUserDef
+	Field name:String
+	Field value:Int = 1
+End Type

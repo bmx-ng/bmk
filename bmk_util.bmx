@@ -1,13 +1,13 @@
-Strict
+SuperStrict
 
 Import "bmk_config.bmx"
 Import "bmk_ng.bmx"
 Import "file_util.c"
 
 'OS X Nasm doesn't work? Used to produce incorrect reloc offsets - haven't checked for a while 
-Const USE_NASM=False
+Const USE_NASM:Int=False
 
-Const CC_WARNINGS=False'True
+Const CC_WARNINGS:Int=False'True
 
 Type TModOpt ' BaH
 	Field cc_opts:String = ""
@@ -75,7 +75,7 @@ End Type
 
 Global mod_opts:TModOpt ' BaH
 
-Function Match( ext$,pat$ )
+Function Match:Int( ext$,pat$ )
 	Return (";"+pat+";").Find( ";"+ext+";" )<>-1
 End Function
 
@@ -84,7 +84,7 @@ Function HTTPEsc$( t$ )
 	Return t
 End Function
 
-Function Sys( cmd$ )
+Function Sys:Int( cmd$ )
 	If opt_verbose
 		Print cmd
 	Else If opt_dumpbuild
@@ -92,7 +92,7 @@ Function Sys( cmd$ )
 		p=p.Replace( BlitzMaxPath()+"/","./" )
 		WriteStdout p+"~n"
 		Local t$="mkdir "
-		If cmd.StartsWith( t ) And FileType( cmd[t.length..] ) Return
+		If cmd.StartsWith( t ) And FileType( cmd[t.length..] ) Return 0
 	EndIf
 	Return system_( cmd )
 End Function
@@ -184,7 +184,7 @@ Function CreateMergeArc( path$ , arc_path:String )
 
 End Function
 
-Function LinkApp( path$,lnk_files:TList,makelib,opts$ )
+Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 
 	If processor.Platform() = "ios" Then
 
@@ -1682,7 +1682,7 @@ Type TOrderedMap Extends TMap
 		Super.Insert(key, value)
 	End Method
 	
-	Method Remove( key:Object )
+	Method Remove:Int( key:Object )
 		_keys.Remove(key)
 		Return Super.Remove(key)
 	End Method
