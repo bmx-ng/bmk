@@ -488,7 +488,12 @@ Type TBuildManager Extends TCallback
 					End If
 				End If
 
-				Local build_path:String = ExtractDir(m.path) + "/.bmx"
+				Local build_path:String
+				If m.obj_path Then
+					build_path = ExtractDir(m.obj_path)
+				Else
+					build_path = ExtractDir(m.path) + "/.bmx"
+				End If
 				
 				If Not FileType(build_path) Then
 					CreateDir build_path
