@@ -771,7 +771,7 @@ Function GetUserDefs:TUserDef[]()
 	End If
 	
 	Local parts:String[] = defs.ToLower().Split(",")
-	Local userdefs:String[parts.length]
+	Local userdefs:TUserDef[parts.length]
 	Local count:Int
 	For Local def:String = EachIn parts
 		def = def.Trim()
@@ -791,7 +791,7 @@ Function GetUserDefs:TUserDef[]()
 		ud.name = name
 		ud.value = value
 		
-		userdefs[count] = def
+		userdefs[count] = ud
 		count :+ 1
 	Next
 	If count < parts.length Then
