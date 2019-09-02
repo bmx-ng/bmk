@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.39"
+Const BMK_VERSION:String = "3.40"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -60,6 +60,7 @@ Global opt_nopie:Int
 Global opt_nopie_set:Int
 Global opt_upx:Int
 Global opt_userdefs:String
+Global opt_gprof:Int
 
 Global opt_dumpbuild
 
@@ -245,6 +246,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			n:+1
 			If n=args.length MissingArg(argv)
 			opt_userdefs=args[n]
+		Case "gprof"
+			opt_gprof = True
 		Default
 			CmdError "Invalid option '" + argv + "'"
 		End Select
@@ -358,6 +361,9 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t-gdb~n"
 		s:+ "~t~tGenerates line mappings suitable for GDB debugging.~n"
 		s:+ "~t~tBacktrace (etc.) will show .bmx relative source lines rather than that of the generated code."
+		s:+ "~n~n"
+		s:+ "~t-gprof~n"
+		s:+ "~t~tCompiles for gprof profiling.~n"
 		s:+ "~n~n"
 		s:+ "~t-h~n"
 		s:+ "~t~tBuild multithreaded version. (This is the default on NG)~n"

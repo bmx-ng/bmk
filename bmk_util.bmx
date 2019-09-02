@@ -304,6 +304,10 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 			End If
 		Else
 			sb.Append(" -static")
+			
+			If opt_gprof Then
+				sb.Append(" -pg")
+			End If
 		End If
 		
 		sb.Append(" -o ").Append(CQuote( path ))
@@ -448,6 +452,9 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		End If
 		If Not opt_nopie Then
 			sb.Append(" -no-pie -fpie")
+		End If
+		If opt_gprof Then
+			sb.Append(" -pg")
 		End If
 		sb.Append(" -pthread")
 		sb.Append(" -o ").Append(CQuote( path ))

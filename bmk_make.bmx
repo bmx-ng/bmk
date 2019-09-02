@@ -362,6 +362,14 @@ Type TBuildManager Extends TCallback
 		If opt_release Then
 			cc_opts :+ " -DNDEBUG"
 		End If
+		If processor.BCCVersion() <> "BlitzMax" Then
+			If opt_gdbdebug Then
+				cc_opts :+ " -g"
+			End If
+			If opt_gprof Then
+				cc_opts :+ " -pg"
+			End If
+		End If
 	
 		Local sb:TStringBuffer = New TStringBuffer
 		sb.Append(" -g ").Append(processor.CPU())
@@ -1241,7 +1249,15 @@ Type TBuildManager Extends TCallback
 			If opt_threaded Then
 				cc_opts :+ " -DTHREADED"
 			End If
-			
+			If processor.BCCVersion() <> "BlitzMax" Then
+				If opt_gdbdebug Then
+					cc_opts :+ " -g"
+				End If
+				If opt_gprof Then
+					cc_opts :+ " -pg"
+				End If
+			End If
+
 			source.cc_opts = ""
 			If source.mod_opts Then
 				source.cc_opts :+ source.mod_opts.cc_opts

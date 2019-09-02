@@ -1,3 +1,12 @@
+## [3.40] - 2019-09-02
+### Added
+ - New '-gprof' option for gprof profiling support.
+ - Basic conditional comparisons. (bcc 0.111+)
+ - User defined compiler options may now contain specific integer values. (bcc 0.111+)
+### Fixed
+ - Icon and buildpath usage improvements.
+ - Suppress creation of nested .bmx folders.
+
 ## [3.39] - 2019-06-20
 ### Fixed
  - Correctly set file version on Win32.
