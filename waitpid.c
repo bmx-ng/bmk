@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <unistd.h>
 #endif
 
 int bmx_system(const char * c) {

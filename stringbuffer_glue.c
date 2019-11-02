@@ -205,6 +205,7 @@ int bmx_stringbuffer_endswith(struct MaxStringBuffer * buf, BBString * subString
 	if (subString->length <= buf->count) {
 		return bmx_stringbuffer_matches(buf, buf->count - subString->length, subString);
 	}
+	return 0;
 }
 
 int bmx_stringbuffer_find(struct MaxStringBuffer * buf, BBString * subString, int startIndex) {
