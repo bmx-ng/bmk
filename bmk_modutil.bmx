@@ -744,7 +744,7 @@ Function SetCompilerValues()
 	compilerOptions.Add("emscripten", processor.Platform() = "emscripten")
 	compilerOptions.Add("emscriptenjs", processor.Platform() = "emscripten" And processor.CPU()="js")
 
-	compilerOptions.Add("opengles", processor.Platform() = "android" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "emscripten" Or processor.Platform() = "ios")
+	compilerOptions.Add("opengles", processor.Platform() = "android" Or processor.Platform() = "emscripten" Or processor.Platform() = "ios")
 
 	compilerOptions.Add("bmxng", processor.BCCVersion() <> "BlitzMax")
 
