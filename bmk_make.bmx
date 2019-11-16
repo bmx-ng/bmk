@@ -508,7 +508,7 @@ Type TBuildManager Extends TCallback
 				End If
 				
 				If FileType(build_path) <> FILETYPE_DIR Then
-					Throw "Unable to create temporary directory"
+					Throw "Unable to create temporary directory : " + build_path
 				End If
 
 				' change dir, so relative commands work as expected
