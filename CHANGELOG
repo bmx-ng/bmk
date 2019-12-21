@@ -1,3 +1,8 @@
+## [3.41] - 2019-12-21
+### Changed
+ - Non bmx object files now have a prefix applied to make them more unique.
+ - cleanmods now removes all .bmx subdirs.
+
 ## [3.40] - 2019-09-02
 ### Added
  - New '-gprof' option for gprof profiling support.

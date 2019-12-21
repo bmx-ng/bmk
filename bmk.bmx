@@ -191,10 +191,10 @@ Function CleanModules( args$[] )
 
 		Local path$=ModulePath(name)
 
-		DeleteDir path+"/.bmx",True
-
+		CleanBmxDirs(path)
+		Rem
 		If Not opt_kill Continue
-
+		
 		For Local f$=EachIn LoadDir( path )
 
 			Local p$=path+"/"+f
@@ -213,8 +213,27 @@ Function CleanModules( args$[] )
 			End Select
 
 		Next
+		End Rem
 	Next
 
+End Function
+
+Function CleanBmxDirs(path:String)
+		Local bmx:String = path + "/.bmx"
+		If FileType(bmx) = FILETYPE_DIR Then
+			If opt_verbose Then
+				Print "  Deleting " + bmx
+			End If
+			DeleteDir bmx,True
+		End If
+		
+		For Local f:String = EachIn LoadDir( path )
+			Local p:String = path + "/" + f
+			Select FileType(p)
+				Case FILETYPE_DIR
+					CleanBmxDirs(p)
+			End Select
+		Next
 End Function
 
 Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )

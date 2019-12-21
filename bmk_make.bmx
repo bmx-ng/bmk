@@ -1084,10 +1084,11 @@ Type TBuildManager Extends TCallback
 							sp = ConcatString(ExtractDir(source_path), "/.bmx/", StripDir(source_path), opt_configmung, processor.CPU())
 						End If
 						
-						source.obj_path = sp + ".o"
-						source.obj_time = FileTime(source.obj_path)
 						
 						If Match(ext, "bmx") Then
+							source.obj_path = sp + ".o"
+							source.obj_time = FileTime(source.obj_path)						
+
 							source.iface_path = sp + ".i"
 							source.iface_path2 = source.iface_path + "2"
 							source.iface_time = FileTime(source.iface_path2)
@@ -1104,6 +1105,9 @@ Type TBuildManager Extends TCallback
 								Local p:String = sp + ".s"
 								source.gen_time = FileTime(p)
 							End If
+						Else
+							source.obj_path = PPFix(sp) + ".o"
+							source.obj_time = FileTime(source.obj_path)						
 						End If
 					Else
 						source.isInclude = True
@@ -1113,6 +1117,22 @@ Type TBuildManager Extends TCallback
 		End If
 		
 		Return source
+	End Method
+	
+	Method PPFix:String(path:String)
+		Local dir:String = ExtractDir(ExtractDir(path))
+		Local s:String
+		For Local i:Int = 0 Until 3
+			Local t:String = StripDir(dir)
+			If Not t Then
+				t = "x"
+			End If
+			s = t[..1] + s
+			
+			dir = ExtractDir(dir)
+		Next
+
+		Return ExtractDir(path) + "/" + s + "_" + StripDir(path)
 	End Method
 
 	Method GetISourceFile:TSourceFile(arc_path:String, arc_time:Int, iface_path:String, iface_time:Int, merge_path:String, merge_time:Int)
