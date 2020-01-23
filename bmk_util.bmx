@@ -1768,6 +1768,10 @@ Type TBootstrapConfig
 					CopyFile( filePath, dest + "/" + file )
 			End Select
 		Next
+		
+		If LoadDir(dest + "/.bmx").Length = 0 Then
+			CreateFile(dest + "/.bmx/.gitkeep")
+		End If
 	End Method
 	
 	Method FileCopy(src:String, dest:String, suffix:String)
