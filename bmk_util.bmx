@@ -443,7 +443,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 			If processor.CPU() = "x86" Or processor.CPU() = "arm" Then
 				sb.Append(" -m32")
 			End If
-			If processor.CPU() = "x64" Or processor.CPU() = "arm64" Then
+			If processor.CPU() = "x64" Then
 				sb.Append(" -m64")
 			End If
 		End If
