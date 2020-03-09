@@ -777,6 +777,8 @@ Type TBuildManager Extends TCallback
 		Next
 	
 		If app_build Then
+			' global post process
+			LoadBMK("post.bmk")
 
 			' generic post process
 			LoadBMK(ExtractDir(app_main) + "/post.bmk")
