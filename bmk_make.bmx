@@ -1438,6 +1438,10 @@ Type TBuildManager Extends TCallback
 
 		sources.Insert(ib.path, ib)
 
+		If opt_standalone And opt_boot Then
+			processor.PushSource(ib.path)
+		End If
+
 		Return ib
 	End Method
 	
