@@ -65,7 +65,7 @@ Global opt_gprof:Int
 Global opt_dumpbuild
 
 'Global cfg_platform$
-Global macos_version
+Global macos_version:Int=2784 ' 10.14
 
 Global app_main$
 Global app_type$

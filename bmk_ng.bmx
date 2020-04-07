@@ -28,9 +28,7 @@ LoadBMK(AppDir + "/make.bmk", True)
 LoadBMK(AppDir + "/config.bmk")
 
 ' add some defaults
-If processor.Platform() = "macos"
-	globals.SetVar("macos_version", String(macos_version))
-End If
+globals.SetVar("macos_version", String(macos_version))
 globals.SetVar("cc_opts", New TOptionVariable)
 globals.SetVar("ld_opts", New TOptionVariable)
 globals.SetVar("c_opts", New TOptionVariable)
