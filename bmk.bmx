@@ -384,6 +384,10 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 			t.WriteLine "~t<string>"+appId+"</string>"
 			t.WriteLine "~t<key>CFBundlePackageType</key>"
 			t.WriteLine "~t<string>APPL</string>"
+			If opt_hi Then
+				t.WriteLine "~t<key>NSHighResolutionCapable</key>"
+				t.WriteLine "~t<true/>"
+			End If
 			If globals.Get("custom_plist") Then
 				t.WriteLine "~t" + globals.Get("custom_plist")
 			End If

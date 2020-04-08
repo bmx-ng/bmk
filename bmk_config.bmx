@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.41"
+Const BMK_VERSION:String = "3.42"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -61,6 +61,7 @@ Global opt_nopie_set:Int
 Global opt_upx:Int
 Global opt_userdefs:String
 Global opt_gprof:Int
+Global opt_hi:Int
 
 Global opt_dumpbuild
 
@@ -248,6 +249,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_userdefs=args[n]
 		Case "gprof"
 			opt_gprof = True
+		Case "hi"
+			opt_hi = True
 		Default
 			CmdError "Invalid option '" + argv + "'"
 		End Select
@@ -369,6 +372,10 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tBuild multithreaded version. (This is the default on NG)~n"
 		s:+ "~t~tThe default on legacy BlitzMax is to build non-threaded. On legacy, using this option will also~n"
 		s:+ "~t~tadd a .mt suffix to the executable."
+		s:+ "~n~n"
+		s:+ "~t-hi~n"
+		s:+ "~t~tSpecifies that the application supports high-resolution screens (HiDPI). (GUI only)~n"
+		s:+ "~t~tThis will, for example, configure the macOS bundle with the appropriate plist settings."
 		s:+ "~n~n"
 		s:+ "~t-i~n"
 		s:+ "~t~tCreates a Universal build for supported platforms.~n"

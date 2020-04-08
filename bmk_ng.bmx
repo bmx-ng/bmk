@@ -796,6 +796,10 @@ Type TBMK
 	Method GetConfigMung:String()
 		Return opt_configmung
 	End Method
+	
+	Method SupportsHiRes:Int()
+		Return opt_hi
+	End Method
 
 	Method RunCommand:Object(command:String, args:String[])
 		Local cmd:TBMKCommand = TBMKCommand(commands.ValueForKey(command.ToLower()))
