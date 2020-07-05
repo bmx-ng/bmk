@@ -97,6 +97,9 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				FD787AAB0E22A5CC003E8E36 /* Default-568h@2x.png */,
+				FD787AA00E22A5CC003E8E36 /* Default.png */,
+				FD925B180E0F276600E92347 /* Icon.png */,
 			);
 			name = Resources;
 			sourceTree = "<group>";

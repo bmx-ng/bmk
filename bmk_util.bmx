@@ -8,6 +8,7 @@ Import "file_util.c"
 Const USE_NASM:Int=False
 
 Const CC_WARNINGS:Int=False'True
+Const IOS_HAS_MERGE:Int = False
 
 Type TModOpt ' BaH
 	Field cc_opts:String = ""
@@ -1114,6 +1115,7 @@ Function PackageIOSApp( path$, lnk_files:TList, opts$ )
 	project = project.Replace("${PROJECT}", appId)
 	project = project.Replace("${PROJECT_STRIPPED}", iOSFixAppId(appId))
 	project = project.Replace("${COMPANY_IDENTIFIER}", processor.option("company_identifier", "com.mycompany"))
+	project = project.Replace("${TEAM_ID}", processor.option("developer_team_id", "developer_team_id"))
 	
 	SaveString(project, projectPath)
 	
@@ -1299,6 +1301,10 @@ Function iOSProjectBuildFiles:String(uuid:String, fileMap:TFileMap)
 		Local fileRef:String = fileMap.FileId(path, uuid, TFileMap.REF, f.kind)
 		Local dir:String = ExtractDir(path)
 		Local name:String = StripDir(path)
+
+		If path.StartsWith("-framework") Then
+			name = path[11..]
+		End If
 		
 		Select f.kind
 			Case TFileId.TYPE_ARC, TFileId.TYPE_OBJ, TFileId.TYPE_DYL
@@ -1330,11 +1336,11 @@ Function iOSProjectFileRefs:String(uuid:String, fileMap:TFileMap)
 		
 		Select fid.kind
 			Case TFileId.TYPE_ARC
-				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
+				stack.AddLast "~t~t" + id + " /* " + name + " */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
 			Case TFileId.TYPE_OBJ
-				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.objfile~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
+				stack.AddLast "~t~t" + id + " /* " + name + " */ = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.objfile~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
 			Case TFileId.TYPE_DYL
-				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.dylib~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
+				stack.AddLast "~t~t" + id + " /* " + name + " */ = {isa = PBXFileReference; lastKnownFileType = ~qcompiled.mach-o.dylib~q; name = " + name + "; path = ~q" + path + "~q; sourceTree = ~q<absolute>~q; };"
 			Case TFileId.TYPE_DIR
 				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = folder; path = ~q" + path + "~q; sourceTree = SOURCE_ROOT; };"
 
@@ -1347,7 +1353,7 @@ Function iOSProjectFileRefs:String(uuid:String, fileMap:TFileMap)
 						Local libPath:String = p[2..].Replace("~q", "") + "/" + name
 						If FileType(libPath) Then
 							found = True
-							stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + libPath + "~q; sourceTree = ~q<absolute>~q; };"
+							stack.AddLast "~t~t" + id + " /* " + name + " */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = " + name + "; path = ~q" + libPath + "~q; sourceTree = ~q<absolute>~q; };"
 							Exit
 						End If
 					End If
@@ -1358,7 +1364,7 @@ Function iOSProjectFileRefs:String(uuid:String, fileMap:TFileMap)
 
 			Case TFileId.TYPE_FRM
 				name = path[11..]
-				stack.AddLast "~t~t" + id + " = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = " + name + ".framework; path = System/Library/Frameworks/" + name + ".framework; sourceTree = SDKROOT; };"
+				stack.AddLast "~t~t" + id + " /* " + name + " */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = " + name + ".framework; path = System/Library/Frameworks/" + name + ".framework; sourceTree = SDKROOT; };"
 		End Select
 
 	Next

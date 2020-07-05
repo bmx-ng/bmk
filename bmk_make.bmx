@@ -487,7 +487,7 @@ Type TBuildManager Extends TCallback
 				' sort archives for app linkage
 				If m.modid Then
 					Local path:String = m.arc_path
-					If processor.Platform() = "ios" Then
+					If IOS_HAS_MERGE  And processor.Platform() = "ios" Then
 						path = m.merge_path
 					End If
 					
@@ -696,21 +696,22 @@ Type TBuildManager Extends TCallback
 							End If
 
 						Case STAGE_MERGE
-
-							' a module?
-							If m.modid Then
-								Local max_obj_time:Int = m.MaxObjTime()
-
-								If max_obj_time > m.merge_time And Not m.dontbuild Then
-		
-									If Not opt_quiet Then
-										Print ShowPct(m.pct) + "Merging:" + StripDir(m.merge_path)
+							If IOS_HAS_MERGE Then
+								' a module?
+								If m.modid Then
+									Local max_obj_time:Int = m.MaxObjTime()
+	
+									If max_obj_time > m.merge_time And Not m.dontbuild Then
+			
+										If Not opt_quiet Then
+											Print ShowPct(m.pct) + "Merging:" + StripDir(m.merge_path)
+										End If
+	
+										CreateMergeArc m.merge_path, m.arc_path
+	
+										m.merge_time = time_(Null)
+										
 									End If
-
-									CreateMergeArc m.merge_path, m.arc_path
-
-									m.merge_time = time_(Null)
-									
 								End If
 							End If
 					End Select
@@ -1140,7 +1141,7 @@ Type TBuildManager Extends TCallback
 	Method GetISourceFile:TSourceFile(arc_path:String, arc_time:Int, iface_path:String, iface_time:Int, merge_path:String, merge_time:Int)
 		Local source:TSourceFile
 		
-		If processor.Platform() = "ios" Then
+		If IOS_HAS_MERGE And processor.Platform() = "ios" Then
 			source = TSourceFile(sources.ValueForKey(merge_path))
 		Else 
 			source = TSourceFile(sources.ValueForKey(arc_path))
@@ -1159,7 +1160,7 @@ Type TBuildManager Extends TCallback
 				source.iface_time = iface_time
 				source.merge_time = merge_time
 
-				If processor.Platform() = "ios" Then
+				If IOS_HAS_MERGE And processor.Platform() = "ios" Then
 					sources.Insert(merge_path, source)
 				Else
 					sources.Insert(arc_path, source)
@@ -1190,7 +1191,7 @@ Type TBuildManager Extends TCallback
 		Local merge_path:String
 		Local merge_time:Int
 		
-		If processor.Platform() = "ios" Then
+		If IOS_HAS_MERGE And processor.Platform() = "ios" Then
 			If processor.CPU() = "x86" Or processor.CPU() = "x64" Then
 				merge_path = ConcatString(path, "/", id, opt_configmung, "sim.a")
 			Else
@@ -1226,7 +1227,7 @@ Type TBuildManager Extends TCallback
 				CalculateDependencies(source, True, rebuild)
 
 				source.dontbuild = True
-				If processor.Platform() = "ios" Then
+				If IOS_HAS_MERGE And processor.Platform() = "ios" Then
 					source.stage = STAGE_MERGE
 					sources.Insert(source.merge_path, source)
 				Else
@@ -1359,13 +1360,17 @@ Type TBuildManager Extends TCallback
 			If processor.Platform() <> "ios" Then
 				link = CreateLinkStage(gen)
 			Else
-				Local realLink:TSourceFile = CreateLinkStage(gen)
+				If IOS_HAS_MERGE Then
+					Local realLink:TSourceFile = CreateLinkStage(gen)
 				
-				' create a fat archive
-				link = CreateMergeStage(realLink)
+					' create a fat archive
+					link = CreateMergeStage(realLink)
+				Else
+					link = CreateLinkStage(gen)
+				End If
 			End If
 		Else
-			If processor.Platform() = "ios" Then
+			If IOS_HAS_MERGE And processor.Platform() = "ios" Then
 				link = TSourceFile(sources.ValueForKey(source.merge_path))
 			Else
 				link = TSourceFile(sources.ValueForKey(source.arc_path))
@@ -1495,7 +1500,7 @@ Type TBuildManager Extends TCallback
 		link.depsList = New TList
 		link.depsList.AddLast(source)		
 
-		If processor.Platform() = "ios" Then
+		If IOS_HAS_MERGE And processor.Platform() = "ios" Then
 			sources.Insert(link.obj_path, link)
 		Else
 			sources.Insert(link.arc_path, link)
