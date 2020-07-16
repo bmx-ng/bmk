@@ -785,6 +785,10 @@ Type TBMK
 		Return opt_quickscan
 	End Method
 
+	Method IsGDBBuild:Int()
+		Return opt_gdbdebug
+	End Method
+
 	Method IsUniversalBuild:Int()
 		Return opt_universal
 	End Method

@@ -98,6 +98,8 @@ Case "compile"
 	MakeApplication args,False,True
 Case "cleanmods"
 	CleanModules args
+Case "resetmods"
+	ResetModules(args)
 Case "zapmod"
 	ZapModule args
 Case "unzapmod"
@@ -192,31 +194,50 @@ Function CleanModules( args$[] )
 		Local path$=ModulePath(name)
 
 		CleanBmxDirs(path)
-		Rem
-		If Not opt_kill Continue
-		
-		For Local f$=EachIn LoadDir( path )
-
-			Local p$=path+"/"+f
-			Select FileType(p)
-			Case FILETYPE_DIR
-				If f<>"doc"
-					DeleteDir p,True
-				EndIf
-			Case FILETYPE_FILE
-				Select ExtractExt(f).tolower()
-				Case "i","a","txt","htm","html"
-					'nop
-				Default
-					DeleteFile p
-				End Select
-			End Select
-
-		Next
-		End Rem
 	Next
 
 End Function
+
+
+Function ResetModules( args$[], removeBuildResults:Int = False )
+	If args.length > 1 Then CmdError("Expecting only 1 argument for ResetModules")
+	If args.length > 0 
+		SetModfilter(args[0])
+	Else
+		opt_modfilter = ""
+	EndIf
+
+	Local mods:TList = EnumModules()
+
+	For local name:String = EachIn mods
+		If (name + ".").Find(opt_modfilter) <> 0 Then Continue
+
+		Print "Resetting:" + name
+
+		Local path:String = ModulePath(name)
+
+		'Remove .bmx directory
+		CleanBmxDirs(path)
+
+		For Local f:String = EachIn LoadDir( path )
+			Local p:String = path + "/" + f
+			
+			'only interested in files, skip directories
+			If FileType(p) <> FILETYPE_FILE Then Continue
+
+			'remove prebuilt module builds
+			Select ExtractExt(f).tolower()
+				Case "i","a","i2"
+					'search for "modulename.release.*" and "modulename.debug.*"
+					if not ( (f + ".").Find(name + ".release.") = 0 or (f + ".").Find(name + ".debug.") = 0) Then Continue
+					'print "deleting file: " + p
+					DeleteFile p
+			End Select
+		Next
+	Next
+
+End Function
+
 
 Function CleanBmxDirs(path:String)
 		Local bmx:String = path + "/.bmx"

@@ -24,7 +24,6 @@ Global opt_debug=False
 Global opt_threaded=False
 Global opt_release=False
 Global opt_configmung$=""
-Global opt_kill=False
 Global opt_modfilter$="."
 Global opt_all=False
 Global opt_quiet=False
@@ -170,8 +169,6 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_release=True
 		Case "h"
 			opt_threaded=True
-		Case "k"
-			opt_kill=True
 		Case "g", "arch"
 			n:+1
 			If n=args.length MissingArg(argv)
