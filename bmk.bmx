@@ -96,6 +96,8 @@ Case "makebootstrap"
 Case "compile"
 	SetConfigMung
 	MakeApplication args,False,True
+Case "resetmods"
+	ResetModules(args)
 Case "cleanmods"
 	CleanModules args
 Case "zapmod"
@@ -192,28 +194,53 @@ Function CleanModules( args$[] )
 		Local path$=ModulePath(name)
 
 		CleanBmxDirs(path)
-		Rem
-		If Not opt_kill Continue
+	Next
+
+End Function
+
+Function ResetModules( args$[], removeBuildResults:Int = False )
+	If args.length > 1 Then CmdError("Expecting only 1 argument for ResetModules")
+	If args.length > 0 
+		SetModfilter(args[0])
+	Else
+		opt_modfilter = ""
+	EndIf
+
+	Local mods:TList = EnumModules()
+
+	For Local name:String = EachIn mods
+		If (name + ".").Find(opt_modfilter) <> 0 Then Continue
+
+		If opt_verbose Then
+			Print "  Resetting " + name
+		EndIf
 		
-		For Local f$=EachIn LoadDir( path )
+		Local path:String = ModulePath(name)
+		'if there is no "." in the string, this returns "-1 + 1" so will
+		'copy the whole name-string 
+		Local localName:String = name[name.FindLast(".") + 1 ..]
+		
 
-			Local p$=path+"/"+f
-			Select FileType(p)
-			Case FILETYPE_DIR
-				If f<>"doc"
-					DeleteDir p,True
-				EndIf
-			Case FILETYPE_FILE
-				Select ExtractExt(f).tolower()
-				Case "i","a","txt","htm","html"
-					'nop
-				Default
+		'Remove .bmx directory
+		CleanBmxDirs(path)
+
+		For Local f:String = EachIn LoadDir( path )
+			Local p:String = path + "/" + f
+			
+			'only interested in files, skip directories
+			If FileType(p) <> FILETYPE_FILE Then Continue
+
+			'remove prebuilt module builds
+			Select ExtractExt(f).tolower()
+				Case "i","a","i2"
+					'search for "modulename.release.*" and "modulename.debug.*"
+					If Not ( (f + ".").Find(localName + ".release.") = 0 Or (f + ".").Find(localName + ".debug.") = 0) Then Continue
+					If opt_verbose Then
+						Print "  Deleting " + p
+					EndIf
 					DeleteFile p
-				End Select
 			End Select
-
 		Next
-		End Rem
 	Next
 
 End Function
