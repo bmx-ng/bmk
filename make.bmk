@@ -142,10 +142,10 @@
 	if bmk.Platform() == "macos" or bmk.Platform() == "osx" or bmk.Platform() == "ios" then
 	
 		if bmk.Platform() == "macos" or bmk.Platform() == "osx" then
-			cmd = "gcc"
+			cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
 		
 			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-				cmd = "g++"
+				cmd = bmk.Option(bmk.BuildName("gpp"), "g++")
 			end
 		else
 			cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
@@ -170,14 +170,14 @@
 			cmd = cmd .. " -arch x86_64 "
 		elseif bmk.CPU() == "armv7" and bmk.Platform() == "ios" then
 			cmd = cmd .. " -arch armv7 "
-		elseif bmk.CPU() == "arm64" and bmk.Platform() == "ios" then
+		elseif bmk.CPU() == "arm64" then
 			cmd = cmd .. " -arch arm64 "
 		end
 		
-		if bmk.Platform() == "ios" then
-			cmd = cmd .. " -isysroot " .. bmk.Option("ios.sysroot", "")
+		if bmk.Option(bmk.BuildName("sysroot"), "") ~= "" then
+			cmd = cmd .. " -isysroot " .. bmk.Option(bmk.BuildName("sysroot"), "")
 		end
-		
+				
 	elseif bmk.Platform() == "win32" then
 		cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/gcc.exe")
 		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
@@ -467,7 +467,7 @@
 		
 	elseif bmk.Platform() == "ios" then
 	
-		globals.SetOption("cc_opts", "osversion", "-miphoneos-version-min=7.1")
+		globals.SetOption("cc_opts", "osversion", "-miphoneos-version-min=8.0.0")
 		
 	elseif bmk.Platform() == "win32" then
 	
