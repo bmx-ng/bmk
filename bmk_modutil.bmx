@@ -655,7 +655,7 @@ Function ValidatePlatformArchitecture()
 				valid = True
 			End If
 		Case "macos", "osx"
-			If arch = "x86" Or arch = "x64" Or arch = "ppc" Then
+			If arch = "x86" Or arch = "x64" Or arch = "ppc" Or arch = "arm64" Then
 				valid = True
 			End If
 		Case "ios"
@@ -722,9 +722,11 @@ Function SetCompilerValues()
 	compilerOptions.Add("macosx86", (processor.Platform() = "macos"Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x86")
 	compilerOptions.Add("macosppc", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="ppc")
 	compilerOptions.Add("macosx64", (processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x64")
+	compilerOptions.Add("macosarm64", (processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="arm64")
 	compilerOptions.Add("osx", processor.Platform() = "macos" Or processor.Platform() = "osx")
 	compilerOptions.Add("osxx86", (processor.Platform() = "macos"Or processor.Platform() = "osx") And processor.CPU()="x86")
 	compilerOptions.Add("osxx64", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="x64")
+	compilerOptions.Add("osxarm64", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="arm64")
 	compilerOptions.Add("ios", processor.Platform() = "ios")
 	compilerOptions.Add("iosx86", processor.Platform() = "ios" And processor.CPU()="x86")
 	compilerOptions.Add("iosx64", processor.Platform() = "ios" And processor.CPU()="x64")

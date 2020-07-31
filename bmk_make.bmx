@@ -1773,7 +1773,7 @@ Type TArcTask
 		End If
 		
 		If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
-			cmd="libtool -o "+CQuote(path)
+			cmd=processor.Option(processor.BuildName("libtool"), "libtool") + " -o "+CQuote(path)
 			For Local t$=EachIn oobjs
 				cmd:+" "+CQuote(t)
 			Next
@@ -1788,7 +1788,7 @@ Type TArcTask
 					proc = "x86_64"
 			End Select
 		
-			cmd="libtool -static -arch_only " + proc + " -o "+CQuote(path)
+			cmd= processor.Option(processor.BuildName("libtool"), "libtool") + " -static -arch_only " + proc + " -o "+CQuote(path)
 			For Local t$=EachIn oobjs
 				cmd:+" "+CQuote(t)
 			Next

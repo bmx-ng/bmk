@@ -206,19 +206,28 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	If opt_standalone tmpfile = String(globals.GetRawVar("EXEPATH")) + "/ld." + processor.AppDet() + ".txt.tmp"
 	
 	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
-		sb.Append("g++")
+		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
 
-		If processor.CPU()="ppc" 
-			sb.Append(" -arch ppc" )
-		Else If processor.CPU()="x86"
-			sb.Append(" -arch i386 -read_only_relocs suppress")
-		Else
-			sb.Append(" -arch x86_64")
-		EndIf
+		Select processor.CPU()
+			Case "ppc" 
+				sb.Append(" -arch ppc" )
+			Case "x86"
+				sb.Append(" -arch i386 -read_only_relocs suppress")
+			Case "x64"
+				sb.Append(" -arch x86_64")
+			Case "arm64"
+				sb.Append(" -arch arm64")
+		End Select
+	
+		If processor.Option(processor.BuildName("sysroot"), "") Then
+			sb.Append(" -isysroot ").Append(processor.Option(processor.BuildName("sysroot"), ""))
+		End If
 	
 		sb.Append(" -o ").Append(CQuote( path ))
 	
-		sb.Append(" ").Append(CQuote("-L" +CQuote( BlitzMaxPath()+"/lib" ) ))
+		If processor.BCCVersion() = "BlitzMax" Then
+			sb.Append(" ").Append(CQuote("-L" +CQuote( BlitzMaxPath()+"/lib" ) ))
+		End If
 	
 		If Not opt_dumpbuild Then
 			sb.Append(" -filelist ").Append(CQuote( tmpfile ))

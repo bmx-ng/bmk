@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.43"
+Const BMK_VERSION:String = "3.44"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -352,7 +352,7 @@ Function Usage:String(fullUsage:Int = False)
 ?
 		s:+ ")~n"
 		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
-		s:+ "~t~t~tMacOS : x86, x64~n"
+		s:+ "~t~t~tMacOS : x86, x64, arm64~n"
 		s:+ "~t~t~tWin32 : x86, x64~n"
 		s:+ "~t~t~tLinux : x86, x64, arm, arm64~n"
 		s:+ "~t~t~tiOS : x86, x64 (simulator), armv7, arm64~n"

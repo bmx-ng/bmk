@@ -1,3 +1,8 @@
+## [3.44] - 2020-07-31
+### Added
+ - macOS "arm64" build option.
+ - Custom macOS toolchain configuration.
+
 ## [3.43] - 2020-07-05
 ### Fixed
  - iOS build configuration.
