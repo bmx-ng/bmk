@@ -92,6 +92,9 @@ If is_pid_native(0) opt_arch="x86" Else opt_arch="ppc"
 ?MacOsx64
 opt_arch="x64"
 
+?MacOsarm64
+opt_arch="arm64"
+
 ?win32x64
 opt_arch="x64"
 ?Win32x86
