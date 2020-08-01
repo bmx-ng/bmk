@@ -2,6 +2,8 @@
 ### Added
  - macOS "arm64" build option.
  - Custom macOS toolchain configuration.
+### Fixed
+ - obj-C sources now built in correct order.
 
 ## [3.43] - 2020-07-05
 ### Fixed

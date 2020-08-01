@@ -1595,7 +1595,7 @@ Type TBuildManager Extends TCallback
 		For Local i:Int = 0 Until 3
 			Select i
 				Case 0
-					suffix = ["c", "cpp", "cc", "cxx"]
+					suffix = ["c", "cpp", "cc", "cxx", "m", "mm"]
 				Case 1
 					suffix = ["o"]
 					stage = STAGE_LINK
