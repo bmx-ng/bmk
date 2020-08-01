@@ -255,7 +255,11 @@
 @end
 
 @define addoption
-	globals.Add(arg1, arg2)
+	globals.Add(arg1, arg2, 0)
+@end
+
+@define setoption
+	globals.Add(arg1, arg2, 1)
 @end
 
 ## adds a cc_opt option

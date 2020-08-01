@@ -978,13 +978,13 @@ Type TBMKGlobals
 	End Method
 	
 	' adds value to the end of variable
-	Method Add(variable:String, value:String)
+	Method Add(variable:String, value:String, once:Int = False)
 		If Not AsConfigurable(variable.ToLower(), value) Then
 			variable = variable.ToUpper()
 	
 			Local v:Object = vars.ValueForKey(variable)
 			If Not TOptionVariable(v) Then
-				If v Then
+				If v And Not once Then
 					SetVar(variable, String(v) + " " + value)
 				Else
 					SetVar(variable, value)
