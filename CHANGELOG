@@ -2,6 +2,7 @@
 ### Added
  - macOS "arm64" build option.
  - Custom macOS toolchain configuration.
+ - macOS universal apps (requires xcode 12+).
 ### Fixed
  - obj-C sources now built in correct order.
 

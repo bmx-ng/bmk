@@ -604,15 +604,16 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	End If
 End Function
 
-Function MergeApp(fromFile:String, toFile:String)
+Function MergeApp(file1:String, file2:String, outputFile:String)
 
-	If Not opt_quiet Print "Merging:"+StripDir(fromFile) + " + " + StripDir(toFile)
+	If Not opt_quiet Print "[100%] Merging:"+StripDir(file1) + " + " + StripDir(file2) + " > " + StripDir(outputFile)
 
-	Local cmd:String = "lipo -create ~q" + fromFile + "~q ~q" + toFile + "~q -output ~q" + toFile + "~q"
+	Local cmd:String = "lipo -create ~q" + file1 + "~q ~q" + file2 + "~q -output ~q" + outputFile + "~q"
 	
-	If processor.Sys( cmd ) Throw "Merge Error: Failed to merge " + toFile
+	If processor.Sys( cmd ) Throw "Merge Error: Failed to merge " + file1 + " and " + file2 + " into " + outputFile
 	
-	DeleteFile fromFile
+	DeleteFile file1
+	DeleteFile file2
 
 End Function
 

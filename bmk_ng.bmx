@@ -358,11 +358,16 @@ Type TBMK
 		If opt_universal Then
 			Select Platform()
 				Case "macos"
-					If opt_arch = "ppc" Then
-						opt_arch = "x86"
-					Else
-						opt_arch = "ppc"
-					End If
+					Select CPU()
+						Case "ppc"
+							opt_arch = "x86"
+						Case "x86"
+							opt_arch = "ppc"
+						Case "x64"
+							opt_arch = "arm64"
+						Case "arm64"
+							opt_arch = "x64"
+					End Select
 				Case "ios"
 					Select CPU()
 						Case "x86"
@@ -553,7 +558,49 @@ Type TBMK
 		Return compiler + " " + version
 '?
 	End Method
-	
+
+	Method XCodeVersion:String()
+?macos
+		Global xcode:String
+		Global version:String
+		
+		If xcode Then
+			Return version
+		End If
+
+		Local process:TProcess
+		process = CreateProcess(Option(BuildName("xcodebuild"), "xcodebuild") + " -version")
+
+		Local s:String
+		
+		If Not process Then
+			Throw "Cannot find xcodebuild. Please check your paths and environment."
+		End If
+		
+		While True
+			Delay 10
+			
+			Local line:String = process.pipe.ReadLine()
+
+			If Not process.Status() And Not line Then
+				Exit
+			End If
+			
+			If line.startswith("Xcode") Then
+				xcode = line
+				Local parts:String[] = line.split(" ")
+				
+				version =parts[1].Trim()
+			End If
+			
+		Wend
+		
+		Return version
+?Not macos
+		Return Null
+?
+	End Method
+
 	Global _target:String
 	
 	Method HasTarget:Int(find:String)

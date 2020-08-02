@@ -29,12 +29,20 @@ CreateDir BlitzMaxPath()+"/tmp"
 
 Select cmd.ToLower()
 Case "makeapp"
+	If opt_universal And processor.Platform() = "macos" And Float(processor.XCodeVersion()) < 12 Then
+		Throw "XCode 12+ required for universal macOS build"
+	End If
+
 	SetConfigMung
 	MakeApplication args,False
 Case "makelib"
 	SetConfigMung
 	MakeApplication args,True
 Case "makemods"
+	If opt_universal And processor.Platform() = "macos" And Float(processor.XCodeVersion()) < 12 Then
+		Throw "XCode 12+ required for universal macOS build"
+	End If
+
 	opt_quickscan = False
 	If opt_debug Or opt_release
 		SetConfigMung
@@ -105,7 +113,7 @@ Case "unzapmod"
 Case "ranlibdir"
 	RanlibDir args
 Case "-v"
-	VersionInfo(processor.GCCVersion(), GetCoreCount())
+	VersionInfo(processor.GCCVersion(), GetCoreCount(), processor.XCodeVersion())
 Default
 	CmdError "Unknown operation '" + cmd.ToLower() + "'"
 End Select
@@ -270,6 +278,11 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 		opt_outfile = RealPath(opt_outfile)
 	End If
 
+	If opt_universal And processor.Platform() = "macos" Then
+		opt_outfile :+ "." + processor.CPU()
+	End If
+
+
 	' set some useful global variables
 	globals.SetVar("BUILDPATH", ExtractDir(opt_infile))
 	globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
@@ -279,15 +292,25 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	' some more useful globals
 	If processor.Platform() = "macos" And opt_apptype="gui" And Not compileOnly Then
 		Local appId$=StripDir( opt_outfile )
+		
+		If opt_universal Then
+			appId = StripExt(appId)
+		End If
 
 		globals.SetVar("APPID", appId)
 		' modify for bundle
 		globals.SetVar("EXEPATH", ExtractDir(opt_outfile+".app/Contents/MacOS/"+appId))
 
 
-		' make bundle dirs
-		Local exeDir$=opt_outfile+".app",d$
+		Local baseDir:String = opt_outfile
+		If opt_universal Then
+			baseDir = StripExt(baseDir)
+		End If
 
+		' make bundle dirs
+		Local exeDir:String = baseDir + ".app"
+		Local d:String
+		
 		d=exeDir+"/Contents/MacOS"
 		Select FileType( d )
 		Case FILETYPE_NONE
@@ -346,32 +369,13 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 			'Local appId$=StripDir( opt_outfile )
 			Local appId$ = globals.Get("APPID")
 
-			Local exeDir$=opt_outfile+".app",d$,t:TStream
-	Rem
-			d=exeDir+"/Contents/MacOS"
-			Select FileType( d )
-			Case FILETYPE_NONE
-				CreateDir d,True
-				If FileType( d )<>FILETYPE_DIR
-					Throw "Unable to create application directory"
-				EndIf
-			Case FILETYPE_FILE
-				Throw "Unable to create application directory"
-			Case FILETYPE_DIR
-			End Select
+			Local baseDir:String = opt_outfile
+			If opt_universal Then
+				baseDir = StripExt(baseDir)
+			End If
+			Local exeDir:String = baseDir+".app"
+			Local t:TStream
 
-			d=exeDir+"/Contents/Resources"
-			Select FileType( d )
-			Case FILETYPE_NONE
-				CreateDir d
-				If FileType( d )<>FILETYPE_DIR
-					Throw "Unable to create resources directory"
-				EndIf
-			Case FILETYPE_FILE
-				Throw "Unable to create resources directory"
-			Case FILETYPE_DIR
-			End Select
-	End Rem
 			t=WriteStream( exeDir+"/Contents/Info.plist" )
 			If Not t Throw "Unable to create Info.plist"
 			t.WriteLine "<?xml version=~q1.0~q encoding=~qUTF-8~q?>"
@@ -404,9 +408,9 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 
 			opt_outfile=exeDir+"/Contents/MacOS/"+appId
 
-			' Mac GUI exepath is in the bundle...
-			'globals.SetVar("EXEPATH", ExtractDir(opt_outfile))
-			'globals.SetVar("APPID", appId)
+			If opt_universal Then
+				opt_outfile :+ "." + processor.CPU()
+			End If
 
 		EndIf
 	End If
@@ -434,10 +438,14 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 	buildManager.MakeApp(Main, makelib, compileOnly)
 	buildManager.DoBuild(makelib, Not compileOnly)
 
-	If opt_universal And processor.Platform() = "ios" Then
+	If opt_universal And processor.Platform() = "macos" Then
+
+		Local original:String = opt_outfile
 
 		processor.ToggleCPU()
-		LoadOptions(True) ' reload options for PPC
+		LoadOptions(True) ' reload options for other arch
+
+		opt_outfile  = StripExt(opt_outfile) + "." + processor.CPU()
 
 		BeginMake
 
@@ -447,25 +455,9 @@ Function MakeApplication( args$[],makelib:Int,compileOnly:Int = False )
 
 		processor.ToggleCPU()
 		LoadOptions(True)
+		
+		MergeApp original, opt_outfile, StripExt(opt_outfile)
 	End If
-
-Rem
-	If opt_universal
-
-		Local previousOutfile:String = opt_outfile
-		processor.ToggleCPU()
-		LoadOptions(True) ' reload options for PPC
-		opt_outfile :+ "." + processor.CPU()
-		BeginMake
-		MakeApp Main,makelib
-		processor.ToggleCPU()
-		LoadOptions(True)
-
-		MergeApp opt_outfile, previousOutfile
-
-		opt_outfile = previousOutfile
-	End If
-End Rem
 
 	If processor.Platform() = "nx" And Not compileOnly Then
 		BuildNxDependencies()

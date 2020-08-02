@@ -462,7 +462,7 @@ Function Usage:String(fullUsage:Int = False)
 	Return s
 End Function
 
-Function VersionInfo(gcc:String, cores:Int)
+Function VersionInfo(gcc:String, cores:Int, xcode:String)
 	Local s:String = "bmk "
 	s:+ BMK_VERSION + " "
 ?threaded
@@ -506,6 +506,10 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "js"
 ?
 	s:+ " / " + gcc
+	
+	If xcode Then
+		s:+ " / xcode " + xcode
+	End If
 
 	s:+ " (cpu x" + cores + ")"
 
