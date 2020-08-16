@@ -416,6 +416,9 @@ Type TBuildManager Extends TCallback
 			If defs Then
 				sb.Append(" -ud ").Append(defs)
 			End If
+			If opt_standalone Then
+				sb.Append(" -ib")
+			End If
 		End If
 
 		source.cc_opts :+ cc_opts
@@ -1328,6 +1331,9 @@ Type TBuildManager Extends TCallback
 				If defs Then
 					sb.Append(" -ud ").Append(defs)
 				End If
+				If opt_standalone Then
+					sb.Append(" -ib")
+				End If
 			End If
 	
 			source.bcc_opts = sb.ToString()
@@ -1422,7 +1428,12 @@ Type TBuildManager Extends TCallback
 
 	Method CreateIncBin:TSourceFile(source:TSourceFile, sourcePath:String)
 	
-		Local path:String = StripDir(sourcePath) + opt_configmung +  processor.CPU() + ".incbin.c"
+		Local path:String = StripDir(sourcePath) + opt_configmung +  processor.CPU()
+		If opt_standalone Then
+			path :+ ".incbin.c"
+		Else
+			path :+ ".incbin2.c"
+		End If
 
 		Local ib:TSourceFile = GetSourceFile(path)
 		

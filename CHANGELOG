@@ -1,3 +1,7 @@
+## [3.45] - 2020-08-16
+### Changed
+ - New incbin format.
+
 ## [3.44] - 2020-07-31
 ### Added
  - macOS "arm64" build option.
