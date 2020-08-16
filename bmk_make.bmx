@@ -1020,6 +1020,10 @@ Type TBuildManager Extends TCallback
 			For Local f:String = EachIn source.incbins
 				Local path:String = CheckPath(ExtractDir(source.path), f)
 
+				If FileType(path) = FILETYPE_FILE Then
+					source.hashes.Insert(f, CalculateFileHash(path))
+				End If
+
 				Local time:Int = FileTime(path)
 				
 				' update our time to the latest incbin time
@@ -1040,6 +1044,8 @@ Type TBuildManager Extends TCallback
 				If Not ib.time Then
 					requiresBuild = True
 				Else If IncbinsDifference(source.incbins, ib.incbins) Then
+					requiresBuild = True
+				Else If IncbinsHashDifference(source, ib) Then
 					requiresBuild = True
 				End If
 				
@@ -1467,9 +1473,13 @@ Type TBuildManager Extends TCallback
 			While Not stream.Eof()
 				Local line:String = stream.ReadLine()
 				If line.StartsWith("// FILE : ") Then
-					Local ib:String = line[10..].Replace("~q", "")
+					Local parts:String[] = line[10..].Split("~t")
+					Local ib:String = parts[0].Replace("~q", "")
 					If ib Then
 						source.incbins.AddLast(ib)
+						If parts.length = 2 Then
+							source.hashes.Insert(ib, parts[1])
+						End If
 					End If
 				Else If line.StartsWith("// ----") Then
 					Exit
@@ -1498,6 +1508,26 @@ Type TBuildManager Extends TCallback
 		Next
 		
 		Return False
+	End Method
+	
+	Method IncbinsHashDifference:Int(source:TSourceFile, ib:TSourceFile)
+		If source.hashes.IsEmpty() Then
+			Return True
+		End If
+		
+		For Local file:String = EachIn source.hashes.Keys()
+			Local sourceHash:String = String(source.hashes.ValueForKey(file))
+			If sourceHash <> String(ib.hashes.ValueForKey(file)) Then
+				Return True
+			End If
+		Next
+
+		For Local file:String = EachIn ib.hashes.Keys()
+			Local ibHash:String = String(ib.hashes.ValueForKey(file))
+			If ibHash <> String(source.hashes.ValueForKey(file)) Then
+				Return True
+			End If
+		Next
 	End Method
 	
 	Method CreateLinkStage:TSourceFile(source:TSourceFile, stage:Int = STAGE_LINK)

@@ -3,6 +3,7 @@ SuperStrict
 Import "bmk_config.bmx"
 Import "bmk_ng.bmx"
 Import "file_util.c"
+Import "hash.c"
 
 'OS X Nasm doesn't work? Used to produce incorrect reloc offsets - haven't checked for a while 
 Const USE_NASM:Int=False
@@ -1911,8 +1912,70 @@ End Function
 
 Extern
 	Function bmx_setfiletimenow(path:String)
+
+	Function bmx_hash_createState:Byte Ptr()
+	Function bmx_hash_reset(state:Byte Ptr)
+	Function bmx_hash_update(state:Byte Ptr, data:Byte Ptr, length:Int)
+	Function bmx_hash_digest:String(state:Byte Ptr)
+	Function bmx_hash_free(state:Byte Ptr)
 End Extern
 
 Function SetFileTimeNow(path:String)
 	bmx_setfiletimenow(path)
+End Function
+
+Type TFileHash
+
+	Field statePtr:Byte Ptr
+	
+	Method Create:TFileHash()
+		statePtr = bmx_hash_createState()
+		Return Self
+	End Method
+	
+	Method CalculateHash:String(stream:TStream)
+		Const BUFFER_SIZE:Int = 8192
+	
+	
+		bmx_hash_reset(statePtr)
+		
+		Local data:Byte[BUFFER_SIZE]
+		
+		While True
+			Local read:Int = stream.Read(data, BUFFER_SIZE)
+
+			bmx_hash_update(statePtr, data, read)
+			
+			If read < BUFFER_SIZE Then
+				Exit
+			End If
+
+		Wend
+		
+		Return bmx_hash_digest(statePtr)
+		
+	End Method
+	
+	Method Free()
+		bmx_hash_free(statePtr)
+	End Method
+
+End Type
+
+Function CalculateFileHash:String(path:String)
+	
+	If FileType(path) = FILETYPE_FILE Then
+
+		Local fileHasher:TFileHash = New TFileHash.Create()
+
+		Local stream:TStream = ReadStream(path)
+		Local fileHash:String = fileHasher.CalculateHash(stream)
+		stream.Close()
+		
+		fileHasher.Free()
+		
+		Return fileHash
+	End If
+	
+	Return Null
 End Function

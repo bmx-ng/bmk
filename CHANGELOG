@@ -1,4 +1,6 @@
 ## [3.45] - 2020-08-16
+### Added
+ - incbin file hashing.
 ### Changed
  - New incbin format.
 

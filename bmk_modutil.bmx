@@ -39,6 +39,7 @@ Type TSourceFile
 	Field imports:TList=New TList
 	Field includes:TList=New TList
 	Field incbins:TList=New TList
+	Field hashes:TMap=New TMap
 	
 	Field pragmas:TList = New TList
 	
