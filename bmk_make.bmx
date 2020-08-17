@@ -1435,7 +1435,7 @@ Type TBuildManager Extends TCallback
 	Method CreateIncBin:TSourceFile(source:TSourceFile, sourcePath:String)
 	
 		Local path:String = StripDir(sourcePath) + opt_configmung +  processor.CPU()
-		If opt_standalone Then
+		If opt_standalone Or (processor.CPU() = "x86" And processor.Platform() = "win32") Then
 			path :+ ".incbin.c"
 		Else
 			path :+ ".incbin2.c"
