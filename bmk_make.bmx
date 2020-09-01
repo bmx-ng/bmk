@@ -1075,10 +1075,10 @@ Type TBuildManager Extends TCallback
 
 	End Method
 	
-	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False, isInclude:Int = False)
+	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False, isInclude:Int = False, doCreate:Int = True)
 		Local source:TSourceFile = TSourceFile(sources.ValueForKey(source_path))
 
-		If Not source Then
+		If Not source And doCreate Then
 			source = ParseSourceFile(source_path)
 			
 			If source Then
@@ -1441,16 +1441,23 @@ Type TBuildManager Extends TCallback
 			path :+ ".incbin2.c"
 		End If
 
-		Local ib:TSourceFile = GetSourceFile(path)
+		Local ibPath:String = ExtractDir(sourcePath) + "/.bmx/" + path
+
+		Local ib:TSourceFile = GetSourceFile(ibPath,,,,False)
 		
 		If Not ib Then
 			ib = New TSourceFile
-			ib.path = ExtractDir(sourcePath) + "/.bmx/" + path
+			
+			ib.path = ibPath
 			ib.obj_path = StripExt(ib.path) + ".o"
 			ib.ext = "c"
 			ib.exti = String(processor.RunCommand("source_type", [ib.ext])).ToInt()
 
 			source.imports.AddLast(".bmx/" + StripDir(path) )
+		End If
+		
+		If ib.includePaths.IsEmpty() Then
+			ib.CopyIncludePaths(source.includePaths)
 		End If
 
 		GetIncBinFileList(ib)
