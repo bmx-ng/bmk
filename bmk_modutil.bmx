@@ -679,6 +679,10 @@ Function ValidatePlatformArchitecture()
 			If arch = "arm64" Then
 				valid = True
 			End If
+		Case "haiku"
+			If arch = "x86" Or arch = "x64" Then
+				valid = True
+			End If
 	End Select
 	
 	If Not valid Then
@@ -743,6 +747,10 @@ Function SetCompilerValues()
 	compilerOptions.Add("raspberrypi", processor.Platform() = "raspberrypi")
 	compilerOptions.Add("raspberrypiarm", processor.Platform() = "raspberrypi" And processor.CPU()="arm")
 	compilerOptions.Add("raspberrypiarm64", processor.Platform() = "raspberrypi" And processor.CPU()="arm64")
+
+	compilerOptions.Add("haiku", processor.Platform() = "haiku")
+	compilerOptions.Add("haikux86", processor.Platform() = "haiku" And processor.CPU()="x86")
+	compilerOptions.Add("haikux64", processor.Platform() = "haiku" And processor.CPU()="x64")
 	
 	compilerOptions.Add("emscripten", processor.Platform() = "emscripten")
 	compilerOptions.Add("emscriptenjs", processor.Platform() = "emscripten" And processor.CPU()="js")
