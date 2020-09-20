@@ -335,6 +335,8 @@ Type TBMK
 			Return "win32"
 ?emscripten
 			Return "emscripten"
+?haiku
+			Return "haiku"
 ?
 		Else
 			' the custom target platform
