@@ -447,10 +447,10 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		
 	End If
 	
-	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi"
+	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "haiku"
 		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
 		'cmd:+" -m32 -s -Os -pthread"
-		If processor.Platform() <> "raspberrypi" Then
+		If processor.Platform() <> "raspberrypi" And processor.Platform() <> "haiku" Then
 			If processor.CPU() = "x86" Or processor.CPU() = "arm" Then
 				sb.Append(" -m32")
 			End If
@@ -461,21 +461,32 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		If opt_static Then
 			sb.Append(" -static")
 		End If
-		If Not opt_nopie Then
+		If processor.Platform() <> "haiku" And Not opt_nopie Then
 			sb.Append(" -no-pie -fpie")
 		End If
 		If opt_gprof Then
 			sb.Append(" -pg")
 		End If
-		sb.Append(" -pthread")
+		
+		If processor.Platform() <> "haiku" Then
+			sb.Append(" -pthread")
+		Else
+			sb.Append(" -lpthread")
+		End If
+		
 		sb.Append(" -o ").Append(CQuote( path ))
 		sb.Append(" ").Append(CQuote( tmpfile ))
-		If processor.CPU() = "x86" Then
-			sb.Append(" -L").Append(processor.Option(processor.BuildName("lib32"), "/usr/lib32"))
+		
+		If processor.Platform() <> "haiku" Then
+			If processor.CPU() = "x86" Then
+				sb.Append(" -L").Append(processor.Option(processor.BuildName("lib32"), "/usr/lib32"))
+			End If
+			sb.Append(" -L").Append(processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib"))
+			sb.Append(" -L").Append(processor.Option(processor.BuildName("lib"), "/usr/lib"))
+		Else
+			sb.Append(" -L").Append(CQuote( "/boot/system/develop/lib" ))
+			sb.Append(" -L").Append(CQuote( BlitzMaxPath()+"/lib" ))
 		End If
-		sb.Append(" -L").Append(processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib"))
-		sb.Append(" -L").Append(processor.Option(processor.BuildName("lib"), "/usr/lib"))
-		sb.Append(" -L").Append(CQuote( BlitzMaxPath()+"/lib" ))
 	
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
@@ -1882,7 +1893,7 @@ Function LoadBootstrapConfig:TBootstrapConfig()
 		'Local i:Int
 		For Local assetLine:String = EachIn assets
 			Local parts:String[] = assetLine.Split("~t")
-			If parts Then
+			If parts And parts.length > 1 Then
 				Select parts[0]
 					Case "t"
 						Local target:TBootstrapTarget = New TBootstrapTarget
@@ -1894,7 +1905,9 @@ Function LoadBootstrapConfig:TBootstrapConfig()
 						Local asset:TBootstrapAsset = New TBootstrapAsset
 						asset.assetType = parts[0]
 						asset.name = parts[1]
-						asset.parts = parts[2..]
+						If parts.length > 2 Then
+							asset.parts = parts[2..]
+						End If
 						
 						boot.assets :+ [asset]
 						

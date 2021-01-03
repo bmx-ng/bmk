@@ -121,6 +121,10 @@ opt_arch="arm64"
 opt_arch="arm"
 ?raspberrypi64
 opt_arch="arm64"
+?haikux86
+opt_arch="x86"
+?haikux64
+opt_arch="x64"
 ?
 
 TStringBuffer.initialCapacity = 128
@@ -361,8 +365,8 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~t~tiOS : x86, x64 (simulator), armv7, arm64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm, arm64~n"
-		s:+ "~t~t~tEmscripten : js~n"
 		s:+ "~t~t~tnx : arm64~n"
+		s:+ "~t~t~thaiku : x86, x64~n"
 		s:+ "~n~n"
 		s:+ "~t-gdb~n"
 		s:+ "~t~tGenerates line mappings suitable for GDB debugging.~n"
@@ -386,7 +390,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-l <target platfom> | -platform <target platform>~n"
 		s:+ "~t~tCross-compiles to the specific target platform.~n"
-		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and emscripten.~n"
+		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and haiku.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
 		s:+ "~n~n"
 		s:+ "~t-musl~n"
@@ -482,6 +486,8 @@ Function VersionInfo(gcc:String, cores:Int, xcode:String)
 	s:+ "-android"
 ?raspberrypi
 	s:+ "-raspberrypi"
+?haiku
+	s:+ "haiku"
 ?emscripten
 	s:+ "-emscripten"
 ?
@@ -661,6 +667,7 @@ Function ValidatePlatform(platform:String)
 		Case "raspberrypi"
 		Case "emscripten"
 		Case "nx"
+		Case "haiku"
 		Default
 			' oops
 			CmdError "Not valid platform : '" + platform + "'"

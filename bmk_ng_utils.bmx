@@ -14,6 +14,8 @@ Import "bmk_cores_linux.bmx"
 Import "bmk_cores_macos.bmx"
 ?win32
 Import "bmk_cores_win32.bmx"
+?haiku
+Import "bmk_cores_haiku.bmx"
 ?
 
 Global utils:TMaxUtils = New TMaxUtils

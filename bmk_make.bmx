@@ -1858,7 +1858,7 @@ Type TArcTask
 			Next
 		End If
 		
-		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten" Or processor.Platform() = "nx"
+		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten" Or processor.Platform() = "nx" Or processor.Platform() = "haiku"
 			For Local t$=EachIn oobjs
 				If Len(cmd)+Len(t)>1000
 				
