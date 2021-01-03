@@ -1,3 +1,7 @@
+## [3.46] - 2021-03-01
+### Fixed
+ - Linkage for incbin in included sources.
+
 ## [3.45] - 2020-08-16
 ### Added
  - incbin file hashing.

@@ -881,10 +881,22 @@ Type TBuildManager Extends TCallback
 			End If
 
 			For Local f:String = EachIn source.imports
+
 				If f[0] <> Asc("-") Then
 					Local path:String = CheckPath(ExtractDir(source.path), f)
 
 					Local s:TSourceFile = GetSourceFile(path, isMod)
+					
+					' imported sourcefile not there? Maybe it's relative to the owner path instead?
+					' For example, an incbin as part of an included source file.
+					If Not s Then
+						Local p:String = CheckPath(ExtractDir(source.owner_path), f)
+						s = GetSourceFile(p, isMod)
+						If s Then
+							path = p
+						End If
+					End If
+					
 					If s Then
 	
 						If rebuildImports Then
@@ -1002,6 +1014,10 @@ Type TBuildManager Extends TCallback
 				If s Then
 					s.owner_path = source.path
 					
+					If s.includePaths.IsEmpty() Then
+						s.CopyIncludePaths(source.includePaths)
+					End If
+				
 					' calculate included file dependencies
 					CalculateDependencies(s, isMod, rebuildImports)
 
@@ -1060,7 +1076,7 @@ Type TBuildManager Extends TCallback
 				End If
 			End If
 						
-			If source.depsList Then			
+			If source.depsList Then
 				For Local s:TSourceFile = EachIn source.depsList
 					If Not Match(s.ext, "bmx") Then
 						s.cc_opts = source.cc_opts
