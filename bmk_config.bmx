@@ -119,7 +119,7 @@ opt_arch="arm"
 opt_arch="arm64"
 ?raspberrypi
 opt_arch="arm"
-?raspberrypi64
+?raspberrypiarm64
 opt_arch="arm64"
 ?haikux86
 opt_arch="x86"
