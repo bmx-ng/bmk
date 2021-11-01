@@ -822,6 +822,10 @@ Type TBMK
 		Return opt_debug
 	End Method
 
+	Method IsGdbDebugBuild:Int()
+		Return opt_gdbdebug
+	End Method
+
 	Method IsReleaseBuild:Int()
 		Return opt_release
 	End Method
