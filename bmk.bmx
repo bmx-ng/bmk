@@ -10,7 +10,12 @@ Import BRL.RamStream
 Incbin "macos.icns"
 ?
 
-If AppArgs.length<2 CmdError "Not enough parameters", True
+'if binary was executed without any parameter then print out 
+'help screen / usage commands and end program execution
+If AppArgs.length < 2
+	print Usage(True)
+	end
+EndIf
 
 Local cmd$=AppArgs[1],args$[]
 
