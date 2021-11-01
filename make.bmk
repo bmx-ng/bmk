@@ -500,21 +500,24 @@
 
 	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")
 	globals.SetOption("cc_opts", "linker", "-c")
-	if bmk.Platform() ~= "nx" then
-		globals.SetOption("cc_opts", "optimization", "-O3")
-	else
-		globals.SetOption("cc_opts", "optimization", "-O2")
-	end
-	if bmk.CPU() == "x64" then
-		globals.SetOption("cc_opts", "simd", "-msse3")
-	end
-	
-	if bmk.IsDebugBuild() == 0 then
-		if bmk.Platform() ~= "emscripten" then
-			globals.SetOption("cc_opts", "stripsymbols", "-s")
+
+	if bmk.IsGdbDebugBuild() == 0 then
+		if bmk.Platform() ~= "nx" then
+			globals.SetOption("cc_opts", "optimization", "-O3")
+		else
+			globals.SetOption("cc_opts", "optimization", "-O2")
+		end
+		if bmk.CPU() == "x64" then
+			globals.SetOption("cc_opts", "simd", "-msse3")
+		end
+
+		if bmk.IsDebugBuild() == 0 then
+			if bmk.Platform() ~= "emscripten" then
+				globals.SetOption("cc_opts", "stripsymbols", "-s")
+			end
 		end
 	end
-
+	
 @end
 
 
