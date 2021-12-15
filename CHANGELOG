@@ -1,4 +1,11 @@
-## [3.46] - 2021-03-01
+## [3.47] - 2021-12-14
+### Fixed
+ - Less optimisations with -gdb option.
+ - .mm files use CPP_OPTS.
+### Changed
+ - Use BRL.ThreadPool with NG.
+
+## [3.46] - 2021-01-03
 ### Fixed
  - Linkage for incbin in included sources.
 
