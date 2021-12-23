@@ -254,9 +254,15 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	End If
 	
 	If processor.Platform() = "win32"
+
 		Local version:Int = Int(processor.GCCVersion(True))
 		Local usingLD:Int = False
-		
+
+		Local options:TStringBuffer = fb
+		If processor.HasClang() Then
+			options = sb
+		End If
+
 		' always use g++ instead of LD...
 		' uncomment if we want to change to only use LD for GCC's < 4.x
 		'If version < 40000 Then
@@ -274,20 +280,29 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 
 		If usingLD Then
 			sb.Append(CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))).Append(" -stack 4194304")
-			sb.Append(processor.option("strip.debug", " -s "))
+
+			If Not opt_debug And Not opt_gdbdebug Then
+				sb.Append(processor.option("strip.debug", " -s "))
+			End If
+
 			If opt_apptype="gui" Then
 				sb.Append(" -subsystem windows")
 			End If
 		Else
-			sb.Append(CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe")))
+			Local prefix:String = processor.MinGWExePrefix()
+			sb.Append(CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/" + prefix + "g++.exe")))
 
-			If version < 60000 Then
-				sb.Append(" --stack=4194304")
-			Else
-				sb.Append(" -Wl,--stack,4194304")
+			If Not processor.HasClang() Then
+				If version < 60000 Then
+					sb.Append(" --stack=4194304")
+				Else
+					sb.Append(" -Wl,--stack,4194304")
+				End If
 			End If
 
-			sb.Append(processor.option("strip.debug", " -s "))
+			If Not opt_debug And Not opt_gdbdebug Then
+				sb.Append(processor.option("strip.debug", " -s "))
+			End If
 			If opt_apptype="gui"
 				If version < 60000 Then
 					sb.Append(" --subsystem,windows -mwindows")
@@ -358,7 +373,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 			If version < 60000 Then
 				sb.Append(" --out-implib ").Append(CQuote( imp ))
 				If usingLD Then
-					fb.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) ))
+					options.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) ))
 				End If
 			Else
 				sb.Append(" -Wl,--out-implib,").Append(CQuote( imp ))
@@ -373,78 +388,90 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		Local xpmanifest$
 		For Local f$=EachIn lnk_files
 			Local t$=CQuote( f )
+			If processor.HasClang() Then
+				t = f.Replace("\", "/").Replace(" ", "\ ").Replace("~q", "\~q").Replace("'", "\'")
+			End If
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
 				sb.Append(" ").Append(t)
 			Else
 				If f.EndsWith( "/win32maxguiex.mod/xpmanifest.o" )
 					xpmanifest=t
 				Else
-					fb.Append(" ").Append(t)
+					If processor.HasClang() Then
+						fb.Append("~n").Append(t)
+					Else
+						fb.Append(" ").Append(t)
+					End If
 				EndIf
 			EndIf
 		Next
 		If xpmanifest Then
-			fb.Append(" ").Append(xpmanifest)
+			If processor.HasClang() Then
+				fb.Append("~n").Append(xpmanifest)
+			Else
+				fb.Append(" ").Append(xpmanifest)
+			End If
 		End If
 		
-		sb.Append(" ").Append(CQuote( tmpfile ))
+		sb.Append(" @").Append(CQuote( tmpfile ))
 	
-		fb.Append(" -lgdi32 -lwsock32 -lwinmm -ladvapi32")
+		options.Append(" -lgdi32 -lwsock32 -lwinmm -ladvapi32")
 
 		' add any user-defined linker options
-		fb.Append(" ").Append(opts)
+		options.Append(" ").Append(opts)
 
 		If usingLD
 			If opts.Find("stdc++") = -1 Then
-				fb.Append(" -lstdc++")
+				options.Append(" -lstdc++")
 			End If
 
-			fb.Append(" -lmingwex")
+			options.Append(" -lmingwex")
 			
 		
 		' for a native Win32 runtiime of mingw 3.4.5, this needs to appear early.
 		'If Not processor.Option("path_to_mingw", "") Then
-			fb.Append(" -lmingw32")
+		options.Append(" -lmingw32")
 		'End If
 
 			If opts.Find("gcc") = -1 Then
-				fb.Append(" -lgcc")
+				options.Append(" -lgcc")
 			End If
 
 			' if using 4.8+ or mingw64, we need to link to pthreads
-			If version >= 40800 Or processor.HasTarget("x86_64") Then
-				fb.Append(" -lwinpthread ")
+			If version >= 40800 Or processor.HasTarget("x86_64") Or processor.HasClang() Then
+				options.Append(" -lwinpthread ")
 				
 				If processor.CPU()="x86" Then
-					fb.Append(" -lgcc")
+					options.Append(" -lgcc")
 				End If
 			End If
 			
-			fb.Append(" -lmoldname -lmsvcrt ")
+			options.Append(" -lmoldname -lmsvcrt ")
 		End If
 
-		fb.Append(" -luser32 -lkernel32 ")
+		options.Append(" -luser32 -lkernel32 ")
 
 		'If processor.Option("path_to_mingw", "") Then
 			' for a non-native Win32 runtime, this needs to appear last.
 			' (Actually, also for native gcc 4.x, but I dunno how we'll handle that yet!)
 		If usingLD
-			fb.Append(" -lmingw32 ")
+			options.Append(" -lmingw32 ")
 		End If
 
 		' add any user-defined linker options, again - just to cover whether we missed dependencies before.
-		fb.Append(" ").Append(opts)
+		options.Append(" ").Append(opts)
 
 		'End If
 		
 		If Not makelib
 			If usingLD
-				fb.Append(" ").Append(CQuote( processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtend.o" ))
+				options.Append(" ").Append(CQuote( processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtend.o" ))
 			End If
 		EndIf
 		
-		fb.Insert(0,"INPUT(").Append(")")
-		
+		If Not processor.HasClang() Then
+			fb.Insert(0,"INPUT(").Append(")")
+		End If
 	End If
 	
 	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "haiku"

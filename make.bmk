@@ -179,9 +179,10 @@
 		end
 				
 	elseif bmk.Platform() == "win32" then
-		cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/gcc.exe")
+		local prefix = bmk.MinGWExePrefix()
+		cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/" .. prefix .. "gcc.exe")
 		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-			cmd = bmk.Option("path_to_gpp", bmk.MinGWBinPath() .. "/g++.exe")
+			cmd = bmk.Option("path_to_gpp", bmk.MinGWBinPath() .. "/" .. prefix .. "g++.exe")
 		end
 		
 	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" or bmk.Platform() == "haiku" then
@@ -475,14 +476,18 @@
 		
 	elseif bmk.Platform() == "win32" then
 	
-		if bmk.hasTarget("x86_64") then
-			if bmk.CPU() == "x86" then
-				globals.SetOption("cc_opts", "arch", "-m32")
-			elseif bmk.CPU() == "x64" then
-				globals.SetOption("cc_opts", "arch", "-m64")
-			end
+		if bmk.HasClang() then
+			globals.SetOption("cc_opts", "win_family", "-DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP")
 		else
-			globals.SetOption("cc_opts", "arch", "-march=pentium")
+			if bmk.hasTarget("x86_64") then
+				if bmk.CPU() == "x86" then
+					globals.SetOption("cc_opts", "arch", "-m32")
+				elseif bmk.CPU() == "x64" then
+					globals.SetOption("cc_opts", "arch", "-m64")
+				end
+			else
+				globals.SetOption("cc_opts", "arch", "-march=pentium")
+			end
 		end
 
 		globals.SetOption("cc_opts", "fastmath", "-ffast-math")
@@ -549,7 +554,7 @@
 
 @define make_win32_resource
 
-	local windres =  "windres.exe"
+	local windres =  bmk.MinGWExePrefix() .. "windres.exe"
 	local windresPath = bmk.MinGWBinPath() .. "/" .. windres
 	
 	local outfile = %outfile%

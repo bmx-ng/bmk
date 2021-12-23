@@ -1831,7 +1831,10 @@ Type TArcTask
 					EndIf
 					cmd=""
 				EndIf
-				If Not cmd cmd= processor.Option("path_to_ar", processor.MinGWBinPath() + "/ar.exe") + " -r "+CQuote(path)
+				If Not cmd Then
+					Local prefix:String = processor.MinGWExePrefix()
+					cmd= processor.Option("path_to_ar", processor.MinGWBinPath() + "/" + prefix + "ar.exe") + " -rc "+CQuote(path)
+				End If
 				cmd:+" "+CQuote(t)
 			Next
 		End If

@@ -53,6 +53,7 @@ Type TBMK
 	Field _minGWLinkPaths:String
 	Field _minGWDLLCrtPath:String
 	Field _minGWCrtPath:String
+	Field _minGWExePrefix:String
 	
 	Field callback:TCallback
 	Field _appSettings:TMap
@@ -69,6 +70,7 @@ Type TBMK
 		_minGWLinkPaths = Null
 		_minGWDLLCrtPath = Null
 		_minGWCrtPath = Null
+		_minGWExePrefix = Null
 	End Method
 
 	' loads a .bmk, stores any functions, and runs any commands.
@@ -507,7 +509,7 @@ Type TBMK
 
 		Local process:TProcess
 		If Platform() = "win32" Then
-			process = CreateProcess(MinGWBinPath() + "/gcc.exe -v")
+			process = CreateProcess(MinGWBinPath() + "/gcc.exe -v", HIDECONSOLE)
 		Else	
 			process = CreateProcess("gcc -v")
 		End If
@@ -531,7 +533,7 @@ Type TBMK
 				Local parts:String[] = line.split(" ")
 				
 				rawVersion = parts[2].Trim()
-				Local values:String[] = parts[2].split(".")
+				Local values:String[] = rawVersion.split(".")
 				For Local v:String = EachIn values
 					Local n:String = "0" + v
 					s:+ n[n.length - 2..]
@@ -542,7 +544,24 @@ Type TBMK
 				Local pos:Int = line.Find("clang")
 				If pos >= 0 Then
 					compiler = "clang"
+					_clang = True
 					s = line[pos + 6..line.find(")", pos)]
+
+					Local parts:String[] = line.split(" ")
+					For Local i:Int = 0 Until parts.Length
+						If parts[i].StartsWith("(") Then
+							rawVersion = parts[i - 1].Trim()
+
+							s = ""
+							Local values:String[] = rawVersion.split(".")
+							For Local v:String = EachIn values
+								Local n:String = "0" + v
+								s:+ n[n.length - 2..]
+							Next
+							Exit
+						End If
+					Next
+
 				End If
 			End If
 			
@@ -605,6 +624,7 @@ Type TBMK
 	End Method
 
 	Global _target:String
+	Global _clang:Int
 	
 	Method HasTarget:Int(find:String)
 		
@@ -625,6 +645,10 @@ Type TBMK
 	Method GCCVersionInt:Int()
 	End Method
 
+	Method HasClang:Int()
+		Return _clang
+	End Method
+
 	Method BCCVersion:String()
 
 		Global bcc:String
@@ -638,7 +662,7 @@ Type TBMK
 			exe :+ ".exe"
 		End If
 
-		Local process:TProcess = CreateProcess(CQuote(BlitzMaxPath() + "/bin/" + exe))
+		Local process:TProcess = CreateProcess(CQuote(BlitzMaxPath() + "/bin/" + exe), HIDECONSOLE)
 		Local s:String
 		
 		If Not process Then
@@ -704,6 +728,13 @@ Type TBMK
 				Return _minGWPath
 			End If
 
+			path = BlitzMaxPath() + "/llvm-mingw/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_minGWPath = BlitzMaxPath() + "/llvm-mingw"
+				Return _minGWPath
+			End If
+
 			' try MINGW environment variable
 			path = getenv_("MINGW")
 			If path And FileType(path) = FILETYPE_DIR Then
@@ -726,7 +757,18 @@ Type TBMK
 		If Not _minGWLinkPaths Then
 			Local links:String
 			
-			If processor.HasTarget("x86_64") Then
+			If HasClang() Then
+				Select processor.CPU()
+					Case "x86"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/i686-w64-mingw32/lib"))
+					Case "x64"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib"))
+					Case "armv7"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/armv7-w64-mingw32/lib"))
+					Case "arm64"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/aarch64-w64-mingw32/lib"))
+				End Select
+			Else If processor.HasTarget("x86_64") Then
 				If processor.CPU()="x86" Then
 					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True) + "/32"))
 					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib32"))
@@ -817,6 +859,25 @@ Type TBMK
 		End If
 		
 		Return RealPath(_minGWCrtPath)
+	End Method
+
+	Method MinGWExePrefix:String()
+		If Not _minGWExePrefix Then
+			GCCVersion()
+			If processor.HasClang() Then
+				Select processor.CPU()
+					Case "x86"
+						_minGWExePrefix = "i686-w64-mingw32uwp-"
+					Case "x64"
+						_minGWExePrefix = "x86_64-w64-mingw32uwp-"
+					Case "armv7"
+						_minGWExePrefix = "armv7-w64-mingw32-"
+					Case "arm64"
+						_minGWExePrefix = "aarch64-w64-mingw32-"
+				End Select
+			End If
+		End If
+		Return _minGWExePrefix
 	End Method
 	
 	Method IsDebugBuild:Int()

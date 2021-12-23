@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.47"
+Const BMK_VERSION:String = "3.48"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -99,6 +99,10 @@ opt_arch="arm64"
 opt_arch="x64"
 ?Win32x86
 opt_arch="x86"
+?win32armv7
+opt_arch="armv7"
+?win32arm64
+opt_arch="arm64"
 ?Win32
 'Fudge PATH so exec sees our MinGW first!
 Local mingw$=getenv_( "MINGW" )
@@ -360,7 +364,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ ")~n"
 		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
 		s:+ "~t~t~tMacOS : x86, x64, arm64~n"
-		s:+ "~t~t~tWin32 : x86, x64~n"
+		s:+ "~t~t~tWin32 : x86, x64, armv7, armv64~n"
 		s:+ "~t~t~tLinux : x86, x64, arm, arm64~n"
 		s:+ "~t~t~tiOS : x86, x64 (simulator), armv7, arm64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"

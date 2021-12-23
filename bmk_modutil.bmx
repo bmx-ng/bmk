@@ -648,7 +648,7 @@ Function ValidatePlatformArchitecture()
 
 	Select platform
 		Case "win32"
-			If arch = "x86" Or arch = "x64" Then
+			If arch = "x86" Or arch = "x64" or arch = "armv7" or arch = "arm64" Then
 				valid = True
 			End If
 		Case "linux"
@@ -716,6 +716,8 @@ Function SetCompilerValues()
 	compilerOptions.Add("win32x86", processor.Platform() = "win32" And processor.CPU()="x86")
 	compilerOptions.Add("win32ppc", processor.Platform() = "win32" And processor.CPU()="ppc")
 	compilerOptions.Add("win32x64", processor.Platform() = "win32" And processor.CPU()="x64")
+	compilerOptions.Add("win32armv7", processor.Platform() = "win32" And processor.CPU()="armv7")
+	compilerOptions.Add("win32arm64", processor.Platform() = "win32" And processor.CPU()="arm64")
 
 	compilerOptions.Add("linux", processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi")
 	compilerOptions.Add("linuxx86", (processor.Platform() = "linux" Or processor.Platform() = "android") And processor.CPU()="x86")
