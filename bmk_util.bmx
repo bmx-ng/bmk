@@ -413,7 +413,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 			End If
 		End If
 		
-		sb.Append(" @").Append(CQuote( tmpfile ))
+		sb.Append(" ").Append(CQuote( tmpfile ))
 	
 		options.Append(" -lgdi32 -lwsock32 -lwinmm -ladvapi32")
 
