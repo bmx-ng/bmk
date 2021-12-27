@@ -509,9 +509,9 @@ Type TBMK
 
 		Local process:TProcess
 		If Platform() = "win32" Then
-			process = CreateProcess(MinGWBinPath() + "/gcc.exe -v", HIDECONSOLE)
+			process = CreateProcess(MinGWBinPath() + "/gcc.exe --version", HIDECONSOLE)
 		Else	
-			process = CreateProcess("gcc -v")
+			process = CreateProcess("gcc --version")
 		End If
 		Local s:String
 		
@@ -522,7 +522,7 @@ Type TBMK
 		While True
 			Delay 10
 			
-			Local line:String = process.err.ReadLine()
+			Local line:String = process.pipe.ReadLine()
 
 			If Not process.Status() And Not line Then
 				Exit
@@ -532,7 +532,7 @@ Type TBMK
 				compiler = "gcc"
 				Local parts:String[] = line.split(" ")
 				
-				rawVersion = parts[2].Trim()
+				rawVersion = parts[parts.length - 1].Trim()
 				Local values:String[] = rawVersion.split(".")
 				For Local v:String = EachIn values
 					Local n:String = "0" + v
@@ -566,7 +566,10 @@ Type TBMK
 			End If
 			
 		Wend
-		
+		If process Then
+			process.Close()
+		End If
+
 		version = s
 		
 		If getVersionNum Then
@@ -616,6 +619,9 @@ Type TBMK
 			End If
 			
 		Wend
+		If process Then
+			process.Close()
+		End If
 		
 		Return version
 ?Not macos
@@ -685,6 +691,9 @@ Type TBMK
 			End If
 			
 		Wend
+		If process Then
+			process.Close()
+		End If
 
 		Return bcc
 	End Method
@@ -720,11 +729,25 @@ Type TBMK
 				_minGWPath = BlitzMaxPath() + cpuMinGW 
 				Return _minGWPath
 			End If
-			
+
 			path = BlitzMaxPath() + "/MinGW32/bin"
 			If FileType(path) = FILETYPE_DIR Then
 				' bin dir exists, go with that
 				_minGWPath = BlitzMaxPath() + "/MinGW32"
+				Return _minGWPath
+			End If
+
+			path = BlitzMaxPath() + "/MinGW32x86/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_minGWPath = BlitzMaxPath() + "/MinGW32x86" 
+				Return _minGWPath
+			End If
+
+			path = BlitzMaxPath() + "/MinGW32x64/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_minGWPath = BlitzMaxPath() + "/MinGW32x64" 
 				Return _minGWPath
 			End If
 
