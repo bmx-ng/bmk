@@ -389,6 +389,9 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		For Local f$=EachIn lnk_files
 			Local t$=CQuote( f )
 			If processor.HasClang() Then
+				If f.StartsWith("-l") Then
+					f = f.Replace(" ", "~n")
+				End If
 				t = f.Replace("\", "/").Replace(" ", "\ ").Replace("~q", "\~q").Replace("'", "\'")
 			End If
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
@@ -413,7 +416,11 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 			End If
 		End If
 		
-		sb.Append(" @").Append(CQuote( tmpfile ))
+		sb.Append(" ")
+		If processor.HasClang() Then
+			sb.Append("@")
+		End If
+		sb.Append(CQuote( tmpfile ))
 	
 		options.Append(" -lgdi32 -lwsock32 -lwinmm -ladvapi32")
 

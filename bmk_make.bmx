@@ -773,9 +773,9 @@ Type TBuildManager Extends TCallback
 			Next
 
 ?threaded
-		If Not opt_single Then
-			processManager.WaitForTasks()
-		End If
+			If Not opt_single Then
+				processManager.WaitForTasks()
+			End If
 ?
 
 		Next
