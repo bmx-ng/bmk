@@ -724,6 +724,7 @@ Function SetCompilerValues()
 	compilerOptions.Add("linuxppc", processor.Platform() = "linux" And processor.CPU()="ppc")
 	compilerOptions.Add("linuxx64", (processor.Platform() = "linux" Or processor.Platform() = "android") And processor.CPU()="x64")
 	compilerOptions.Add("linuxarm", (processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi") And processor.CPU()="arm")
+	compilerOptions.Add("linuxarm64", ((processor.Platform() = "linux" Or processor.Platform() = "raspberrypi") And processor.CPU()="arm64") Or (processor.Platform() = "android" And processor.CPU()="arm64v8a"))
 
 	compilerOptions.Add("macos", processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios")
 	compilerOptions.Add("macosx86", (processor.Platform() = "macos"Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x86")
