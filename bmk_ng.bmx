@@ -522,7 +522,7 @@ Type TBMK
 		While True
 			Delay 10
 			
-			Local line:String = process.err.ReadLine()
+			Local line:String = process.pipe.ReadLine()
 
 			If Not process.Status() And Not line Then
 				Exit
