@@ -476,7 +476,7 @@
 		
 	elseif bmk.Platform() == "win32" then
 	
-		if bmk.HasClang() then
+		if bmk.HasClang() == 1 then
 			globals.SetOption("cc_opts", "win_family", "-DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP")
 		else
 			if bmk.hasTarget("x86_64") then
