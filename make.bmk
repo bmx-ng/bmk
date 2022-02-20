@@ -472,7 +472,8 @@
 		
 	elseif bmk.Platform() == "ios" then
 	
-		globals.SetOption("cc_opts", "osversion", "-miphoneos-version-min=8.0.0")
+		globals.SetOption("cc_opts", "osversion", "-miphoneos-version-min=10.0.0")
+		globals.SetOption("cc_opts", "ostarget", "-target arm64-apple-ios10.0")
 		
 	elseif bmk.Platform() == "win32" then
 	
