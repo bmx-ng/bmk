@@ -19,6 +19,9 @@ args=ParseConfigArgs( AppArgs[2..], processor.BCCVersion() = "BlitzMax" )
 ' validate the platform configuration
 ValidatePlatformArchitecture()
 
+' pre-init gcc version cache
+processor.GCCVersion()
+
 ' preload the default options
 processor.RunCommand("default_cc_opts", Null)
 

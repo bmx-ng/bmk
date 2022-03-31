@@ -1,3 +1,7 @@
+## [3.49] - 2022-03-31
+### Fixed
+ - Compute gcc version cache earlier.
+
 ## [3.47] - 2021-12-14
 ### Fixed
  - Less optimisations with -gdb option.
