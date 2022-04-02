@@ -235,7 +235,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		End If
 
 		For Local t$=EachIn lnk_files
-			If opt_dumpbuild Or (t[..1]="-")
+			If opt_dumpbuild Or (t[..1]="-") Or (t[..1]="`")
 				sb.Append(" ").Append(t) 
 			Else
 				fb.Append(t).Append(Chr(10))
