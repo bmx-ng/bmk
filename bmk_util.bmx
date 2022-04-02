@@ -524,7 +524,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
-			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
+			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l") Or (t[..1]="`")
 				sb.Append(" ").Append(t)
 			Else
 				fb.Append(" ").Append(t)
@@ -607,7 +607,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
-			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
+			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l") Or (t[..1]="`")
 				sb.Append(" ").Append(t)
 			Else
 				If t.Contains("appstub") Or t.Contains("blitz.mod") Then
