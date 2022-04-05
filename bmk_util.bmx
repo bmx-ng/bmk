@@ -226,6 +226,10 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	
 		sb.Append(" -o ").Append(CQuote( path ))
 	
+		If opt_debug Or opt_gdbdebug Then
+			sb.Append(" -g")
+		End If
+
 		If processor.BCCVersion() = "BlitzMax" Then
 			sb.Append(" ").Append(CQuote("-L" +CQuote( BlitzMaxPath()+"/lib" ) ))
 		End If

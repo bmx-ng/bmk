@@ -359,7 +359,7 @@ Type TBuildManager Extends TCallback
 	
 		Local cc_opts:String
 		source.AddIncludePath(" -I" + CQuote(ModulePath("")))
-		If opt_release Then
+		If opt_release And Not opt_gdbdebug Then
 			cc_opts :+ " -DNDEBUG"
 		End If
 		If processor.BCCVersion() <> "BlitzMax" Then
@@ -1291,7 +1291,7 @@ Type TBuildManager Extends TCallback
 			Local cc_opts:String
 			source.AddIncludePath(" -I" + CQuote(path))
 			source.AddIncludePath(" -I" + CQuote(ModulePath("")))
-			If opt_release Then
+			If opt_release And Not opt_gdbdebug Then
 				cc_opts :+ " -DNDEBUG"
 			End If
 			If opt_threaded Then
