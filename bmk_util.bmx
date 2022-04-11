@@ -396,7 +396,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 				If f.StartsWith("-l") Then
 					f = f.Replace(" ", "~n")
 				End If
-				t = f.Replace("\", "/").Replace(" ", "\ ").Replace("~q", "\~q").Replace("'", "\'")
+				t = f.Replace("\", "/").Replace(" ", "\ ").Replace("'", "\'")
 			End If
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
 				sb.Append(" ").Append(t)
