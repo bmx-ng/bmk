@@ -438,7 +438,12 @@
 
 	if bmk.Platform() == "macos" or bmk.Platform() == "osx" then
 		
-		if tonumber(%macos_version%) >= 2784 then
+		if tonumber(%macos_version%) >= 2800 then
+			# macos version >= 10.15.0 ?
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.15")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.15")
+			globals.SetOption("ld_opts", "stdlib", "-stdlib=libc++")
+		elseif tonumber(%macos_version%) >= 2784 then
 			# macos version >= 10.14.0 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.12")
 			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.12")
