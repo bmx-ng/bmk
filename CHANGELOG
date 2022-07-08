@@ -1,3 +1,7 @@
+## [3.50] - 2022-07-08
+### Added
+ - moduleinfo variable opts - cc_vopt, etc.
+
 ## [3.49] - 2022-03-31
 ### Fixed
  - Compute gcc version cache earlier.

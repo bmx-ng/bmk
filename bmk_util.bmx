@@ -31,8 +31,24 @@ Type TModOpt ' BaH
 				opt = "-L" + CQuote(opt[2..])
 			End If
 			ld_opts.addLast opt
+		ElseIf qval.startswith("CC_VOPT") Then
+			setOption("cc_opts", qval)
+		ElseIf qval.startswith("CPP_VOPT") Then
+			setOption("cpp_opts", qval)
+		ElseIf qval.startswith("C_VOPT") Then
+			setOption("c_opts", qval)
+		ElseIf qval.startswith("LD_VOPT") Then
+			setOption("ld_opts", qval)
 		End If
 	End Method
+
+	Function setOption(option:String, qval:String)
+		Local opt:String = qval[qval.find(":") + 1..].Trim()
+		Local parts:String[] = opt.Split("|")
+		If parts.length = 2 Then
+			globals.SetOption(option, parts[0].trim(), parts[1].Trim())
+		End If
+	End Function
 	
 	Method hasCCopt:Int(value:String)
 		Return cc_opts.find(value) >= 0
