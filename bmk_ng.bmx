@@ -513,7 +513,6 @@ Type TBMK
 		Else	
 			process = CreateProcess("gcc --version")
 		End If
-		Local s:String
 		
 		If Not process Then
 			Throw "Cannot find a valid GCC compiler. Please check your paths and environment."
@@ -530,14 +529,6 @@ Type TBMK
 			
 			If line.startswith("gcc") Then
 				compiler = "gcc"
-				Local parts:String[] = line.split(" ")
-				
-				rawVersion = parts[parts.length - 1].Trim()
-				Local values:String[] = rawVersion.split(".")
-				For Local v:String = EachIn values
-					Local n:String = "0" + v
-					s:+ n[n.length - 2..]
-				Next
 			Else If line.startswith("Target:") Then
 				_target = line[7..].Trim()
 			Else
@@ -545,27 +536,43 @@ Type TBMK
 				If pos >= 0 Then
 					compiler = "clang"
 					_clang = True
-					s = line[pos + 6..line.find(")", pos)]
-
-					Local parts:String[] = line.split(" ")
-					For Local i:Int = 0 Until parts.Length
-						If parts[i].StartsWith("(") Then
-							rawVersion = parts[i - 1].Trim()
-
-							s = ""
-							Local values:String[] = rawVersion.split(".")
-							For Local v:String = EachIn values
-								Local n:String = "0" + v
-								s:+ n[n.length - 2..]
-							Next
-							Exit
-						End If
-					Next
-
 				End If
 			End If
 			
 		Wend
+		If process Then
+			process.Close()
+		End If
+
+		' get version
+		If Platform() = "win32" Then
+			process = CreateProcess(MinGWBinPath() + "/gcc.exe -dumpversion -dumpfullversion", HIDECONSOLE)
+		Else	
+			process = CreateProcess("gcc -dumpversion -dumpfullversion")
+		End If
+		Local s:String
+		
+		While True
+			Delay 10
+			
+			Local line:String = process.pipe.ReadLine()
+
+			If Not process.Status() And Not line Then
+				Exit
+			End If
+			
+			If Not rawVersion and line Then
+				rawVersion = line.Trim()
+
+				Local values:String[] = rawVersion.split(".")
+				For Local v:String = EachIn values
+					Local n:String = "0" + v
+					s:+ n[n.length - 2..]
+				Next
+			End If
+		
+		Wend
+	
 		If process Then
 			process.Close()
 		End If

@@ -757,7 +757,7 @@ Type TBuildManager Extends TCallback
 								Print s
 							End If
 
-							If m.path.EndsWith(".cpp") Or m.path.EndsWith("cc") Or m.path.EndsWith("mm") Then
+							If m.path.EndsWith(".cpp") Or m.path.EndsWith(".cc") Or m.path.EndsWith(".mm") Or m.path.EndsWith(".cxx") Then
 								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.cpp_opts
 							ElseIf m.path.EndsWith(".S") Or m.path.EndsWith("asm") Then
 								AssembleNative m.path, m.obj_path
