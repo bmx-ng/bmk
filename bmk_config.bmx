@@ -154,6 +154,11 @@ End Function
 Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 
 	Local n
+	'additional arguments passed to the built file - if executed
+	Local xArgs:String[]
+	'merge xArgs and arguments not handled by bmk?
+	'if False and no xArgs passed, leftover arguments are still merged! 
+	Local xArgsMerge:Int = True
 
 	If getenv_( "BMKDUMPBUILD" )
 		opt_dumpbuild=1
@@ -173,6 +178,15 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_verbose=True
 		Case "x"
 			opt_execute=True
+		Case "xargs"
+			n:+1
+			'unescape quots and single quots (also allowed on command line) 
+			Local xArgsStr:String = args[n].Replace("\~q", "~q").Replace("\'", "'")
+			xArgs = ExtractArguments(xArgsStr)
+		Case "xargsmerge"
+			xArgsMerge = True
+		Case "xargsnomerge"
+			xArgsMerge = False
 		Case "d", "debug"
 			opt_debug=True
 			opt_release=False
@@ -273,9 +287,58 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 		End If
 		opt_threaded=True
 	End If
+	
+	
+	If xArgs.length > 0 
+		If xArgsMerge
+			Return args[n ..] + xArgs
+		Else
+			Return xArgs
+		EndIf
+	EndIf
+	Return args[n ..]
+End Function
 
-	Return args[n..]
 
+Function ExtractArguments:String[](argString:String)
+	'double and single quots possible
+	Local inDQuot:Int
+	Local inSQuot:Int
+	Local argBegin:Int = 0
+	Local result:String[]
+	'split xargs into an array
+	For local i:int = 0 until argString.length
+		If argString[i] = Asc("~q")
+			If not inDQuot
+				inDQuot = True
+				argBegin = i 'mark begin
+				Continue
+			Else
+				result :+ [ argString[argBegin+1 .. i] ]
+				inDQuot = False
+			EndIf
+		ElseIf argString[i] = Asc("'")
+			If not inSQuot
+				inSQuot = True
+				argBegin = i 'mark begin
+				Continue
+			Else
+				result :+ [ argString[argBegin+1 .. i] ]
+				inSQuot = False
+			EndIf
+		ElseIf argString[i] = Asc(" ") and not (inSQuot or inDQuot)
+			'trimming and checking the argument automatically cares for
+			'"multi spaces" between arguments
+			If i > 0
+				local arg:String = argString[argBegin .. i].Trim()
+				If arg
+					result :+ [ arg ]
+				Endif
+			EndIf
+			argBegin = i
+		EndIf
+	Next
+	Return result
 End Function
 
 
