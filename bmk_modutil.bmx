@@ -652,7 +652,7 @@ Function ValidatePlatformArchitecture()
 				valid = True
 			End If
 		Case "linux"
-			If arch = "x86" Or arch = "x64" Or arch = "arm" Or arch="arm64" Then
+			If arch = "x86" Or arch = "x64" Or arch = "arm" Or arch="arm64" Or arch = "riscv32" Or arch = "riscv64" Then
 				valid = True
 			End If
 		Case "macos", "osx"
@@ -707,10 +707,12 @@ Function SetCompilerValues()
 	compilerOptions.Add("arm64v8a", processor.CPU()="arm64v8a")
 	compilerOptions.Add("armv7", processor.CPU()="armv7")
 	compilerOptions.Add("arm64", processor.CPU()="arm64")
+	compilerOptions.Add("riscv32", processor.CPU()="riscv32")
+	compilerOptions.Add("riscv64", processor.CPU()="riscv64")
 	compilerOptions.Add("js", processor.CPU()="js")
 
-	compilerOptions.Add("ptr32", processor.CPU()="x86" Or processor.CPU()="ppc" Or processor.CPU()="arm" Or processor.CPU()="armeabi" Or processor.CPU()="armeabiv7a" Or processor.CPU()="armv7" Or processor.CPU()="js")
-	compilerOptions.Add("ptr64", processor.CPU()="x64" Or processor.CPU()="arm64v8a" Or processor.CPU()="arm64")
+	compilerOptions.Add("ptr32", processor.CPU()="x86" Or processor.CPU()="ppc" Or processor.CPU()="arm" Or processor.CPU()="armeabi" Or processor.CPU()="armeabiv7a" Or processor.CPU()="armv7" Or processor.CPU()="js" Or processor.CPU()="riscv32")
+	compilerOptions.Add("ptr64", processor.CPU()="x64" Or processor.CPU()="arm64v8a" Or processor.CPU()="arm64" Or processor.CPU()="riscv64")
 
 	compilerOptions.Add("win32", processor.Platform() = "win32")
 	compilerOptions.Add("win32x86", processor.Platform() = "win32" And processor.CPU()="x86")
@@ -725,6 +727,8 @@ Function SetCompilerValues()
 	compilerOptions.Add("linuxx64", (processor.Platform() = "linux" Or processor.Platform() = "android") And processor.CPU()="x64")
 	compilerOptions.Add("linuxarm", (processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi") And processor.CPU()="arm")
 	compilerOptions.Add("linuxarm64", ((processor.Platform() = "linux" Or processor.Platform() = "raspberrypi") And processor.CPU()="arm64") Or (processor.Platform() = "android" And processor.CPU()="arm64v8a"))
+	compilerOptions.Add("linuxriscv32", (processor.Platform() = "linux" And processor.CPU()="riscv32"))
+	compilerOptions.Add("linuxriscv64", ((processor.Platform() = "linux" And processor.CPU()="riscv64")))
 
 	compilerOptions.Add("macos", processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios")
 	compilerOptions.Add("macosx86", (processor.Platform() = "macos"Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x86")

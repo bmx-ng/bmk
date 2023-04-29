@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.51"
+Const BMK_VERSION:String = "3.52"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -129,6 +129,10 @@ opt_arch="arm64"
 opt_arch="x86"
 ?haikux64
 opt_arch="x64"
+?linuxRiscv32
+opt_arch="riscv32"
+?linuxRiscv64
+opt_arch="riscv64"
 ?
 
 TStringBuffer.initialCapacity = 128
@@ -360,12 +364,16 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "arm64v8a"
 ?js
 		s:+ "js"
+?riscv32
+		s:+ "riscv32"
+?riscv64
+		s:+ "riscv64"
 ?
 		s:+ ")~n"
 		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
 		s:+ "~t~t~tMacOS : x86, x64, arm64~n"
 		s:+ "~t~t~tWin32 : x86, x64, armv7, armv64~n"
-		s:+ "~t~t~tLinux : x86, x64, arm, arm64~n"
+		s:+ "~t~t~tLinux : x86, x64, arm, arm64, riscv32, riscv64~n"
 		s:+ "~t~t~tiOS : x86, x64 (simulator), armv7, arm64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm, arm64~n"
@@ -514,6 +522,10 @@ Function VersionInfo(gcc:String, cores:Int, xcode:String)
 	s:+ "arm64v8a"
 ?js
 	s:+ "js"
+?riscv32
+	s:+ "riscv32"
+?riscv64
+	s:+ "riscv64"
 ?
 	s:+ " / " + gcc
 	
@@ -655,6 +667,8 @@ Function ValidateArch(arch:String)
 		Case "armv7"
 		Case "arm64"
 		Case "js"
+		Case "riscv32"
+		Case "riscv64"
 		Default
 			CmdError "Not a valid architecture : '" + arch + "'"
 	End Select
