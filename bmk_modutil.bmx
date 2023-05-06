@@ -765,6 +765,7 @@ Function SetCompilerValues()
 	compilerOptions.Add("opengles", processor.Platform() = "android" Or processor.Platform() ="raspberrypi" Or processor.Platform() = "emscripten" Or processor.Platform() = "ios")
 
 	compilerOptions.Add("bmxng", processor.BCCVersion() <> "BlitzMax")
+	compilerOptions.Add("coverage", opt_coverage)
 
 	compilerOptions.Add("musl", processor.Platform() = "linux" Or processor.Platform() ="raspberrypi")
 

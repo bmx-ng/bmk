@@ -369,6 +369,9 @@ Type TBuildManager Extends TCallback
 			If opt_gprof Then
 				cc_opts :+ " -pg"
 			End If
+			If opt_coverage Then
+				cc_opts :+ " -DBMX_COVERAGE"
+			End If
 		End If
 	
 		Local sb:TStringBuffer = New TStringBuffer
@@ -418,6 +421,9 @@ Type TBuildManager Extends TCallback
 			End If
 			If opt_standalone Then
 				sb.Append(" -ib")
+			End If
+			If opt_coverage Then
+				sb.Append(" -cov")
 			End If
 		End If
 
@@ -1304,6 +1310,9 @@ Type TBuildManager Extends TCallback
 				If opt_gprof Then
 					cc_opts :+ " -pg"
 				End If
+				If opt_coverage Then
+					cc_opts :+ " -DBMX_COVERAGE"
+				End If
 			End If
 
 			source.cc_opts = ""
@@ -1355,6 +1364,9 @@ Type TBuildManager Extends TCallback
 				End If
 				If opt_standalone Then
 					sb.Append(" -ib")
+				End If
+				If opt_coverage Then
+					sb.Append(" -cov")
 				End If
 			End If
 	
