@@ -10,7 +10,7 @@ Import brl.map
 
 Import "stringbuffer_core.bmx"
 
-Const BMK_VERSION:String = "3.52"
+Const BMK_VERSION:String = "3.53"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -62,6 +62,7 @@ Global opt_upx:Int
 Global opt_userdefs:String
 Global opt_gprof:Int
 Global opt_hi:Int
+Global opt_coverage:Int
 
 Global opt_dumpbuild
 
@@ -266,6 +267,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_gprof = True
 		Case "hi"
 			opt_hi = True
+		Case "cov"
+			opt_coverage = True
 		Default
 			CmdError "Invalid option '" + argv + "'"
 		End Select
@@ -340,6 +343,11 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t-b <custom appstub module>~n"
 		s:+ "~t~tBuilds an app using a custom appstub (i.e. not BRL.Appstub).~n"
 		s:+ "~t~tThis can be useful when you want more control over low-level application state."
+		s:+ "~n~n"
+		s:+ "~t-cov~n"
+		s:+ "~t~tBuilds a version with code coverage information.~n"
+		s:+ "~t~tBy default, when the application ends, an lcov.info is produced.~n"
+		s:+ "~t~tThis can be used by a variety of tools to generate coverage reports."
 		s:+ "~n~n"
 		s:+ "~t-d | -debug~n"
 		s:+ "~t~tBuilds a debug version. (This is the default for makeapp)."

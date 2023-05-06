@@ -128,6 +128,9 @@ Function SetConfigMung()
 		If processor.BCCVersion() = "BlitzMax" Then
 			If opt_threaded opt_configmung:+".mt"
 		End If
+		If opt_coverage Then
+			opt_configmung :+ ".cov"
+		End If
 		opt_configmung="."+opt_configmung+"."+processor.Platform()+"."'+opt_arch
 	Else
 		opt_debug=True
