@@ -9,8 +9,7 @@ Import Pub.MacOS
 Import brl.map
 
 Import "stringbuffer_core.bmx"
-
-Const BMK_VERSION:String = "3.53"
+Import "version.bmx"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
