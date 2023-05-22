@@ -347,6 +347,24 @@ Type TBMK
 		End If
 	End Method
 
+	Method OSPlatform:String()
+?raspberrypi
+		Return "raspberrypi"
+?android
+		Return "android"
+?macos
+		Return "macos"
+?linux
+		Return "linux"
+?win32
+		Return "win32"
+?emscripten
+		Return "emscripten"
+?haiku
+		Return "haiku"
+?
+	End Method
+
 	'returns the app type as a string ("gui", "console" ...)
 	Method AppType:String()
 		Return opt_apptype

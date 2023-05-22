@@ -1,3 +1,9 @@
+## [3.54] - 2023-05-22
+### Added
+ - Cross-compile improvements.
+### Changed
+ - Version number is now in its own file to assist auto-builds.
+
 ## [3.53] - 2023-05-06
 ### Added
  - Coverage generation with -cov option.
