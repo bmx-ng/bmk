@@ -274,7 +274,10 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	End If
 	
 	If processor.Platform() = "win32"
-
+		Local ext:String = ""
+?win32
+		ext = ".exe"
+?
 		Local version:Int = Int(processor.GCCVersion(True))
 		Local usingLD:Int = False
 
@@ -299,7 +302,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		End If
 
 		If usingLD Then
-			sb.Append(CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))).Append(" -stack 4194304")
+			sb.Append(CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld" + ext))).Append(" -stack 4194304")
 
 			If Not opt_debug And Not opt_gdbdebug Then
 				sb.Append(processor.option("strip.debug", " -s "))
@@ -310,7 +313,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 			End If
 		Else
 			Local prefix:String = processor.MinGWExePrefix()
-			sb.Append(CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/" + prefix + "g++.exe")))
+			sb.Append(CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/" + prefix + "g++" + ext)))
 
 			If Not processor.HasClang() Then
 				If version < 60000 Then
