@@ -564,6 +564,11 @@ Type TBMK
 			process.Close()
 		End If
 
+		If Int(globals.Get("verbose")) Or opt_verbose
+			Print "Compiler : " + compiler
+			Print "Is clang : " + _clang
+		End If
+
 		' get version
 		If Platform() = "win32" Then
 			process = CreateProcess(Option("path_to_gcc", MinGWBinPath() + "/gcc.exe") + " -dumpversion -dumpfullversion", HIDECONSOLE)
@@ -606,7 +611,12 @@ Type TBMK
 				Return version
 			End If
 		End If
-		
+
+		If Int(globals.Get("verbose")) Or opt_verbose
+			Print "Version     : " + version
+			Print "Raw version : " + rawVersion
+		End If
+
 		Return compiler + " " + version
 '?
 	End Method

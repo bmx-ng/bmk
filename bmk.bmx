@@ -19,14 +19,14 @@ args=ParseConfigArgs( AppArgs[2..], processor.BCCVersion() = "BlitzMax" )
 ' validate the platform configuration
 ValidatePlatformArchitecture()
 
-' pre-init gcc version cache
-processor.GCCVersion()
-
 ' preload the default options
 processor.RunCommand("default_cc_opts", Null)
 
 ' load any global custom options (in BlitzMax/bin)
 LoadOptions
+
+' pre-init gcc version cache
+processor.GCCVersion()
 
 CreateDir BlitzMaxPath()+"/tmp"
 
