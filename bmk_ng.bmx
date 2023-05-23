@@ -544,8 +544,10 @@ Type TBMK
 			If Not process.Status() And Not line Then
 				Exit
 			End If
+
+			Local parts:String[] = line.Split(" ")
 			
-			If line.startswith("gcc") Then
+			If line.startswith("gcc") or parts[0].EndsWith("gcc") Then
 				compiler = "gcc"
 			Else If line.startswith("Target:") Then
 				_target = line[7..].Trim()
