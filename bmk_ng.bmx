@@ -589,11 +589,24 @@ Type TBMK
 			If Not rawVersion and line Then
 				rawVersion = line.Trim()
 
-				Local values:String[] = rawVersion.split(".")
-				For Local v:String = EachIn values
-					Local n:String = "0" + v
-					s:+ n[n.length - 2..]
+				Local count:Int = 0
+				Local parts:String[] = rawVersion.split("-")  ' First split by "-"
+				For Local part:String = EachIn parts
+					Local values:String[] = part.split(".")  ' Then split by "."
+					For Local v:String = EachIn values
+						If IsNumeric(v)
+							Local n:String = "0" + v
+							s :+ n[n.length - 2..]
+							count :+ 1
+						EndIf
+					Next
 				Next
+
+				' Append "00" for each missing segment
+				For Local i:Int = count To 2
+					s:+ "00"
+				Next
+
 			End If
 		
 		Wend
@@ -620,6 +633,15 @@ Type TBMK
 		Return compiler + " " + version
 '?
 	End Method
+
+	Function IsNumeric:Int(value:String)
+		For Local i:Int = 0 Until value.length
+			If Not CharIsDigit(value[i]) Then
+				Return False
+			End If
+		Next
+		Return True
+	End Function
 
 	Method XCodeVersion:String()
 ?macos
