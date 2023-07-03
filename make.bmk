@@ -572,6 +572,13 @@
 
 	local windres =  bmk.MinGWExePrefix() .. "windres" .. ext
 	local windresPath = bmk.MinGWBinPath() .. "/" .. windres
+
+	if bmk.Option("path_to_windres", "") ~= "" then
+		windresPath = bmk.Option("path_to_windres", "")
+	end
+	if bmk.Option("name_of_windres", "") ~= "" then
+		windres = bmk.Option("name_of_windres", "")
+	end
 	
 	local outfile = %outfile%
 	local undecorated_outfile = outfile
