@@ -570,8 +570,9 @@
 		ext = ""
 	end
 
-	local windres =  bmk.MinGWExePrefix() .. "windres" .. ext
-	local windresPath = bmk.MinGWBinPath() .. "/" .. windres
+	local windres = bmk.Option("path_to_windres", bmk.MinGWBinPath() .. "/" .. bmk.MinGWExePrefix() .. "windres") .. ext
+	local windresExe = sys.StripDir(windres)
+	local windresDir = sys.ExtractDir(windres)
 	
 	local outfile = %outfile%
 	local undecorated_outfile = outfile
@@ -591,14 +592,14 @@
 		outfile = outfile .. decoration
 	end
 
-	if sys.FileType(windresPath) == 0 then
+	if sys.FileType(windres) == 0 then
 		if bmk.VerboseBuild() == 1 then
-			print("windres" .. ext .. " not found in '" .. bmk.MinGWBinPath() .. "'")
+			print(windresExe .. " not found in '" .. windresDir .. "'. Unable to apply any manifest files.")
 		end
 		return
 	end
 	
-	windres = bmk.Quote(windres)
+	windresExe = bmk.Quote(windresExe)
 	
 	if bmk.VerboseBuild() == 1 then
 		print("Compiling resources...")
@@ -753,11 +754,11 @@
 	
 		if futils.SaveText(resource_path, resource) then
 		
-			local cmd = windres .. " -i " .. bmk.Quote(resource_path) .. " -o " .. object_path
+			local cmd = windresExe .. " -i " .. bmk.Quote(resource_path) .. " -o " .. object_path
 
 			-- windres should be run from its location in order to avoid issues with spaces in paths
 			local cwd = sys.CurrentDir()
-			sys.ChangeDir(bmk.MinGWBinPath())
+			sys.ChangeDir(windresDir)
 			
 			bmk.Sys(cmd)
 			
