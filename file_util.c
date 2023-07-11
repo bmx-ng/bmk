@@ -1,4 +1,5 @@
 #include <utime.h>
+#include <time.h>
 #include "brl.mod/blitz.mod/blitz.h"
 
 void bmx_setfiletimenow(BBString * path) {
