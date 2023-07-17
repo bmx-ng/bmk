@@ -640,6 +640,7 @@ Function MakeBootstrap()
 	config.CopyAssets(bootstrapPath)
 
 	opt_release = True
+	opt_all = True
 
 	For Local target:TBootstrapTarget = EachIn config.targets
 		For Local app:TBootstrapAsset = EachIn config.assets
