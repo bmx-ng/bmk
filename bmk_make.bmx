@@ -7,12 +7,14 @@ Global cc_opts$
 Global bcc_opts$
 Global cpp_opts$
 Global c_opts$
+Global asm_opts:String
 
 Function BeginMake()
 	cc_opts=Null
 	cpp_opts=Null
 	c_opts=Null
 	bcc_opts=Null
+	asm_opts=Null
 	app_main=Null
 	opt_framework=""
 End Function
@@ -766,7 +768,7 @@ Type TBuildManager Extends TCallback
 							If m.path.EndsWith(".cpp") Or m.path.EndsWith(".cc") Or m.path.EndsWith(".mm") Or m.path.EndsWith(".cxx") Then
 								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.cpp_opts
 							ElseIf m.path.EndsWith(".S") Or m.path.EndsWith("asm") Then
-								AssembleNative m.path, m.obj_path
+								AssembleNative m.path, m.obj_path, m.asm_opts
 							Else
 								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.c_opts
 							End If
@@ -931,6 +933,7 @@ Type TBuildManager Extends TCallback
 							s.cc_opts :+ source.cc_opts
 							s.cpp_opts :+ source.cpp_opts
 							s.c_opts :+ source.c_opts
+							s.asm_opts :+ source.asm_opts
 							s.CopyIncludePaths(source.includePaths)
 							
 							CalculateDependencies(s, isMod, rebuildImports)
@@ -965,6 +968,7 @@ Type TBuildManager Extends TCallback
 							s.cc_opts = source.cc_opts
 							s.cpp_opts = source.cpp_opts
 							s.c_opts = source.c_opts
+							s.asm_opts = source.asm_opts
 							s.CopyIncludePaths(source.includePaths)
 							
 							source.deps.Insert(s.GetSourcePath(), s)
@@ -1088,6 +1092,7 @@ Type TBuildManager Extends TCallback
 						s.cc_opts = source.cc_opts
 						s.cpp_opts = source.cpp_opts
 						s.c_opts = source.c_opts
+						s.asm_opts = source.asm_opts
 						s.CopyIncludePaths(source.includePaths)
 					End If
 				Next
@@ -1320,10 +1325,12 @@ Type TBuildManager Extends TCallback
 				source.cc_opts :+ source.mod_opts.cc_opts
 				source.cpp_opts :+ source.mod_opts.cpp_opts
 				source.c_opts :+ source.mod_opts.c_opts
+				source.asm_opts :+ source.mod_opts.asm_opts
 			End If
 			source.cc_opts :+ cc_opts
 			source.cpp_opts :+ cpp_opts
 			source.c_opts :+ c_opts
+			source.asm_opts :+ asm_opts
 	
 			' Module BCC opts
 			Local sb:TStringBuffer = New TStringBuffer

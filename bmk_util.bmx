@@ -16,6 +16,7 @@ Type TModOpt ' BaH
 	Field ld_opts:TList = New TList
 	Field cpp_opts:String = ""
 	Field c_opts:String = ""
+	Field asm_opts:String = ""
 	
 	Method addOption(qval:String, path:String)
 		If qval.startswith("CC_OPTS") Then
@@ -24,6 +25,8 @@ Type TModOpt ' BaH
 			cpp_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
 		ElseIf qval.startswith("C_OPTS") Then
 			c_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
+		ElseIf qval.startswith("ASM_OPTS") Then
+			asm_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
 		ElseIf qval.startswith("LD_OPTS") Then
 			Local opt:String = ReQuote(qval[qval.find(":") + 1..].Trim())
 			
@@ -37,6 +40,8 @@ Type TModOpt ' BaH
 			setOption("cpp_opts", qval)
 		ElseIf qval.startswith("C_VOPT") Then
 			setOption("c_opts", qval)
+		ElseIf qval.startswith("ASM_VOPT") Then
+			setOption("asm_opts", qval)
 		ElseIf qval.startswith("LD_VOPT") Then
 			setOption("ld_opts", qval)
 		End If
@@ -62,6 +67,10 @@ Type TModOpt ' BaH
 		Return c_opts.find(value) >= 0
 	End Method
 
+	Method hasASMopt:Int(value:String)
+		Return asm_opts.find(value) >= 0
+	End Method
+
 	Method hasLDopt:Int(value:String)
 		For Local opt:String = EachIn ld_opts
 			If opt.find(value) >= 0 Then
@@ -73,6 +82,9 @@ Type TModOpt ' BaH
 
 	Function setPath:String(value:String, path:String)
 		If value.Contains("%PWD%") Then
+			If FileType(path) = FILETYPE_FILE Then
+				path = ExtractDir(path)
+			End If
 			Return value.Replace("%PWD%", path)
 		End If
 		
@@ -136,8 +148,8 @@ Function Assemble( src$,obj$ )
 	processor.RunCommand("assemble", [src, obj])
 End Function
 
-Function AssembleNative( src$, obj$ )
-	processor.RunCommand("assembleNative", [src, obj])
+Function AssembleNative( src$, obj$, opts:String )
+	processor.RunCommand("assembleNative", [src, obj, opts])
 End Function
 
 Function Fasm2As( src$,obj$ )
