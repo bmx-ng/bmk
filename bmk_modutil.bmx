@@ -69,6 +69,7 @@ Type TSourceFile
 	Field bcc_opts:String
 	Field cpp_opts:String
 	Field c_opts:String
+	Field asm_opts:String
 	
 	Field mod_opts:TModOpt
 	Field includePaths:TOrderedMap = New TOrderedMap
@@ -376,6 +377,7 @@ Type TSourceFile
 		source.merge_time = merge_time
 		source.cpp_opts = cpp_opts
 		source.c_opts = c_opts
+		source.asm_opts = asm_opts
 		source.CopyIncludePaths(includePaths)
 		source.maxLinkTimeCache = maxLinkTimeCache
 		source.maxIfaceTimeCache = maxIfaceTimeCache
@@ -632,6 +634,8 @@ Function ParseISourceFile:TSourceFile( path$ )
 				file.AddModOpt(qval) ' bmk2
 				'If mod_opts mod_opts.addOption(qval) ' BaH
 			EndIf
+		case "#pragma"
+			file.pragmas.AddLast val
 		End Select
 
 	Wend

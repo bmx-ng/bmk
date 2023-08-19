@@ -41,17 +41,56 @@
 	local src = nvl(arg1, %infile%)
 	local obj = nvl(arg2, %outfile%)
 
-	cmd = "as"
+	local nativeAssembler = bmk.Option("native.assembler", "as")
+	local asmPath = bmk.Option(bmk.BuildName(nativeAssembler), nativeAssembler)
+
+	cmd = asmPath
 	
-	if bmk.Platform() == "win32" then
-		if bmk.CPU() == "x86" then
-			cmd = cmd .. " -arch i686"
-		else
-			cmd = cmd .. " -arch generic64"
+	if nativeAssembler == "as" then
+		if bmk.Platform() == "win32" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -arch i686"
+			else
+				cmd = cmd .. " -arch generic64"
+			end
+		end
+
+		cmd = cmd .. " -W"
+	end
+
+	if nativeAssembler == "nasm" or nativeAssembler == "yasm" then
+		if bmk.Platform() == "win32" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -f win32"
+			else
+				cmd = cmd .. " -f win64"
+			end
+		end
+
+		if bmk.Platform() == "linux" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -f elf32"
+			else
+				cmd = cmd .. " -f elf64"
+			end
+		end
+
+		if bmk.Platform() == "macos" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -f macho32"
+			else
+				cmd = cmd .. " -f macho64"
+			end
 		end
 	end
 	
-	cmd = cmd .. " -W -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+	if nativeAssembler == "as" or nativeAssembler == "nasm" or nativeAssembler == "yasm" then
+		cmd = cmd .. " -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+	end
+
+	if nativeAssembler == "fasm" then
+		cmd = cmd .. " " .. bmk.Quote(src) .. " " .. bmk.Quote(obj)
+	end
 
 	if bmk.MultiSys(cmd, src, obj, "") ~= 0 then
 		bmk.ThrowNew("Build Error: Failed to assemble " .. src)
@@ -349,9 +388,17 @@
 	end
 @end
 
+@define addasmopt
+	globals.AddOption("asm_opts", arg1, arg2)
+@end
+
 ## removes a cc_opt option
 @define rmccopt
 	globals.Remove("cc_opts", arg1)
+@end
+
+@define rmasmopt
+	globals.Remove("asm_opts", arg1)
 @end
 
 @define addldopt
