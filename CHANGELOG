@@ -1,3 +1,9 @@
+## [3.56] - 2023-09-30
+### Fixed
+ - Bootstrap script progress echoes require quotes.
+### Changed
+ - Bootstrap config can now be delimited by any whitespace.
+
 ## [3.55] - 2023-08-19
 ### Added
  - Added support for different assemblers.
