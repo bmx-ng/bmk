@@ -1961,7 +1961,7 @@ Function LoadBootstrapConfig:TBootstrapConfig()
 		
 		'Local i:Int
 		For Local assetLine:String = EachIn assets
-			Local parts:String[] = assetLine.Split("~t")
+			Local parts:String[] = SplitByWhitespace(assetLine)
 			If parts And parts.length > 1 Then
 				Select parts[0]
 					Case "t"
@@ -1991,6 +1991,32 @@ Function LoadBootstrapConfig:TBootstrapConfig()
 	End If
 	
 End Function
+
+Function SplitByWhitespace:String[](input:String)
+    Local result:String[] = New String[0]
+    Local tempString:String = ""
+    
+    For Local i:Int = 0 Until input.Length
+        Local char:Int = input[i]
+
+		If char = 32 Or char = 9 Or char = 10 Or char = 13 Then
+
+			If tempString.Length > 0 Then
+                result :+ [tempString]
+                tempString = ""
+            End If
+        Else
+            tempString :+ Chr(char)
+        End If
+    Next
+    
+    If tempString.Length > 0 Then
+        result :+ [tempString]
+    End If
+    
+    Return result
+End Function
+
 
 Extern
 	Function bmx_setfiletimenow(path:String)

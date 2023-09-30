@@ -1034,7 +1034,7 @@ Type TBMK
 	End Method
 
 	Method PushEcho(cmd:String)
-		PushLog("echo " + cmd)
+		PushLog("echo ~q" + cmd + "~q")
 	End Method
 	
 	Method FixPaths:String(Text:String)
