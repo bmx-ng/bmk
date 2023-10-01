@@ -535,7 +535,7 @@ Type TBuildManager Extends TCallback
 							If m.requiresBuild Or (m.time > m.gen_time Or m.iface_time < m.MaxIfaceTime() Or Not m.MaxIfaceTime()) Then
 
 								If Not opt_quiet Then
-									Print ShowPct(m.pct) + "Processing:" + StripDir(m.path)
+									Print ShowPct(m.pct) + "Processing:" + ShortenFilepath(m.path)
 								End If
 
 								' process pragmas
@@ -583,7 +583,7 @@ Type TBuildManager Extends TCallback
 									Local cobj_path:String = StripExt(m.obj_path) + ".o"
 
 									If Not opt_quiet Then
-										Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(csrc_path)
+										Local s:String = ShowPct(m.pct) + "Compiling:" + ShortenFilepath(csrc_path)
 										If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
 										Print s
 									End If
@@ -601,7 +601,7 @@ Type TBuildManager Extends TCallback
 									Local obj_path:String = StripExt(m.obj_path) + ".o"
 
 									If Not opt_quiet Then
-										Print ShowPct(m.pct) + "Compiling:" + StripDir(src_path)
+										Print ShowPct(m.pct) + "Compiling:" + ShortenFilepath(src_path)
 									End If
 
 									Assemble src_path, obj_path
@@ -620,7 +620,7 @@ Type TBuildManager Extends TCallback
 								m.GetObjs(objs)
 	
 								If Not opt_quiet Then
-									Local s:String = ShowPct(m.pct) + "Archiving:" + StripDir(m.arc_path)
+									Local s:String = ShowPct(m.pct) + "Archiving:" + ShortenFilepath(m.arc_path)
 									If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
 									Print s
 								End If
@@ -736,7 +736,7 @@ Type TBuildManager Extends TCallback
 					If m.requiresBuild Then
 
 						If Not opt_quiet Then
-							Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+							Local s:String = ShowPct(m.pct) + "Compiling:" + ShortenFilepath(m.path)
 							If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
 							Print s
 						End If
@@ -760,7 +760,7 @@ Type TBuildManager Extends TCallback
 						If m.requiresBuild Then
 	
 							If Not opt_quiet Then
-								Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
+								Local s:String = ShowPct(m.pct) + "Compiling:" + ShortenFilepath(m.path)
 								If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
 								Print s
 							End If

@@ -11,6 +11,26 @@ Const USE_NASM:Int=False
 Const CC_WARNINGS:Int=False'True
 Const IOS_HAS_MERGE:Int = False
 
+Function ShortenFilepath:String(Filepath:String)
+	Local FilepathLength:Int = Filepath.Length
+
+	Local Index:Int = 0, Count:Int = 0
+	For Index = FilepathLength To 1 Step -1
+		If Filepath[Index] = Asc("/") Or Filepath[Index] = Asc("\")..
+			Count :+1
+
+		If Count = 2
+			If Filepath[Index..Index + 5] = "/.bmx"..
+				Count = 1
+		EndIf
+
+		If Count = 2..
+			Exit
+	Next
+
+	Return ".." + Filepath[Index..]
+EndFunction
+
 Type TModOpt ' BaH
 	Field cc_opts:String = ""
 	Field ld_opts:TList = New TList
