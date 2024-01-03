@@ -62,6 +62,7 @@ Global opt_userdefs:String
 Global opt_gprof:Int
 Global opt_hi:Int
 Global opt_coverage:Int
+Global opt_no_auto_superstrict:Int
 
 Global opt_dumpbuild
 
@@ -268,6 +269,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_hi = True
 		Case "cov"
 			opt_coverage = True
+		Case "nas"
+			opt_no_auto_superstrict = True
 		Default
 			CmdError "Invalid option '" + argv + "'"
 		End Select
