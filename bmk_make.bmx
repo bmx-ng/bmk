@@ -427,6 +427,9 @@ Type TBuildManager Extends TCallback
 			If opt_coverage Then
 				sb.Append(" -cov")
 			End If
+			If opt_no_auto_superstrict Then
+				sb.Append(" -nas")
+			End If
 		End If
 
 		source.cc_opts :+ cc_opts
@@ -1374,6 +1377,9 @@ Type TBuildManager Extends TCallback
 				End If
 				If opt_coverage Then
 					sb.Append(" -cov")
+				End If
+				If opt_no_auto_superstrict Then
+					sb.Append(" -nas")
 				End If
 			End If
 	
