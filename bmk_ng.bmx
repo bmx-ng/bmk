@@ -9,6 +9,7 @@ Import Pub.FreeProcess
 
 ?threaded
 Import BRL.Threads
+Import "bmk_proc_man.bmx"
 ?
 ?Not win32
 Import "waitpid.c"
@@ -52,6 +53,7 @@ Type TBMK
 	Field _minGWLinkPaths:String
 	Field _minGWDLLCrtPath:String
 	Field _minGWCrtPath:String
+	Field _minGWExePrefix:String
 	
 	Field callback:TCallback
 	Field _appSettings:TMap
@@ -68,6 +70,7 @@ Type TBMK
 		_minGWLinkPaths = Null
 		_minGWDLLCrtPath = Null
 		_minGWCrtPath = Null
+		_minGWExePrefix = Null
 	End Method
 
 	' loads a .bmk, stores any functions, and runs any commands.
@@ -335,11 +338,31 @@ Type TBMK
 			Return "win32"
 ?emscripten
 			Return "emscripten"
+?haiku
+			Return "haiku"
 ?
 		Else
 			' the custom target platform
 			Return opt_target_platform
 		End If
+	End Method
+
+	Method OSPlatform:String()
+?raspberrypi
+		Return "raspberrypi"
+?android
+		Return "android"
+?macos
+		Return "macos"
+?linux
+		Return "linux"
+?win32
+		Return "win32"
+?emscripten
+		Return "emscripten"
+?haiku
+		Return "haiku"
+?
 	End Method
 
 	'returns the app type as a string ("gui", "console" ...)
@@ -358,11 +381,16 @@ Type TBMK
 		If opt_universal Then
 			Select Platform()
 				Case "macos"
-					If opt_arch = "ppc" Then
-						opt_arch = "x86"
-					Else
-						opt_arch = "ppc"
-					End If
+					Select CPU()
+						Case "ppc"
+							opt_arch = "x86"
+						Case "x86"
+							opt_arch = "ppc"
+						Case "x64"
+							opt_arch = "arm64"
+						Case "arm64"
+							opt_arch = "x64"
+					End Select
 				Case "ios"
 					Select CPU()
 						Case "x86"
@@ -499,11 +527,10 @@ Type TBMK
 
 		Local process:TProcess
 		If Platform() = "win32" Then
-			process = CreateProcess(MinGWBinPath() + "/gcc.exe -v")
+			process = CreateProcess(Option("path_to_gcc", MinGWBinPath() + "/gcc.exe") + " --version", HIDECONSOLE)
 		Else	
-			process = CreateProcess("gcc -v")
+			process = CreateProcess("gcc --version")
 		End If
-		Local s:String
 		
 		If Not process Then
 			Throw "Cannot find a valid GCC compiler. Please check your paths and environment."
@@ -512,34 +539,82 @@ Type TBMK
 		While True
 			Delay 10
 			
-			Local line:String = process.err.ReadLine()
+			Local line:String = process.pipe.ReadLine()
 
 			If Not process.Status() And Not line Then
 				Exit
 			End If
+
+			Local parts:String[] = line.Split(" ")
 			
-			If line.startswith("gcc") Then
+			If line.startswith("gcc") or parts[0].EndsWith("gcc") Then
 				compiler = "gcc"
-				Local parts:String[] = line.split(" ")
-				
-				rawVersion = parts[2].Trim()
-				Local values:String[] = parts[2].split(".")
-				For Local v:String = EachIn values
-					Local n:String = "0" + v
-					s:+ n[n.length - 2..]
-				Next
 			Else If line.startswith("Target:") Then
 				_target = line[7..].Trim()
 			Else
 				Local pos:Int = line.Find("clang")
 				If pos >= 0 Then
 					compiler = "clang"
-					s = line[pos + 6..line.find(")", pos)]
+					_clang = True
 				End If
 			End If
 			
 		Wend
+		If process Then
+			process.Close()
+		End If
+
+		If Int(globals.Get("verbose")) Or opt_verbose
+			Print "Compiler : " + compiler
+			Print "Is clang : " + _clang
+		End If
+
+		' get version
+		If Platform() = "win32" Then
+			process = CreateProcess(Option("path_to_gcc", MinGWBinPath() + "/gcc.exe") + " -dumpversion -dumpfullversion", HIDECONSOLE)
+		Else	
+			process = CreateProcess("gcc -dumpversion -dumpfullversion")
+		End If
+		Local s:String
 		
+		While True
+			Delay 10
+			
+			Local line:String = process.pipe.ReadLine()
+
+			If Not process.Status() And Not line Then
+				Exit
+			End If
+			
+			If Not rawVersion and line Then
+				rawVersion = line.Trim()
+
+				Local count:Int = 0
+				Local parts:String[] = rawVersion.split("-")  ' First split by "-"
+				For Local part:String = EachIn parts
+					Local values:String[] = part.split(".")  ' Then split by "."
+					For Local v:String = EachIn values
+						If IsNumeric(v)
+							Local n:String = "0" + v
+							s :+ n[n.length - 2..]
+							count :+ 1
+						EndIf
+					Next
+				Next
+
+				' Append "00" for each missing segment
+				For Local i:Int = count To 2
+					s:+ "00"
+				Next
+
+			End If
+		
+		Wend
+	
+		If process Then
+			process.Close()
+		End If
+
 		version = s
 		
 		If getVersionNum Then
@@ -549,12 +624,72 @@ Type TBMK
 				Return version
 			End If
 		End If
-		
+
+		If Int(globals.Get("verbose")) Or opt_verbose
+			Print "Version     : " + version
+			Print "Raw version : " + rawVersion
+		End If
+
 		Return compiler + " " + version
 '?
 	End Method
-	
+
+	Function IsNumeric:Int(value:String)
+		For Local i:Int = 0 Until value.length
+			If Not CharIsDigit(value[i]) Then
+				Return False
+			End If
+		Next
+		Return True
+	End Function
+
+	Method XCodeVersion:String()
+?macos
+		Global xcode:String
+		Global version:String
+		
+		If xcode Then
+			Return version
+		End If
+
+		Local process:TProcess
+		process = CreateProcess(Option(BuildName("xcodebuild"), "xcodebuild") + " -version")
+
+		Local s:String
+		
+		If Not process Then
+			Throw "Cannot find xcodebuild. Please check your paths and environment."
+		End If
+		
+		While True
+			Delay 10
+			
+			Local line:String = process.pipe.ReadLine()
+
+			If Not process.Status() And Not line Then
+				Exit
+			End If
+			
+			If line.startswith("Xcode") Then
+				xcode = line
+				Local parts:String[] = line.split(" ")
+				
+				version =parts[1].Trim()
+			End If
+			
+		Wend
+		If process Then
+			process.Close()
+		End If
+		
+		Return version
+?Not macos
+		Return Null
+?
+	End Method
+
 	Global _target:String
+	Global _clang:Int
 	
 	Method HasTarget:Int(find:String)
 		
@@ -575,6 +710,10 @@ Type TBMK
 	Method GCCVersionInt:Int()
 	End Method
 
+	Method HasClang:Int()
+		Return _clang
+	End Method
+
 	Method BCCVersion:String()
 
 		Global bcc:String
@@ -584,11 +723,11 @@ Type TBMK
 		End If
 
 		Local exe:String = "bcc"
-		If Platform() = "win32" Then
+		If OSPlatform() = "win32" Then
 			exe :+ ".exe"
 		End If
 
-		Local process:TProcess = CreateProcess(CQuote(BlitzMaxPath() + "/bin/" + exe))
+		Local process:TProcess = CreateProcess(CQuote(BlitzMaxPath() + "/bin/" + exe), HIDECONSOLE)
 		Local s:String
 		
 		If Not process Then
@@ -611,6 +750,9 @@ Type TBMK
 			End If
 			
 		Wend
+		If process Then
+			process.Close()
+		End If
 
 		Return bcc
 	End Method
@@ -646,11 +788,32 @@ Type TBMK
 				_minGWPath = BlitzMaxPath() + cpuMinGW 
 				Return _minGWPath
 			End If
-			
+
 			path = BlitzMaxPath() + "/MinGW32/bin"
 			If FileType(path) = FILETYPE_DIR Then
 				' bin dir exists, go with that
 				_minGWPath = BlitzMaxPath() + "/MinGW32"
+				Return _minGWPath
+			End If
+
+			path = BlitzMaxPath() + "/MinGW32x86/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_minGWPath = BlitzMaxPath() + "/MinGW32x86" 
+				Return _minGWPath
+			End If
+
+			path = BlitzMaxPath() + "/MinGW32x64/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_minGWPath = BlitzMaxPath() + "/MinGW32x64" 
+				Return _minGWPath
+			End If
+
+			path = BlitzMaxPath() + "/llvm-mingw/bin"
+			If FileType(path) = FILETYPE_DIR Then
+				' bin dir exists, go with that
+				_minGWPath = BlitzMaxPath() + "/llvm-mingw"
 				Return _minGWPath
 			End If
 
@@ -676,7 +839,18 @@ Type TBMK
 		If Not _minGWLinkPaths Then
 			Local links:String
 			
-			If processor.HasTarget("x86_64") Then
+			If HasClang() Then
+				Select processor.CPU()
+					Case "x86"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/i686-w64-mingw32/lib"))
+					Case "x64"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib"))
+					Case "armv7"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/armv7-w64-mingw32/lib"))
+					Case "arm64"
+						links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/aarch64-w64-mingw32/lib"))
+				End Select
+			Else If processor.HasTarget("x86_64") Then
 				If processor.CPU()="x86" Then
 					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/lib/gcc/x86_64-w64-mingw32/" + GCCVersion(True, True) + "/32"))
 					links :+ " -L" +  CQuote(RealPath(MinGWPath() + "/x86_64-w64-mingw32/lib32"))
@@ -768,9 +942,32 @@ Type TBMK
 		
 		Return RealPath(_minGWCrtPath)
 	End Method
+
+	Method MinGWExePrefix:String()
+		If Not _minGWExePrefix Then
+			GCCVersion()
+			If processor.HasClang() Then
+				Select processor.CPU()
+					Case "x86"
+						_minGWExePrefix = "i686-w64-mingw32uwp-"
+					Case "x64"
+						_minGWExePrefix = "x86_64-w64-mingw32uwp-"
+					Case "armv7"
+						_minGWExePrefix = "armv7-w64-mingw32-"
+					Case "arm64"
+						_minGWExePrefix = "aarch64-w64-mingw32-"
+				End Select
+			End If
+		End If
+		Return _minGWExePrefix
+	End Method
 	
 	Method IsDebugBuild:Int()
 		Return opt_debug
+	End Method
+
+	Method IsGdbDebugBuild:Int()
+		Return opt_gdbdebug
 	End Method
 
 	Method IsReleaseBuild:Int()
@@ -837,7 +1034,7 @@ Type TBMK
 	End Method
 
 	Method PushEcho(cmd:String)
-		PushLog("echo " + cmd)
+		PushLog("echo ~q" + cmd + "~q")
 	End Method
 	
 	Method FixPaths:String(Text:String)
@@ -978,13 +1175,13 @@ Type TBMKGlobals
 	End Method
 	
 	' adds value to the end of variable
-	Method Add(variable:String, value:String)
+	Method Add(variable:String, value:String, once:Int = False)
 		If Not AsConfigurable(variable.ToLower(), value) Then
 			variable = variable.ToUpper()
 	
 			Local v:Object = vars.ValueForKey(variable)
 			If Not TOptionVariable(v) Then
-				If v Then
+				If v And Not once Then
 					SetVar(variable, String(v) + " " + value)
 				Else
 					SetVar(variable, value)
@@ -1396,56 +1593,21 @@ Type TBMKCommand
 
 End Type
 
-?threaded
-Type TProcessManager
-
-	Field pool:TThreadPool
-	
-	Field cpuCount:Int
-	
-	Field threads:TList = New TList
-	
-	Method New()
-		cpuCount = GetCoreCount()
-		
-		pool = TThreadPool.Create(Max(1, cpuCount - 1), cpuCount * 6)
-		
-	End Method
-
-	Method CheckTasks()
-		While pool.count() = pool.Size()
-			Delay 5
-		Wend
-	End Method
-	
-	Method WaitForTasks()
-		While pool.Count() Or pool.Running()
-			Delay 5
-		Wend
-	End Method
-	
-	Method DoSystem(cmd:String, src:String, obj:String, supp:String)
-		CheckTasks()
-
-		pool.AddTask(TProcessTask._DoTasks, New TProcessTask.Create(cmd, src, obj, supp))
-
-	End Method
-
-	Method AddTask:Int(func:Object(data:Object), data:Object)
-		CheckTasks()
-
-		pool.AddTask(func, data)
-	End Method
-	
-End Type
-
 ?Not win32
 Extern
 	Function bmx_system:Int(cmd:Byte Ptr)
 End Extern
 ?
 
-Type TProcessTask
+Type TProcessTaskFactoryImpl Extends TProcessTaskFactory
+	Method Create:TProcessTask( cmd:String, src:String, obj:String, supp:String )
+		Return new TProcessTaskImpl.Create(cmd, src, obj, supp)
+	End Method
+End Type
+
+new TProcessTaskFactoryImpl
+
+Type TProcessTaskImpl Extends TProcessTask
 
 	Field command:String
 	Field source:String
@@ -1460,10 +1622,6 @@ Type TProcessTask
 		Self.supp = supp
 		Return Self
 	End Method
-
-	Function _DoTasks:Object(data:Object)
-		Return TProcessTask(data).DoTasks()
-	End Function
 	
 	Method DoTasks:Object()
 		Local res:Int
@@ -1503,204 +1661,4 @@ End Type
 
 ?threaded
 Global processManager:TProcessManager = New TProcessManager
-
-Rem
-bbdoc: A thread pool.
-End Rem
-Type TThreadPool
-
-	Field _threads:TThread[]
-	Field _queue:TThreadPoolTask[]
-	
-	Field _lock:TMutex
-	Field _waitVar:TCondVar
-	
-	Field _count:Int
-	Field _head:Int
-	Field _tail:Int
-	Field _running:Int
-	
-	Field _shutdown:Int
-
-	Rem
-	bbdoc: Creates a new thread pool of @threadCount threads and a queue size of @queueSize.
-	End Rem
-	Function Create:TThreadPool(threadCount:Int, queueSize:Int)
-		Local pool:TThreadPool = New TThreadPool
-		pool._threads = New TThread[threadCount]
-		pool._queue = New TThreadPoolTask[queueSize]
-		
-		pool._lock = TMutex.Create()
-		pool._waitVar = TCondVar.Create()
-		
-		For Local i:Int = 0 Until threadCount
-			pool._threads[i] = TThread.Create(_ThreadPoolThread, pool)
-		Next
-		
-		' cache tasks
-		For Local i:Int = 0 Until queueSize
-			pool._queue[i] = New TThreadPoolTask
-		Next
-		
-		Return pool
-	End Function
-	
-	Rem
-	bbdoc: Returns the number of tasks in the queue.
-	End Rem
-	Method Count:Int()
-		Return _count
-	End Method
-	
-	Rem
-	bbdoc: Returns the size of the queue.
-	End Rem
-	Method Size:Int()
-		Return _queue.length
-	End Method
-	
-	Rem
-	bbdoc: Returns the number of busy/running threads.
-	End Rem
-	Method Running:Int()
-		Return _running
-	End Method
-	
-	Rem
-	bbdoc: Adds a task to the queue.
-	End Rem
-	Method AddTask:Int(func:Object(data:Object), data:Object)
-	
-		Local result:Int = True
-	
-		_lock.Lock()
-		
-		Local slot:Int = _tail + 1
-		If slot = _queue.length Then
-			slot = 0
-		End If
-		
-		While True
-		
-			If _count = _queue.length Then
-				result = False
-				Exit
-			End If
-		
-			If _shutdown Then
-				result = False
-				Exit
-			End If
-			
-			_queue[_tail].func = func
-			_queue[_tail].data = data
-			_tail = slot
-			_count :+ 1
-			
-			_waitVar.Broadcast()
-			
-			Exit
-		Wend
-		
-		_lock.Unlock()
-		
-		Return result
-	End Method
-	
-	Rem
-	bbdoc: Shutdown the pool.
-	about: If @immediately is False, the queue will be processed to the end.
-	End Rem
-	Method Shutdown(immediately:Int = False)
-		_lock.Lock()
-		
-		While True
-		
-			If _shutdown Then
-				Return
-			End If
-			
-			If immediately Then
-				_shutdown = 2
-			Else
-				_shutdown = 1
-			End If
-		
-			_waitVar.Broadcast()
-			_lock.Unlock()
-			
-			For Local i:Int = 0 Until _threads.length
-				_threads[i].Wait()
-			Next
-		
-			Exit
-		Wend
-		
-		_lock.Lock()
-		_lock.Close()
-		_waitVar.Close()
-		
-	End Method
-	
-	Function _ThreadPoolThread:Object(data:Object)
-		Local pool:TThreadPool = TThreadPool(data)
-		
-		While True
-		
-			pool._lock.Lock()
-			
-			While pool._count = 0 And Not pool._shutdown
-				pool._waitVar.Wait(pool._lock)
-				Delay 5
-			Wend
-			
-			If pool._shutdown And pool._count = 0 Then
-				' time to finish
-				Exit
-			End If
-			
-			Local task:TThreadPoolTask = pool._queue[pool._head]
-			
-			Local func:Object(data:Object) = task.func
-			Local data:Object = task.data
-			
-			pool._head :+ 1
-			
-			If pool._head = pool._queue.length Then
-				pool._head = 0
-			End If
-			
-			' less queue
-			pool._count :- 1
-			' more running threads
-			pool._running :+ 1
-			
-			pool._lock.Unlock()
-			
-			' perform a task
-			func(data)
-			
-			pool._lock.Lock()
-			pool._running :- 1
-			pool._lock.Unlock()
-		Wend
-		
-		pool._lock.Unlock()
-		
-	End Function
-	
-	Method Delete()
-		Shutdown()
-	End Method
-	
-End Type
-
-Type TThreadPoolTask
-
-	Field func:Object(data:Object)
-	Field data:Object
-	
-End Type
-
 ?
-

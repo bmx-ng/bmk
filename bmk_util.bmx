@@ -3,6 +3,7 @@ SuperStrict
 Import "bmk_config.bmx"
 Import "bmk_ng.bmx"
 Import "file_util.c"
+Import "hash.c"
 
 'OS X Nasm doesn't work? Used to produce incorrect reloc offsets - haven't checked for a while 
 Const USE_NASM:Int=False
@@ -15,6 +16,7 @@ Type TModOpt ' BaH
 	Field ld_opts:TList = New TList
 	Field cpp_opts:String = ""
 	Field c_opts:String = ""
+	Field asm_opts:String = ""
 	
 	Method addOption(qval:String, path:String)
 		If qval.startswith("CC_OPTS") Then
@@ -23,6 +25,8 @@ Type TModOpt ' BaH
 			cpp_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
 		ElseIf qval.startswith("C_OPTS") Then
 			c_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
+		ElseIf qval.startswith("ASM_OPTS") Then
+			asm_opts:+ " " + setPath(ReQuote(qval[qval.find(":") + 1..].Trim()), path)
 		ElseIf qval.startswith("LD_OPTS") Then
 			Local opt:String = ReQuote(qval[qval.find(":") + 1..].Trim())
 			
@@ -30,8 +34,26 @@ Type TModOpt ' BaH
 				opt = "-L" + CQuote(opt[2..])
 			End If
 			ld_opts.addLast opt
+		ElseIf qval.startswith("CC_VOPT") Then
+			setOption("cc_opts", qval)
+		ElseIf qval.startswith("CPP_VOPT") Then
+			setOption("cpp_opts", qval)
+		ElseIf qval.startswith("C_VOPT") Then
+			setOption("c_opts", qval)
+		ElseIf qval.startswith("ASM_VOPT") Then
+			setOption("asm_opts", qval)
+		ElseIf qval.startswith("LD_VOPT") Then
+			setOption("ld_opts", qval)
 		End If
 	End Method
+
+	Function setOption(option:String, qval:String)
+		Local opt:String = qval[qval.find(":") + 1..].Trim()
+		Local parts:String[] = opt.Split("|")
+		If parts.length = 2 Then
+			globals.SetOption(option, parts[0].trim(), parts[1].Trim())
+		End If
+	End Function
 	
 	Method hasCCopt:Int(value:String)
 		Return cc_opts.find(value) >= 0
@@ -45,6 +67,10 @@ Type TModOpt ' BaH
 		Return c_opts.find(value) >= 0
 	End Method
 
+	Method hasASMopt:Int(value:String)
+		Return asm_opts.find(value) >= 0
+	End Method
+
 	Method hasLDopt:Int(value:String)
 		For Local opt:String = EachIn ld_opts
 			If opt.find(value) >= 0 Then
@@ -56,6 +82,9 @@ Type TModOpt ' BaH
 
 	Function setPath:String(value:String, path:String)
 		If value.Contains("%PWD%") Then
+			If FileType(path) = FILETYPE_FILE Then
+				path = ExtractDir(path)
+			End If
 			Return value.Replace("%PWD%", path)
 		End If
 		
@@ -119,8 +148,8 @@ Function Assemble( src$,obj$ )
 	processor.RunCommand("assemble", [src, obj])
 End Function
 
-Function AssembleNative( src$, obj$ )
-	processor.RunCommand("assembleNative", [src, obj])
+Function AssembleNative( src$, obj$, opts:String )
+	processor.RunCommand("assembleNative", [src, obj, opts])
 End Function
 
 Function Fasm2As( src$,obj$ )
@@ -206,26 +235,39 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	If opt_standalone tmpfile = String(globals.GetRawVar("EXEPATH")) + "/ld." + processor.AppDet() + ".txt.tmp"
 	
 	If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
-		sb.Append("g++")
+		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
 
-		If processor.CPU()="ppc" 
-			sb.Append(" -arch ppc" )
-		Else If processor.CPU()="x86"
-			sb.Append(" -arch i386 -read_only_relocs suppress")
-		Else
-			sb.Append(" -arch x86_64")
-		EndIf
+		Select processor.CPU()
+			Case "ppc" 
+				sb.Append(" -arch ppc" )
+			Case "x86"
+				sb.Append(" -arch i386 -read_only_relocs suppress")
+			Case "x64"
+				sb.Append(" -arch x86_64")
+			Case "arm64"
+				sb.Append(" -arch arm64")
+		End Select
+	
+		If processor.Option(processor.BuildName("sysroot"), "") Then
+			sb.Append(" -isysroot ").Append(processor.Option(processor.BuildName("sysroot"), ""))
+		End If
 	
 		sb.Append(" -o ").Append(CQuote( path ))
 	
-		sb.Append(" ").Append(CQuote("-L" +CQuote( BlitzMaxPath()+"/lib" ) ))
+		If opt_debug Or opt_gdbdebug Then
+			sb.Append(" -g")
+		End If
+
+		If processor.BCCVersion() = "BlitzMax" Then
+			sb.Append(" ").Append(CQuote("-L" +CQuote( BlitzMaxPath()+"/lib" ) ))
+		End If
 	
 		If Not opt_dumpbuild Then
 			sb.Append(" -filelist ").Append(CQuote( tmpfile ))
 		End If
 
 		For Local t$=EachIn lnk_files
-			If opt_dumpbuild Or (t[..1]="-")
+			If opt_dumpbuild Or (t[..1]="-") Or (t[..1]="`")
 				sb.Append(" ").Append(t) 
 			Else
 				fb.Append(t).Append(Chr(10))
@@ -244,9 +286,18 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	End If
 	
 	If processor.Platform() = "win32"
+		Local ext:String = ""
+?win32
+		ext = ".exe"
+?
 		Local version:Int = Int(processor.GCCVersion(True))
 		Local usingLD:Int = False
-		
+
+		Local options:TStringBuffer = fb
+		If processor.HasClang() Then
+			options = sb
+		End If
+
 		' always use g++ instead of LD...
 		' uncomment if we want to change to only use LD for GCC's < 4.x
 		'If version < 40000 Then
@@ -263,21 +314,30 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		End If
 
 		If usingLD Then
-			sb.Append(CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld.exe"))).Append(" -stack 4194304")
-			sb.Append(processor.option("strip.debug", " -s "))
+			sb.Append(CQuote(processor.Option("path_to_ld", processor.MinGWBinPath()+ "/ld" + ext))).Append(" -stack 4194304")
+
+			If Not opt_debug And Not opt_gdbdebug Then
+				sb.Append(processor.option("strip.debug", " -s "))
+			End If
+
 			If opt_apptype="gui" Then
 				sb.Append(" -subsystem windows")
 			End If
 		Else
-			sb.Append(CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/g++.exe")))
+			Local prefix:String = processor.MinGWExePrefix()
+			sb.Append(CQuote(processor.Option("path_to_gpp", processor.MinGWBinPath() + "/" + prefix + "g++" + ext)))
 
-			If version < 60000 Then
-				sb.Append(" --stack=4194304")
-			Else
-				sb.Append(" -Wl,--stack,4194304")
+			If Not processor.HasClang() Then
+				If version < 60000 Then
+					sb.Append(" --stack=4194304")
+				Else
+					sb.Append(" -Wl,--stack,4194304")
+				End If
 			End If
 
-			sb.Append(processor.option("strip.debug", " -s "))
+			If Not opt_debug And Not opt_gdbdebug Then
+				sb.Append(processor.option("strip.debug", " -s "))
+			End If
 			If opt_apptype="gui"
 				If version < 60000 Then
 					sb.Append(" --subsystem,windows -mwindows")
@@ -348,7 +408,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 			If version < 60000 Then
 				sb.Append(" --out-implib ").Append(CQuote( imp ))
 				If usingLD Then
-					fb.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) ))
+					options.Append(" ").Append(CQuote( RealPath(processor.Option("path_to_mingw_lib", processor.MinGWDLLCrtPath()) + "/dllcrt2.o" ) ))
 				End If
 			Else
 				sb.Append(" -Wl,--out-implib,").Append(CQuote( imp ))
@@ -363,84 +423,103 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		Local xpmanifest$
 		For Local f$=EachIn lnk_files
 			Local t$=CQuote( f )
+			If processor.HasClang() Then
+				If f.StartsWith("-l") Then
+					f = f.Replace(" ", "~n")
+				End If
+				t = f.Replace("\", "/").Replace(" ", "\ ").Replace("'", "\'")
+			End If
 			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
 				sb.Append(" ").Append(t)
 			Else
 				If f.EndsWith( "/win32maxguiex.mod/xpmanifest.o" )
 					xpmanifest=t
 				Else
-					fb.Append(" ").Append(t)
+					If processor.HasClang() Then
+						fb.Append("~n").Append(t)
+					Else
+						fb.Append(" ").Append(t)
+					End If
 				EndIf
 			EndIf
 		Next
 		If xpmanifest Then
-			fb.Append(" ").Append(xpmanifest)
+			If processor.HasClang() Then
+				fb.Append("~n").Append(xpmanifest)
+			Else
+				fb.Append(" ").Append(xpmanifest)
+			End If
 		End If
 		
-		sb.Append(" ").Append(CQuote( tmpfile ))
+		sb.Append(" ")
+		If processor.HasClang() Then
+			sb.Append("@")
+		End If
+		sb.Append(CQuote( tmpfile ))
 	
-		fb.Append(" -lgdi32 -lwsock32 -lwinmm -ladvapi32")
+		options.Append(" -lgdi32 -lwsock32 -lwinmm -ladvapi32")
 
 		' add any user-defined linker options
-		fb.Append(" ").Append(opts)
+		options.Append(" ").Append(opts)
 
 		If usingLD
 			If opts.Find("stdc++") = -1 Then
-				fb.Append(" -lstdc++")
+				options.Append(" -lstdc++")
 			End If
 
-			fb.Append(" -lmingwex")
+			options.Append(" -lmingwex")
 			
 		
 		' for a native Win32 runtiime of mingw 3.4.5, this needs to appear early.
 		'If Not processor.Option("path_to_mingw", "") Then
-			fb.Append(" -lmingw32")
+		options.Append(" -lmingw32")
 		'End If
 
 			If opts.Find("gcc") = -1 Then
-				fb.Append(" -lgcc")
+				options.Append(" -lgcc")
 			End If
 
 			' if using 4.8+ or mingw64, we need to link to pthreads
-			If version >= 40800 Or processor.HasTarget("x86_64") Then
-				fb.Append(" -lwinpthread ")
+			If version >= 40800 Or processor.HasTarget("x86_64") Or processor.HasClang() Then
+				options.Append(" -lwinpthread ")
 				
 				If processor.CPU()="x86" Then
-					fb.Append(" -lgcc")
+					options.Append(" -lgcc")
 				End If
 			End If
 			
-			fb.Append(" -lmoldname -lmsvcrt ")
+			options.Append(" -lmoldname -lmsvcrt ")
 		End If
 
-		fb.Append(" -luser32 -lkernel32 ")
+		options.Append(" -luser32 -lkernel32 ")
 
 		'If processor.Option("path_to_mingw", "") Then
 			' for a non-native Win32 runtime, this needs to appear last.
 			' (Actually, also for native gcc 4.x, but I dunno how we'll handle that yet!)
 		If usingLD
-			fb.Append(" -lmingw32 ")
+			options.Append(" -lmingw32 ")
 		End If
 
 		' add any user-defined linker options, again - just to cover whether we missed dependencies before.
-		fb.Append(" ").Append(opts)
+		options.Append(" ").Append(opts)
 
 		'End If
 		
 		If Not makelib
 			If usingLD
-				fb.Append(" ").Append(CQuote( processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtend.o" ))
+				options.Append(" ").Append(CQuote( processor.Option("path_to_mingw_lib2", processor.MinGWCrtPath()) + "/crtend.o" ))
 			End If
 		EndIf
 		
-		fb.Insert(0,"INPUT(").Append(")")
-		
+		If Not processor.HasClang() Then
+			fb.Insert(0,"INPUT(").Append(")")
+		End If
 	End If
 	
-	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi"
+	If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "haiku"
 		sb.Append(processor.Option(processor.BuildName("gpp"), "g++"))
 		'cmd:+" -m32 -s -Os -pthread"
-		If processor.Platform() <> "raspberrypi" Then
+		If processor.Platform() <> "raspberrypi" And processor.Platform() <> "haiku" Then
 			If processor.CPU() = "x86" Or processor.CPU() = "arm" Then
 				sb.Append(" -m32")
 			End If
@@ -451,25 +530,36 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		If opt_static Then
 			sb.Append(" -static")
 		End If
-		If Not opt_nopie Then
+		If processor.Platform() <> "haiku" And Not opt_nopie Then
 			sb.Append(" -no-pie -fpie")
 		End If
 		If opt_gprof Then
 			sb.Append(" -pg")
 		End If
-		sb.Append(" -pthread")
+		
+		If processor.Platform() <> "haiku" Then
+			sb.Append(" -pthread")
+		Else
+			sb.Append(" -lpthread")
+		End If
+		
 		sb.Append(" -o ").Append(CQuote( path ))
 		sb.Append(" ").Append(CQuote( tmpfile ))
-		If processor.CPU() = "x86" Then
-			sb.Append(" -L").Append(processor.Option(processor.BuildName("lib32"), "/usr/lib32"))
+		
+		If processor.Platform() <> "haiku" Then
+			If processor.CPU() = "x86" Then
+				sb.Append(" -L").Append(processor.Option(processor.BuildName("lib32"), "/usr/lib32"))
+			End If
+			sb.Append(" -L").Append(processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib"))
+			sb.Append(" -L").Append(processor.Option(processor.BuildName("lib"), "/usr/lib"))
+		Else
+			sb.Append(" -L").Append(CQuote( "/boot/system/develop/lib" ))
+			sb.Append(" -L").Append(CQuote( BlitzMaxPath()+"/lib" ))
 		End If
-		sb.Append(" -L").Append(processor.Option(processor.BuildName("x11lib"), "/usr/X11R6/lib"))
-		sb.Append(" -L").Append(processor.Option(processor.BuildName("lib"), "/usr/lib"))
-		sb.Append(" -L").Append(CQuote( BlitzMaxPath()+"/lib" ))
 	
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
-			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
+			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l") Or (t[..1]="`")
 				sb.Append(" ").Append(t)
 			Else
 				fb.Append(" ").Append(t)
@@ -552,7 +642,7 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 		
 		For Local t$=EachIn lnk_files
 			t=CQuote(t)
-			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l")
+			If opt_dumpbuild Or (t[..1]="-" And t[..2]<>"-l") Or (t[..1]="`")
 				sb.Append(" ").Append(t)
 			Else
 				If t.Contains("appstub") Or t.Contains("blitz.mod") Then
@@ -595,15 +685,16 @@ Function LinkApp( path$,lnk_files:TList,makelib:Int,opts$ )
 	End If
 End Function
 
-Function MergeApp(fromFile:String, toFile:String)
+Function MergeApp(file1:String, file2:String, outputFile:String)
 
-	If Not opt_quiet Print "Merging:"+StripDir(fromFile) + " + " + StripDir(toFile)
+	If Not opt_quiet Print "[100%] Merging:"+StripDir(file1) + " + " + StripDir(file2) + " > " + StripDir(outputFile)
 
-	Local cmd:String = "lipo -create ~q" + fromFile + "~q ~q" + toFile + "~q -output ~q" + toFile + "~q"
+	Local cmd:String = "lipo -create ~q" + file1 + "~q ~q" + file2 + "~q -output ~q" + outputFile + "~q"
 	
-	If processor.Sys( cmd ) Throw "Merge Error: Failed to merge " + toFile
+	If processor.Sys( cmd ) Throw "Merge Error: Failed to merge " + file1 + " and " + file2 + " into " + outputFile
 	
-	DeleteFile fromFile
+	DeleteFile file1
+	DeleteFile file2
 
 End Function
 
@@ -1870,8 +1961,8 @@ Function LoadBootstrapConfig:TBootstrapConfig()
 		
 		'Local i:Int
 		For Local assetLine:String = EachIn assets
-			Local parts:String[] = assetLine.Split("~t")
-			If parts Then
+			Local parts:String[] = SplitByWhitespace(assetLine)
+			If parts And parts.length > 1 Then
 				Select parts[0]
 					Case "t"
 						Local target:TBootstrapTarget = New TBootstrapTarget
@@ -1883,7 +1974,9 @@ Function LoadBootstrapConfig:TBootstrapConfig()
 						Local asset:TBootstrapAsset = New TBootstrapAsset
 						asset.assetType = parts[0]
 						asset.name = parts[1]
-						asset.parts = parts[2..]
+						If parts.length > 2 Then
+							asset.parts = parts[2..]
+						End If
 						
 						boot.assets :+ [asset]
 						
@@ -1899,10 +1992,98 @@ Function LoadBootstrapConfig:TBootstrapConfig()
 	
 End Function
 
+Function SplitByWhitespace:String[](input:String)
+    Local result:String[] = New String[0]
+    Local tempString:String = ""
+    
+    For Local i:Int = 0 Until input.Length
+        Local char:Int = input[i]
+
+		If char = 32 Or char = 9 Or char = 10 Or char = 13 Then
+
+			If tempString.Length > 0 Then
+                result :+ [tempString]
+                tempString = ""
+            End If
+        Else
+            tempString :+ Chr(char)
+        End If
+    Next
+    
+    If tempString.Length > 0 Then
+        result :+ [tempString]
+    End If
+    
+    Return result
+End Function
+
+
 Extern
 	Function bmx_setfiletimenow(path:String)
+
+	Function bmx_hash_createState:Byte Ptr()
+	Function bmx_hash_reset(state:Byte Ptr)
+	Function bmx_hash_update(state:Byte Ptr, data:Byte Ptr, length:Int)
+	Function bmx_hash_digest:String(state:Byte Ptr)
+	Function bmx_hash_free(state:Byte Ptr)
 End Extern
 
 Function SetFileTimeNow(path:String)
 	bmx_setfiletimenow(path)
+End Function
+
+Type TFileHash
+
+	Field statePtr:Byte Ptr
+	
+	Method Create:TFileHash()
+		statePtr = bmx_hash_createState()
+		Return Self
+	End Method
+	
+	Method CalculateHash:String(stream:TStream)
+		Const BUFFER_SIZE:Int = 8192
+	
+	
+		bmx_hash_reset(statePtr)
+		
+		Local data:Byte[BUFFER_SIZE]
+		
+		While True
+			Local read:Int = stream.Read(data, BUFFER_SIZE)
+
+			bmx_hash_update(statePtr, data, read)
+			
+			If read < BUFFER_SIZE Then
+				Exit
+			End If
+
+		Wend
+		
+		Return bmx_hash_digest(statePtr)
+		
+	End Method
+	
+	Method Free()
+		bmx_hash_free(statePtr)
+	End Method
+
+End Type
+
+Function CalculateFileHash:String(path:String)
+	
+	If FileType(path) = FILETYPE_FILE Then
+
+		Local fileHasher:TFileHash = New TFileHash.Create()
+
+		Local stream:TStream = ReadStream(path)
+		Local fileHash:String = fileHasher.CalculateHash(stream)
+		stream.Close()
+		
+		fileHasher.Free()
+		
+		Return fileHash
+	End If
+	
+	Return Null
 End Function

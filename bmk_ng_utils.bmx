@@ -14,6 +14,8 @@ Import "bmk_cores_linux.bmx"
 Import "bmk_cores_macos.bmx"
 ?win32
 Import "bmk_cores_win32.bmx"
+?haiku
+Import "bmk_cores_haiku.bmx"
 ?
 
 Global utils:TMaxUtils = New TMaxUtils
@@ -188,3 +190,36 @@ Type TFileUtils
 	End Method
 	
 End Type
+
+Private
+
+Global factories:TProcessTaskFactory
+
+Public
+
+Type TProcessTask
+
+	Function _DoTasks:Object(data:Object)
+		Return TProcessTask(data).DoTasks()
+	End Function
+
+	Method DoTasks:Object() abstract
+End Type
+
+Type TProcessTaskFactory
+
+	Field _succ:TProcessTaskFactory
+	
+	Method New()
+		_succ=factories
+		factories=Self
+	End Method
+	
+	Method Create:TProcessTask( cmd:String, src:String, obj:String, supp:String ) Abstract
+	
+End Type
+
+Function CreateProcessTask:TProcessTask(cmd:String, src:String, obj:String, supp:String)
+	Local factory:TProcessTaskFactory=factories
+	Return factory.Create(cmd, src, obj, supp)
+End Function

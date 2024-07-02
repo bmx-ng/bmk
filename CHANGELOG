@@ -1,3 +1,71 @@
+## [3.57] - 2024-01-03
+### Added
+ - Added -nas option to disable auto superstrict.
+
+## [3.56] - 2023-09-30
+### Fixed
+ - Bootstrap script progress echoes require quotes.
+### Changed
+ - Bootstrap config can now be delimited by any whitespace.
+
+## [3.55] - 2023-08-19
+### Added
+ - Added support for different assemblers.
+ - Include inline bmk directives in .i files.
+
+## [3.54] - 2023-05-22
+### Added
+ - Cross-compile improvements.
+### Changed
+ - Version number is now in its own file to assist auto-builds.
+
+## [3.53] - 2023-05-06
+### Added
+ - Coverage generation with -cov option.
+
+## [3.52] - 2023-04-29
+### Added
+ - Added support for risc-v on Linux.
+
+## [3.51] - 2023-03-02
+### Fixed
+ - .cxx files use CPP_OPTS.
+### Changed
+ - Compiler version calculation.
+
+## [3.50] - 2022-07-08
+### Added
+ - moduleinfo variable opts - cc_vopt, etc.
+
+## [3.49] - 2022-03-31
+### Fixed
+ - Compute gcc version cache earlier.
+
+## [3.47] - 2021-12-14
+### Fixed
+ - Less optimisations with -gdb option.
+ - .mm files use CPP_OPTS.
+### Changed
+ - Use BRL.ThreadPool with NG.
+
+## [3.46] - 2021-01-03
+### Fixed
+ - Linkage for incbin in included sources.
+
+## [3.45] - 2020-08-16
+### Added
+ - incbin file hashing.
+### Changed
+ - New incbin format.
+
+## [3.44] - 2020-07-31
+### Added
+ - macOS "arm64" build option.
+ - Custom macOS toolchain configuration.
+ - macOS universal apps (requires xcode 12+).
+### Fixed
+ - obj-C sources now built in correct order.
+
 ## [3.43] - 2020-07-05
 ### Fixed
  - iOS build configuration.

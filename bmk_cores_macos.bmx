@@ -7,9 +7,9 @@ Import "macos/NSProcessInfo_PECocoaBackports.m"
 ?
 
 Extern
-?x64
-	Function sysctlbyname:Int(name:Byte Ptr, count:Int Ptr, size:Long Ptr, a:Byte Ptr, b:Int)
-?Not x64
+?bmxng
+	Function sysctlbyname:Int(name:Byte Ptr, count:Int Ptr, size:Size_T Ptr, a:Byte Ptr, b:Size_T)
+?Not bmxng
 	Function sysctlbyname:Int(name:Byte Ptr, count:Int Ptr, size:Int Ptr, a:Byte Ptr, b:Int)
 ?
 End Extern
@@ -18,9 +18,9 @@ Function GetCoreCount:Int()
 	Global count:Int
 
 	If Not count Then
-?x64
-		Local l:Long = 4
-?Not x64
+?bmxng
+		Local l:Size_T = 4
+?Not bmxng
 		Local l:Int = 4
 ?
 		sysctlbyname("hw.ncpu", Varptr count, Varptr l,Null,0)

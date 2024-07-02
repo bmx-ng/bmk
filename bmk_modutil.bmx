@@ -39,6 +39,7 @@ Type TSourceFile
 	Field imports:TList=New TList
 	Field includes:TList=New TList
 	Field incbins:TList=New TList
+	Field hashes:TMap=New TMap
 	
 	Field pragmas:TList = New TList
 	
@@ -68,6 +69,7 @@ Type TSourceFile
 	Field bcc_opts:String
 	Field cpp_opts:String
 	Field c_opts:String
+	Field asm_opts:String
 	
 	Field mod_opts:TModOpt
 	Field includePaths:TOrderedMap = New TOrderedMap
@@ -375,6 +377,7 @@ Type TSourceFile
 		source.merge_time = merge_time
 		source.cpp_opts = cpp_opts
 		source.c_opts = c_opts
+		source.asm_opts = asm_opts
 		source.CopyIncludePaths(includePaths)
 		source.maxLinkTimeCache = maxLinkTimeCache
 		source.maxIfaceTimeCache = maxIfaceTimeCache
@@ -631,6 +634,8 @@ Function ParseISourceFile:TSourceFile( path$ )
 				file.AddModOpt(qval) ' bmk2
 				'If mod_opts mod_opts.addOption(qval) ' BaH
 			EndIf
+		case "#pragma"
+			file.pragmas.AddLast val
 		End Select
 
 	Wend
@@ -647,15 +652,15 @@ Function ValidatePlatformArchitecture()
 
 	Select platform
 		Case "win32"
-			If arch = "x86" Or arch = "x64" Then
+			If arch = "x86" Or arch = "x64" or arch = "armv7" or arch = "arm64" Then
 				valid = True
 			End If
 		Case "linux"
-			If arch = "x86" Or arch = "x64" Or arch = "arm" Or arch="arm64" Then
+			If arch = "x86" Or arch = "x64" Or arch = "arm" Or arch="arm64" Or arch = "riscv32" Or arch = "riscv64" Then
 				valid = True
 			End If
 		Case "macos", "osx"
-			If arch = "x86" Or arch = "x64" Or arch = "ppc" Then
+			If arch = "x86" Or arch = "x64" Or arch = "ppc" Or arch = "arm64" Then
 				valid = True
 			End If
 		Case "ios"
@@ -676,6 +681,10 @@ Function ValidatePlatformArchitecture()
 			End If
 		Case "nx"
 			If arch = "arm64" Then
+				valid = True
+			End If
+		Case "haiku"
+			If arch = "x86" Or arch = "x64" Then
 				valid = True
 			End If
 	End Select
@@ -702,29 +711,38 @@ Function SetCompilerValues()
 	compilerOptions.Add("arm64v8a", processor.CPU()="arm64v8a")
 	compilerOptions.Add("armv7", processor.CPU()="armv7")
 	compilerOptions.Add("arm64", processor.CPU()="arm64")
+	compilerOptions.Add("riscv32", processor.CPU()="riscv32")
+	compilerOptions.Add("riscv64", processor.CPU()="riscv64")
 	compilerOptions.Add("js", processor.CPU()="js")
 
-	compilerOptions.Add("ptr32", processor.CPU()="x86" Or processor.CPU()="ppc" Or processor.CPU()="arm" Or processor.CPU()="armeabi" Or processor.CPU()="armeabiv7a" Or processor.CPU()="armv7" Or processor.CPU()="js")
-	compilerOptions.Add("ptr64", processor.CPU()="x64" Or processor.CPU()="arm64v8a" Or processor.CPU()="arm64")
+	compilerOptions.Add("ptr32", processor.CPU()="x86" Or processor.CPU()="ppc" Or processor.CPU()="arm" Or processor.CPU()="armeabi" Or processor.CPU()="armeabiv7a" Or processor.CPU()="armv7" Or processor.CPU()="js" Or processor.CPU()="riscv32")
+	compilerOptions.Add("ptr64", processor.CPU()="x64" Or processor.CPU()="arm64v8a" Or processor.CPU()="arm64" Or processor.CPU()="riscv64")
 
 	compilerOptions.Add("win32", processor.Platform() = "win32")
 	compilerOptions.Add("win32x86", processor.Platform() = "win32" And processor.CPU()="x86")
 	compilerOptions.Add("win32ppc", processor.Platform() = "win32" And processor.CPU()="ppc")
 	compilerOptions.Add("win32x64", processor.Platform() = "win32" And processor.CPU()="x64")
+	compilerOptions.Add("win32armv7", processor.Platform() = "win32" And processor.CPU()="armv7")
+	compilerOptions.Add("win32arm64", processor.Platform() = "win32" And processor.CPU()="arm64")
 
 	compilerOptions.Add("linux", processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi")
 	compilerOptions.Add("linuxx86", (processor.Platform() = "linux" Or processor.Platform() = "android") And processor.CPU()="x86")
 	compilerOptions.Add("linuxppc", processor.Platform() = "linux" And processor.CPU()="ppc")
 	compilerOptions.Add("linuxx64", (processor.Platform() = "linux" Or processor.Platform() = "android") And processor.CPU()="x64")
 	compilerOptions.Add("linuxarm", (processor.Platform() = "linux" Or processor.Platform() = "android" Or processor.Platform() = "raspberrypi") And processor.CPU()="arm")
+	compilerOptions.Add("linuxarm64", ((processor.Platform() = "linux" Or processor.Platform() = "raspberrypi") And processor.CPU()="arm64") Or (processor.Platform() = "android" And processor.CPU()="arm64v8a"))
+	compilerOptions.Add("linuxriscv32", (processor.Platform() = "linux" And processor.CPU()="riscv32"))
+	compilerOptions.Add("linuxriscv64", ((processor.Platform() = "linux" And processor.CPU()="riscv64")))
 
 	compilerOptions.Add("macos", processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios")
 	compilerOptions.Add("macosx86", (processor.Platform() = "macos"Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x86")
 	compilerOptions.Add("macosppc", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="ppc")
 	compilerOptions.Add("macosx64", (processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="x64")
+	compilerOptions.Add("macosarm64", (processor.Platform() = "macos" Or processor.Platform() = "osx" Or processor.Platform() = "ios") And processor.CPU()="arm64")
 	compilerOptions.Add("osx", processor.Platform() = "macos" Or processor.Platform() = "osx")
 	compilerOptions.Add("osxx86", (processor.Platform() = "macos"Or processor.Platform() = "osx") And processor.CPU()="x86")
 	compilerOptions.Add("osxx64", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="x64")
+	compilerOptions.Add("osxarm64", (processor.Platform() = "macos" Or processor.Platform() = "osx") And processor.CPU()="arm64")
 	compilerOptions.Add("ios", processor.Platform() = "ios")
 	compilerOptions.Add("iosx86", processor.Platform() = "ios" And processor.CPU()="x86")
 	compilerOptions.Add("iosx64", processor.Platform() = "ios" And processor.CPU()="x64")
@@ -740,6 +758,10 @@ Function SetCompilerValues()
 	compilerOptions.Add("raspberrypi", processor.Platform() = "raspberrypi")
 	compilerOptions.Add("raspberrypiarm", processor.Platform() = "raspberrypi" And processor.CPU()="arm")
 	compilerOptions.Add("raspberrypiarm64", processor.Platform() = "raspberrypi" And processor.CPU()="arm64")
+
+	compilerOptions.Add("haiku", processor.Platform() = "haiku")
+	compilerOptions.Add("haikux86", processor.Platform() = "haiku" And processor.CPU()="x86")
+	compilerOptions.Add("haikux64", processor.Platform() = "haiku" And processor.CPU()="x64")
 	
 	compilerOptions.Add("emscripten", processor.Platform() = "emscripten")
 	compilerOptions.Add("emscriptenjs", processor.Platform() = "emscripten" And processor.CPU()="js")
@@ -747,6 +769,7 @@ Function SetCompilerValues()
 	compilerOptions.Add("opengles", processor.Platform() = "android" Or processor.Platform() ="raspberrypi" Or processor.Platform() = "emscripten" Or processor.Platform() = "ios")
 
 	compilerOptions.Add("bmxng", processor.BCCVersion() <> "BlitzMax")
+	compilerOptions.Add("coverage", opt_coverage)
 
 	compilerOptions.Add("musl", processor.Platform() = "linux" Or processor.Platform() ="raspberrypi")
 

@@ -9,8 +9,7 @@ Import Pub.MacOS
 Import brl.map
 
 Import "stringbuffer_core.bmx"
-
-Const BMK_VERSION:String = "3.43"
+Import "version.bmx"
 
 Const ALL_SRC_EXTS$="bmx;i;c;m;h;cpp;cxx;mm;hpp;hxx;s;cc;asm;S"
 
@@ -62,6 +61,8 @@ Global opt_upx:Int
 Global opt_userdefs:String
 Global opt_gprof:Int
 Global opt_hi:Int
+Global opt_coverage:Int
+Global opt_no_auto_superstrict:Int
 
 Global opt_dumpbuild
 
@@ -92,10 +93,17 @@ If is_pid_native(0) opt_arch="x86" Else opt_arch="ppc"
 ?MacOsx64
 opt_arch="x64"
 
+?MacOsarm64
+opt_arch="arm64"
+
 ?win32x64
 opt_arch="x64"
 ?Win32x86
 opt_arch="x86"
+?win32armv7
+opt_arch="armv7"
+?win32arm64
+opt_arch="arm64"
 ?Win32
 'Fudge PATH so exec sees our MinGW first!
 Local mingw$=getenv_( "MINGW" )
@@ -116,8 +124,16 @@ opt_arch="arm"
 opt_arch="arm64"
 ?raspberrypi
 opt_arch="arm"
-?raspberrypi64
+?raspberrypiarm64
 opt_arch="arm64"
+?haikux86
+opt_arch="x86"
+?haikux64
+opt_arch="x64"
+?linuxRiscv32
+opt_arch="riscv32"
+?linuxRiscv64
+opt_arch="riscv64"
 ?
 
 TStringBuffer.initialCapacity = 128
@@ -251,6 +267,10 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_gprof = True
 		Case "hi"
 			opt_hi = True
+		Case "cov"
+			opt_coverage = True
+		Case "nas"
+			opt_no_auto_superstrict = True
 		Default
 			CmdError "Invalid option '" + argv + "'"
 		End Select
@@ -326,6 +346,11 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~t~tBuilds an app using a custom appstub (i.e. not BRL.Appstub).~n"
 		s:+ "~t~tThis can be useful when you want more control over low-level application state."
 		s:+ "~n~n"
+		s:+ "~t-cov~n"
+		s:+ "~t~tBuilds a version with code coverage information.~n"
+		s:+ "~t~tBy default, when the application ends, an lcov.info is produced.~n"
+		s:+ "~t~tThis can be used by a variety of tools to generate coverage reports."
+		s:+ "~n~n"
 		s:+ "~t-d | -debug~n"
 		s:+ "~t~tBuilds a debug version. (This is the default for makeapp)."
 		s:+ "~n~n"
@@ -349,17 +374,21 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "arm64v8a"
 ?js
 		s:+ "js"
+?riscv32
+		s:+ "riscv32"
+?riscv64
+		s:+ "riscv64"
 ?
 		s:+ ")~n"
 		s:+ "~t~tOptions vary depending on the current OS/architecture/installed toolchain and version of bcc.~n"
-		s:+ "~t~t~tMacOS : x86, x64~n"
-		s:+ "~t~t~tWin32 : x86, x64~n"
-		s:+ "~t~t~tLinux : x86, x64, arm, arm64~n"
+		s:+ "~t~t~tMacOS : x86, x64, arm64~n"
+		s:+ "~t~t~tWin32 : x86, x64, armv7, armv64~n"
+		s:+ "~t~t~tLinux : x86, x64, arm, arm64, riscv32, riscv64~n"
 		s:+ "~t~t~tiOS : x86, x64 (simulator), armv7, arm64~n"
 		s:+ "~t~t~tAndroid : x86, x64, arm, armeabi, armeabiv7a, arm64v8a~n"
 		s:+ "~t~t~tRaspberryPi : arm, arm64~n"
-		s:+ "~t~t~tEmscripten : js~n"
 		s:+ "~t~t~tnx : arm64~n"
+		s:+ "~t~t~thaiku : x86, x64~n"
 		s:+ "~n~n"
 		s:+ "~t-gdb~n"
 		s:+ "~t~tGenerates line mappings suitable for GDB debugging.~n"
@@ -383,7 +412,7 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-l <target platfom> | -platform <target platform>~n"
 		s:+ "~t~tCross-compiles to the specific target platform.~n"
-		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and emscripten.~n"
+		s:+ "~t~tValid targets are win32, linux, macos, ios, android, raspberrypi and haiku.~n"
 		s:+ "~t~t(see documentation for full list of requirements)"
 		s:+ "~n~n"
 		s:+ "~t-musl~n"
@@ -459,7 +488,7 @@ Function Usage:String(fullUsage:Int = False)
 	Return s
 End Function
 
-Function VersionInfo(gcc:String, cores:Int)
+Function VersionInfo(gcc:String, cores:Int, xcode:String)
 	Local s:String = "bmk "
 	s:+ BMK_VERSION + " "
 ?threaded
@@ -479,6 +508,8 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "-android"
 ?raspberrypi
 	s:+ "-raspberrypi"
+?haiku
+	s:+ "haiku"
 ?emscripten
 	s:+ "-emscripten"
 ?
@@ -501,8 +532,16 @@ Function VersionInfo(gcc:String, cores:Int)
 	s:+ "arm64v8a"
 ?js
 	s:+ "js"
+?riscv32
+	s:+ "riscv32"
+?riscv64
+	s:+ "riscv64"
 ?
 	s:+ " / " + gcc
+	
+	If xcode Then
+		s:+ " / xcode " + xcode
+	End If
 
 	s:+ " (cpu x" + cores + ")"
 
@@ -638,6 +677,8 @@ Function ValidateArch(arch:String)
 		Case "armv7"
 		Case "arm64"
 		Case "js"
+		Case "riscv32"
+		Case "riscv64"
 		Default
 			CmdError "Not a valid architecture : '" + arch + "'"
 	End Select
@@ -654,6 +695,7 @@ Function ValidatePlatform(platform:String)
 		Case "raspberrypi"
 		Case "emscripten"
 		Case "nx"
+		Case "haiku"
 		Default
 			' oops
 			CmdError "Not valid platform : '" + platform + "'"

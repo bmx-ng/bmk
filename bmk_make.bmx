@@ -7,12 +7,14 @@ Global cc_opts$
 Global bcc_opts$
 Global cpp_opts$
 Global c_opts$
+Global asm_opts:String
 
 Function BeginMake()
 	cc_opts=Null
 	cpp_opts=Null
 	c_opts=Null
 	bcc_opts=Null
+	asm_opts=Null
 	app_main=Null
 	opt_framework=""
 End Function
@@ -219,12 +221,12 @@ Function ConfigureIOSPaths()
 	Select processor.CPU() 
 		Case "x86", "x64"
 			Local path:String = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk"
-			globals.SetVar("ios.sysroot", path)
-			globals.SetVar("ios.syslibroot", path)
+			globals.SetVar("ios." + processor.CPU() + ".sysroot", path)
+			globals.SetVar("ios." + processor.CPU() + ".syslibroot", path)
 		Case "armv7", "arm64"
 			Local path:String = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
-			globals.SetVar("ios.sysroot", path)
-			globals.SetVar("ios.syslibroot", path)
+			globals.SetVar("ios." + processor.CPU() + ".sysroot", path)
+			globals.SetVar("ios." + processor.CPU() + ".syslibroot", path)
 	End Select
 
 End Function
@@ -359,7 +361,7 @@ Type TBuildManager Extends TCallback
 	
 		Local cc_opts:String
 		source.AddIncludePath(" -I" + CQuote(ModulePath("")))
-		If opt_release Then
+		If opt_release And Not opt_gdbdebug Then
 			cc_opts :+ " -DNDEBUG"
 		End If
 		If processor.BCCVersion() <> "BlitzMax" Then
@@ -368,6 +370,9 @@ Type TBuildManager Extends TCallback
 			End If
 			If opt_gprof Then
 				cc_opts :+ " -pg"
+			End If
+			If opt_coverage Then
+				cc_opts :+ " -DBMX_COVERAGE"
 			End If
 		End If
 	
@@ -415,6 +420,15 @@ Type TBuildManager Extends TCallback
 			End If
 			If defs Then
 				sb.Append(" -ud ").Append(defs)
+			End If
+			If opt_standalone Then
+				sb.Append(" -ib")
+			End If
+			If opt_coverage Then
+				sb.Append(" -cov")
+			End If
+			If opt_no_auto_superstrict Then
+				sb.Append(" -nas")
 			End If
 		End If
 
@@ -754,10 +768,10 @@ Type TBuildManager Extends TCallback
 								Print s
 							End If
 
-							If m.path.EndsWith(".cpp") Or m.path.EndsWith("cc") Then
+							If m.path.EndsWith(".cpp") Or m.path.EndsWith(".cc") Or m.path.EndsWith(".mm") Or m.path.EndsWith(".cxx") Then
 								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.cpp_opts
 							ElseIf m.path.EndsWith(".S") Or m.path.EndsWith("asm") Then
-								AssembleNative m.path, m.obj_path
+								AssembleNative m.path, m.obj_path, m.asm_opts
 							Else
 								CompileC m.path, m.obj_path, m.GetIncludePaths() + " " + m.cc_opts + " " + m.c_opts
 							End If
@@ -770,9 +784,9 @@ Type TBuildManager Extends TCallback
 			Next
 
 ?threaded
-		If Not opt_single Then
-			processManager.WaitForTasks()
-		End If
+			If Not opt_single Then
+				processManager.WaitForTasks()
+			End If
 ?
 
 		Next
@@ -878,10 +892,22 @@ Type TBuildManager Extends TCallback
 			End If
 
 			For Local f:String = EachIn source.imports
+
 				If f[0] <> Asc("-") Then
 					Local path:String = CheckPath(ExtractDir(source.path), f)
 
 					Local s:TSourceFile = GetSourceFile(path, isMod)
+					
+					' imported sourcefile not there? Maybe it's relative to the owner path instead?
+					' For example, an incbin as part of an included source file.
+					If Not s Then
+						Local p:String = CheckPath(ExtractDir(source.owner_path), f)
+						s = GetSourceFile(p, isMod)
+						If s Then
+							path = p
+						End If
+					End If
+					
 					If s Then
 	
 						If rebuildImports Then
@@ -910,6 +936,7 @@ Type TBuildManager Extends TCallback
 							s.cc_opts :+ source.cc_opts
 							s.cpp_opts :+ source.cpp_opts
 							s.c_opts :+ source.c_opts
+							s.asm_opts :+ source.asm_opts
 							s.CopyIncludePaths(source.includePaths)
 							
 							CalculateDependencies(s, isMod, rebuildImports)
@@ -944,6 +971,7 @@ Type TBuildManager Extends TCallback
 							s.cc_opts = source.cc_opts
 							s.cpp_opts = source.cpp_opts
 							s.c_opts = source.c_opts
+							s.asm_opts = source.asm_opts
 							s.CopyIncludePaths(source.includePaths)
 							
 							source.deps.Insert(s.GetSourcePath(), s)
@@ -999,6 +1027,10 @@ Type TBuildManager Extends TCallback
 				If s Then
 					s.owner_path = source.path
 					
+					If s.includePaths.IsEmpty() Then
+						s.CopyIncludePaths(source.includePaths)
+					End If
+				
 					' calculate included file dependencies
 					CalculateDependencies(s, isMod, rebuildImports)
 
@@ -1016,6 +1048,10 @@ Type TBuildManager Extends TCallback
 
 			For Local f:String = EachIn source.incbins
 				Local path:String = CheckPath(ExtractDir(source.path), f)
+
+				If FileType(path) = FILETYPE_FILE Then
+					source.hashes.Insert(f, CalculateFileHash(path))
+				End If
 
 				Local time:Int = FileTime(path)
 				
@@ -1038,6 +1074,8 @@ Type TBuildManager Extends TCallback
 					requiresBuild = True
 				Else If IncbinsDifference(source.incbins, ib.incbins) Then
 					requiresBuild = True
+				Else If IncbinsHashDifference(source, ib) Then
+					requiresBuild = True
 				End If
 				
 				If requiresBuild Then
@@ -1051,12 +1089,13 @@ Type TBuildManager Extends TCallback
 				End If
 			End If
 						
-			If source.depsList Then			
+			If source.depsList Then
 				For Local s:TSourceFile = EachIn source.depsList
 					If Not Match(s.ext, "bmx") Then
 						s.cc_opts = source.cc_opts
 						s.cpp_opts = source.cpp_opts
 						s.c_opts = source.c_opts
+						s.asm_opts = source.asm_opts
 						s.CopyIncludePaths(source.includePaths)
 					End If
 				Next
@@ -1066,10 +1105,10 @@ Type TBuildManager Extends TCallback
 
 	End Method
 	
-	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False, isInclude:Int = False)
+	Method GetSourceFile:TSourceFile(source_path:String, isMod:Int = False, rebuild:Int = False, isInclude:Int = False, doCreate:Int = True)
 		Local source:TSourceFile = TSourceFile(sources.ValueForKey(source_path))
 
-		If Not source Then
+		If Not source And doCreate Then
 			source = ParseSourceFile(source_path)
 			
 			If source Then
@@ -1266,7 +1305,7 @@ Type TBuildManager Extends TCallback
 			Local cc_opts:String
 			source.AddIncludePath(" -I" + CQuote(path))
 			source.AddIncludePath(" -I" + CQuote(ModulePath("")))
-			If opt_release Then
+			If opt_release And Not opt_gdbdebug Then
 				cc_opts :+ " -DNDEBUG"
 			End If
 			If opt_threaded Then
@@ -1279,6 +1318,9 @@ Type TBuildManager Extends TCallback
 				If opt_gprof Then
 					cc_opts :+ " -pg"
 				End If
+				If opt_coverage Then
+					cc_opts :+ " -DBMX_COVERAGE"
+				End If
 			End If
 
 			source.cc_opts = ""
@@ -1286,10 +1328,12 @@ Type TBuildManager Extends TCallback
 				source.cc_opts :+ source.mod_opts.cc_opts
 				source.cpp_opts :+ source.mod_opts.cpp_opts
 				source.c_opts :+ source.mod_opts.c_opts
+				source.asm_opts :+ source.mod_opts.asm_opts
 			End If
 			source.cc_opts :+ cc_opts
 			source.cpp_opts :+ cpp_opts
 			source.c_opts :+ c_opts
+			source.asm_opts :+ asm_opts
 	
 			' Module BCC opts
 			Local sb:TStringBuffer = New TStringBuffer
@@ -1327,6 +1371,15 @@ Type TBuildManager Extends TCallback
 				End If
 				If defs Then
 					sb.Append(" -ud ").Append(defs)
+				End If
+				If opt_standalone Then
+					sb.Append(" -ib")
+				End If
+				If opt_coverage Then
+					sb.Append(" -cov")
+				End If
+				If opt_no_auto_superstrict Then
+					sb.Append(" -nas")
 				End If
 			End If
 	
@@ -1422,18 +1475,30 @@ Type TBuildManager Extends TCallback
 
 	Method CreateIncBin:TSourceFile(source:TSourceFile, sourcePath:String)
 	
-		Local path:String = StripDir(sourcePath) + opt_configmung +  processor.CPU() + ".incbin.c"
+		Local path:String = StripDir(sourcePath) + opt_configmung +  processor.CPU()
+		If opt_standalone Or (processor.CPU() = "x86" And processor.Platform() = "win32") Then
+			path :+ ".incbin.c"
+		Else
+			path :+ ".incbin2.c"
+		End If
 
-		Local ib:TSourceFile = GetSourceFile(path)
+		Local ibPath:String = ExtractDir(sourcePath) + "/.bmx/" + path
+
+		Local ib:TSourceFile = GetSourceFile(ibPath,,,,False)
 		
 		If Not ib Then
 			ib = New TSourceFile
-			ib.path = ExtractDir(sourcePath) + "/.bmx/" + path
+			
+			ib.path = ibPath
 			ib.obj_path = StripExt(ib.path) + ".o"
 			ib.ext = "c"
 			ib.exti = String(processor.RunCommand("source_type", [ib.ext])).ToInt()
 
 			source.imports.AddLast(".bmx/" + StripDir(path) )
+		End If
+		
+		If ib.includePaths.IsEmpty() Then
+			ib.CopyIncludePaths(source.includePaths)
 		End If
 
 		GetIncBinFileList(ib)
@@ -1456,9 +1521,13 @@ Type TBuildManager Extends TCallback
 			While Not stream.Eof()
 				Local line:String = stream.ReadLine()
 				If line.StartsWith("// FILE : ") Then
-					Local ib:String = line[10..].Replace("~q", "")
+					Local parts:String[] = line[10..].Split("~t")
+					Local ib:String = parts[0].Replace("~q", "")
 					If ib Then
 						source.incbins.AddLast(ib)
+						If parts.length = 2 Then
+							source.hashes.Insert(ib, parts[1])
+						End If
 					End If
 				Else If line.StartsWith("// ----") Then
 					Exit
@@ -1487,6 +1556,26 @@ Type TBuildManager Extends TCallback
 		Next
 		
 		Return False
+	End Method
+	
+	Method IncbinsHashDifference:Int(source:TSourceFile, ib:TSourceFile)
+		If source.hashes.IsEmpty() Then
+			Return True
+		End If
+		
+		For Local file:String = EachIn source.hashes.Keys()
+			Local sourceHash:String = String(source.hashes.ValueForKey(file))
+			If sourceHash <> String(ib.hashes.ValueForKey(file)) Then
+				Return True
+			End If
+		Next
+
+		For Local file:String = EachIn ib.hashes.Keys()
+			Local ibHash:String = String(ib.hashes.ValueForKey(file))
+			If ibHash <> String(source.hashes.ValueForKey(file)) Then
+				Return True
+			End If
+		Next
 	End Method
 	
 	Method CreateLinkStage:TSourceFile(source:TSourceFile, stage:Int = STAGE_LINK)
@@ -1595,7 +1684,7 @@ Type TBuildManager Extends TCallback
 		For Local i:Int = 0 Until 3
 			Select i
 				Case 0
-					suffix = ["c", "cpp", "cc", "cxx"]
+					suffix = ["c", "cpp", "cc", "cxx", "m", "mm"]
 				Case 1
 					suffix = ["o"]
 					stage = STAGE_LINK
@@ -1767,13 +1856,20 @@ Type TArcTask
 					EndIf
 					cmd=""
 				EndIf
-				If Not cmd cmd= processor.Option("path_to_ar", processor.MinGWBinPath() + "/ar.exe") + " -r "+CQuote(path)
+				If Not cmd Then
+					Local prefix:String = processor.MinGWExePrefix()
+					Local ext:String = ""
+					If processor.OSPlatform() = "win32" Then
+						ext = ".exe"
+					End If
+					cmd= processor.Option("path_to_ar", processor.MinGWBinPath() + "/" + prefix + "ar" + ext) + " -rc "+CQuote(path)
+				End If
 				cmd:+" "+CQuote(t)
 			Next
 		End If
 		
 		If processor.Platform() = "macos" Or processor.Platform() = "osx" Then
-			cmd="libtool -o "+CQuote(path)
+			cmd=processor.Option(processor.BuildName("libtool"), "libtool") + " -o "+CQuote(path)
 			For Local t$=EachIn oobjs
 				cmd:+" "+CQuote(t)
 			Next
@@ -1788,13 +1884,13 @@ Type TArcTask
 					proc = "x86_64"
 			End Select
 		
-			cmd="libtool -static -arch_only " + proc + " -o "+CQuote(path)
+			cmd= processor.Option(processor.BuildName("libtool"), "libtool") + " -static -arch_only " + proc + " -o "+CQuote(path)
 			For Local t$=EachIn oobjs
 				cmd:+" "+CQuote(t)
 			Next
 		End If
 		
-		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten" Or processor.Platform() = "nx"
+		If processor.Platform() = "linux" Or processor.Platform() = "raspberrypi" Or processor.Platform() = "android" Or processor.Platform() = "emscripten" Or processor.Platform() = "nx" Or processor.Platform() = "haiku"
 			For Local t$=EachIn oobjs
 				If Len(cmd)+Len(t)>1000
 				

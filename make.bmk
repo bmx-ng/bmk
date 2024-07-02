@@ -41,17 +41,56 @@
 	local src = nvl(arg1, %infile%)
 	local obj = nvl(arg2, %outfile%)
 
-	cmd = "as"
+	local nativeAssembler = bmk.Option("native.assembler", "as")
+	local asmPath = bmk.Option(bmk.BuildName(nativeAssembler), nativeAssembler)
+
+	cmd = asmPath
 	
-	if bmk.Platform() == "win32" then
-		if bmk.CPU() == "x86" then
-			cmd = cmd .. " -arch i686"
-		else
-			cmd = cmd .. " -arch generic64"
+	if nativeAssembler == "as" then
+		if bmk.Platform() == "win32" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -arch i686"
+			else
+				cmd = cmd .. " -arch generic64"
+			end
+		end
+
+		cmd = cmd .. " -W"
+	end
+
+	if nativeAssembler == "nasm" or nativeAssembler == "yasm" then
+		if bmk.Platform() == "win32" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -f win32"
+			else
+				cmd = cmd .. " -f win64"
+			end
+		end
+
+		if bmk.Platform() == "linux" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -f elf32"
+			else
+				cmd = cmd .. " -f elf64"
+			end
+		end
+
+		if bmk.Platform() == "macos" then
+			if bmk.CPU() == "x86" then
+				cmd = cmd .. " -f macho32"
+			else
+				cmd = cmd .. " -f macho64"
+			end
 		end
 	end
 	
-	cmd = cmd .. " -W -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+	if nativeAssembler == "as" or nativeAssembler == "nasm" or nativeAssembler == "yasm" then
+		cmd = cmd .. " -o " .. bmk.Quote(obj) .. " " .. bmk.Quote(src)
+	end
+
+	if nativeAssembler == "fasm" then
+		cmd = cmd .. " " .. bmk.Quote(src) .. " " .. bmk.Quote(obj)
+	end
 
 	if bmk.MultiSys(cmd, src, obj, "") ~= 0 then
 		bmk.ThrowNew("Build Error: Failed to assemble " .. src)
@@ -85,7 +124,7 @@
 		bcc_app = bcc_app .. "_ppc"
 	end
 	
-	if bmk.Platform() == "win32" then
+	if bmk.OSPlatform() == "win32" then
 		bcc_app = bcc_app .. ".exe"
 	end
 	
@@ -142,10 +181,10 @@
 	if bmk.Platform() == "macos" or bmk.Platform() == "osx" or bmk.Platform() == "ios" then
 	
 		if bmk.Platform() == "macos" or bmk.Platform() == "osx" then
-			cmd = "gcc"
+			cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
 		
 			if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-				cmd = "g++"
+				cmd = bmk.Option(bmk.BuildName("gpp"), "g++")
 			end
 		else
 			cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
@@ -170,21 +209,27 @@
 			cmd = cmd .. " -arch x86_64 "
 		elseif bmk.CPU() == "armv7" and bmk.Platform() == "ios" then
 			cmd = cmd .. " -arch armv7 "
-		elseif bmk.CPU() == "arm64" and bmk.Platform() == "ios" then
+		elseif bmk.CPU() == "arm64" then
 			cmd = cmd .. " -arch arm64 "
 		end
 		
-		if bmk.Platform() == "ios" then
-			cmd = cmd .. " -isysroot " .. bmk.Option("ios.sysroot", "")
+		if bmk.Option(bmk.BuildName("sysroot"), "") ~= "" then
+			cmd = cmd .. " -isysroot " .. bmk.Option(bmk.BuildName("sysroot"), "")
 		end
-		
+				
 	elseif bmk.Platform() == "win32" then
-		cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/gcc.exe")
+		local prefix = bmk.MinGWExePrefix()
+		if bmk.OSPlatform() == "win32" then
+			ext = ".exe"
+		else
+			ext = ""
+		end
+		cmd = bmk.Option("path_to_gcc", bmk.MinGWBinPath() .. "/" .. prefix .. "gcc" .. ext)
 		if ext == "cpp" or ext == "cxx" or ext == "mm" or ext == "cc" then
-			cmd = bmk.Option("path_to_gpp", bmk.MinGWBinPath() .. "/g++.exe")
+			cmd = bmk.Option("path_to_gpp", bmk.MinGWBinPath() .. "/" .. prefix .. "g++" .. ext)
 		end
 		
-	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" then
+	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" or bmk.Platform() == "haiku" then
 		cmd = bmk.Option(bmk.BuildName("gcc"), "gcc")
 		
 		if bmk.Option("nopie", "") == "true" then
@@ -255,7 +300,11 @@
 @end
 
 @define addoption
-	globals.Add(arg1, arg2)
+	globals.Add(arg1, arg2, 0)
+@end
+
+@define setoption
+	globals.Add(arg1, arg2, 1)
 @end
 
 ## adds a cc_opt option
@@ -339,9 +388,17 @@
 	end
 @end
 
+@define addasmopt
+	globals.AddOption("asm_opts", arg1, arg2)
+@end
+
 ## removes a cc_opt option
 @define rmccopt
 	globals.Remove("cc_opts", arg1)
+@end
+
+@define rmasmopt
+	globals.Remove("asm_opts", arg1)
 @end
 
 @define addldopt
@@ -433,7 +490,12 @@
 
 	if bmk.Platform() == "macos" or bmk.Platform() == "osx" then
 		
-		if tonumber(%macos_version%) >= 2784 then
+		if tonumber(%macos_version%) >= 2800 then
+			# macos version >= 10.15.0 ?
+			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.15")
+			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.15")
+			globals.SetOption("ld_opts", "stdlib", "-stdlib=libc++")
+		elseif tonumber(%macos_version%) >= 2784 then
 			# macos version >= 10.14.0 ?
 			globals.SetOption("cc_opts", "osversion", "-mmacosx-version-min=10.12")
 			globals.SetOption("ld_opts", "osversion", "-mmacosx-version-min=10.12")
@@ -467,48 +529,58 @@
 		
 	elseif bmk.Platform() == "ios" then
 	
-		globals.SetOption("cc_opts", "osversion", "-miphoneos-version-min=7.1")
+		globals.SetOption("cc_opts", "osversion", "-miphoneos-version-min=10.0.0")
+		globals.SetOption("cc_opts", "ostarget", "-target arm64-apple-ios10.0")
 		
 	elseif bmk.Platform() == "win32" then
 	
-		if bmk.hasTarget("x86_64") then
-			if bmk.CPU() == "x86" then
-				globals.SetOption("cc_opts", "arch", "-m32")
-			elseif bmk.CPU() == "x64" then
-				globals.SetOption("cc_opts", "arch", "-m64")
-			end
+		if bmk.HasClang() == 1 then
+			globals.SetOption("cc_opts", "win_family", "-DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP")
 		else
-			globals.SetOption("cc_opts", "arch", "-march=pentium")
+			if bmk.hasTarget("x86_64") then
+				if bmk.CPU() == "x86" then
+					globals.SetOption("cc_opts", "arch", "-m32")
+				elseif bmk.CPU() == "x64" then
+					globals.SetOption("cc_opts", "arch", "-m64")
+				end
+			else
+				globals.SetOption("cc_opts", "arch", "-march=pentium")
+			end
 		end
 
 		globals.SetOption("cc_opts", "fastmath", "-ffast-math")
 		
-	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" or bmk.Platform() == "emscripten" then
+	elseif bmk.Platform() == "linux" or bmk.Platform() == "android" or bmk.Platform() == "raspberrypi" or bmk.Platform() == "emscripten" or bmk.Platform() == "haiku" then
 		globals.SetOption("cc_opts", "aliasing", "-fno-strict-aliasing")
 		if bmk.CPU() == "x86" then
 			globals.SetOption("cc_opts", "arch", "-m32")
 			globals.SetOption("cc_opts", "fancymath", "-mfancy-math-387")
 		end
-		globals.SetOption("cc_opts", "pie", "-fpie")
+		if bmk.Platform() ~= "haiku" then
+			globals.SetOption("cc_opts", "pie", "-fpie")
+		end
 	end
 
 	globals.SetOption("cc_opts", "exceptions", "-fno-exceptions")
 	globals.SetOption("cc_opts", "linker", "-c")
-	if bmk.Platform() ~= "nx" then
-		globals.SetOption("cc_opts", "optimization", "-O3")
-	else
-		globals.SetOption("cc_opts", "optimization", "-O2")
-	end
-	if bmk.CPU() == "x64" then
-		globals.SetOption("cc_opts", "simd", "-msse3")
-	end
-	
-	if bmk.IsDebugBuild() == 0 then
-		if bmk.Platform() ~= "emscripten" then
-			globals.SetOption("cc_opts", "stripsymbols", "-s")
+
+	if bmk.IsGdbDebugBuild() == 0 then
+		if bmk.Platform() ~= "nx" then
+			globals.SetOption("cc_opts", "optimization", "-O3")
+		else
+			globals.SetOption("cc_opts", "optimization", "-O2")
+		end
+		if bmk.CPU() == "x64" then
+			globals.SetOption("cc_opts", "simd", "-msse3")
+		end
+
+		if bmk.IsDebugBuild() == 0 then
+			if bmk.Platform() ~= "emscripten" then
+				globals.SetOption("cc_opts", "stripsymbols", "-s")
+			end
 		end
 	end
-
+	
 @end
 
 
@@ -539,9 +611,15 @@
 @end
 
 @define make_win32_resource
+	if bmk.OSPlatform() == "win32" then
+		ext = ".exe"
+	else
+		ext = ""
+	end
 
-	local windres =  "windres.exe"
-	local windresPath = bmk.MinGWBinPath() .. "/" .. windres
+	local windres = bmk.Option("path_to_windres", bmk.MinGWBinPath() .. "/" .. bmk.MinGWExePrefix() .. "windres") .. ext
+	local windresExe = sys.StripDir(windres)
+	local windresDir = sys.ExtractDir(windres)
 	
 	local outfile = %outfile%
 	local undecorated_outfile = outfile
@@ -561,14 +639,14 @@
 		outfile = outfile .. decoration
 	end
 
-	if sys.FileType(windresPath) == 0 then
+	if sys.FileType(windres) == 0 then
 		if bmk.VerboseBuild() == 1 then
-			print("windres.exe not found in '" .. bmk.MinGWBinPath() .. "'")
+			print(windresExe .. " not found in '" .. windresDir .. "'. Unable to apply any manifest files.")
 		end
 		return
 	end
 	
-	windres = bmk.Quote(windres)
+	windresExe = bmk.Quote(windresExe)
 	
 	if bmk.VerboseBuild() == 1 then
 		print("Compiling resources...")
@@ -723,11 +801,11 @@
 	
 		if futils.SaveText(resource_path, resource) then
 		
-			local cmd = windres .. " -i " .. bmk.Quote(resource_path) .. " -o " .. object_path
+			local cmd = windresExe .. " -i " .. bmk.Quote(resource_path) .. " -o " .. object_path
 
 			-- windres should be run from its location in order to avoid issues with spaces in paths
 			local cwd = sys.CurrentDir()
-			sys.ChangeDir(bmk.MinGWBinPath())
+			sys.ChangeDir(windresDir)
 			
 			bmk.Sys(cmd)
 			
