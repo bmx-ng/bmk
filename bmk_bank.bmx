@@ -8,13 +8,9 @@ Import BRL.SocketStream
 
 Function CompressBank:TBank( bank:TBank )
 
-?bmxng And (win32 Or ptr32)
-	Local size:UInt=bank.Size()
-	Local out_size:UInt=size+size/10+32
-?bmxng And ptr64 And Not win32
-	Local size:ULong=bank.Size()
-	Local out_size:ULong=size+size/10+32
 ?bmxng
+	Local size:ULongInt=bank.Size()
+	Local out_size:ULongInt=size+size/10+32
 	Local out:TBank=TBank.Create( Size_T(out_size) )
 ?Not bmxng
 	Local size=bank.Size()
@@ -38,10 +34,8 @@ End Function
 
 Function UncompressBank:TBank( bank:TBank )
 
-?bmxng And (win32 Or ptr32)
-	Local out_size:UInt
-?bmxng And ptr64 And Not win32
-	Local out_size:ULong
+?bmxng
+	Local out_size:ULongInt
 ?Not bmxng
 	Local out_size
 ?
@@ -51,7 +45,7 @@ Function UncompressBank:TBank( bank:TBank )
 	out_size:|bank.PeekByte(3) Shl 24
 ?bmxng
 	Local out:TBank=TBank.Create( Size_T(out_size) )
-	uncompress out.Buf(),out_size,bank.Buf()+4,UInt(bank.Size()-4)
+	uncompress out.Buf(),out_size,bank.Buf()+4,ULongInt(bank.Size()-4)
 ?Not bmxng
 	Local out:TBank=TBank.Create( out_size )
 	uncompress out.Buf(),out_size,bank.Buf()+4,bank.Size()-4
