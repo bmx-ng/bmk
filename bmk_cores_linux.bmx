@@ -1,30 +1,17 @@
 SuperStrict
 
-Import Pub.stdc
+Import "bmk_cores_linux.c"
 
 Extern
-?bmxng
-	Function popen:Byte Ptr(command:Byte Ptr, Mode:Byte Ptr)="FILE * popen(const char *, const char *)!"
-?Not bmxng
-	Function popen:Int(command:Byte Ptr, Mode:Byte Ptr)
-?
+	Function bmx_get_core_count:Int()
 End Extern
 
 Function GetCoreCount:Int()
 	Global count:Int
 
 	If Not count Then
-		Local buf:Byte[128]
-?bmxng
-		Local fp:Byte Ptr = popen("cat /proc/cpuinfo |grep -c '^processor'", "r")
-?Not bmxng
-		Local fp:Int = popen("cat /proc/cpuinfo |grep -c '^processor'", "r")
-?
-		fread_(buf, 1, 127, fp)
-		fclose_(fp)
-		count = String.FromCString(buf).ToInt()
+		count = bmx_get_core_count()
 	End If
 
 	Return count
 End Function
-

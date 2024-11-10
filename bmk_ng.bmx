@@ -528,8 +528,8 @@ Type TBMK
 		Local process:TProcess
 		If Platform() = "win32" Then
 			process = CreateProcess(Option("path_to_gcc", MinGWBinPath() + "/gcc.exe") + " --version", HIDECONSOLE)
-		Else	
-			process = CreateProcess("gcc --version")
+		Else
+			process = CreateProcess(Option(BuildName("gcc"), "gcc") + " --version")
 		End If
 		
 		If Not process Then
@@ -573,7 +573,7 @@ Type TBMK
 		If Platform() = "win32" Then
 			process = CreateProcess(Option("path_to_gcc", MinGWBinPath() + "/gcc.exe") + " -dumpversion -dumpfullversion", HIDECONSOLE)
 		Else	
-			process = CreateProcess("gcc -dumpversion -dumpfullversion")
+			process = CreateProcess(Option(BuildName("gcc"), "gcc") + " -dumpversion -dumpfullversion")
 		End If
 		Local s:String
 		
