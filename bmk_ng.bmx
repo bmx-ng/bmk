@@ -542,7 +542,11 @@ Type TBMK
 			Local line:String = process.pipe.ReadLine()
 
 			If Not process.Status() And Not line Then
-				Exit
+				line = process.pipe.ReadLine()
+				
+				If Not line
+					Exit
+				EndIf
 			End If
 
 			Local parts:String[] = line.Split(" ")
@@ -583,7 +587,11 @@ Type TBMK
 			Local line:String = process.pipe.ReadLine()
 
 			If Not process.Status() And Not line Then
-				Exit
+				line = process.pipe.ReadLine()
+				
+				If Not line
+					Exit
+				EndIf
 			End If
 			
 			If Not rawVersion and line Then
