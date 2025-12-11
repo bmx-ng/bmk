@@ -451,6 +451,7 @@ Function ParseSourceFile:TSourceFile( path$ )
 	Local str$=LoadText( path )
 
 	Local pos,in_rem,cc=True
+	Local in_multiline:Int = False
 
 	SetCompilerValues()
 	
@@ -487,10 +488,37 @@ Function ParseSourceFile:TSourceFile( path$ )
 					in_rem=False
 				EndIf
 				Continue
-			Else If lline[..3]="rem"
+			End If
+
+			' First, check if we are inside a multiline string.
+			If in_multiline Then
+				' Look for the closing triple quotes.
+				If line.Find("~q~q~q") <> -1 Then
+					in_multiline = False
+				End If
+				Continue  ' Skip processing any directives while in a multiline string.
+			End If
+
+			If Not in_rem And lline[..3]="rem"
 				in_rem=True
 				Continue
 			EndIf
+
+			' Now, check for the start of a multiline string.
+			Local tripleStart:Int = line.Find("~q~q~q")
+			If tripleStart <> -1 Then
+				Local tripleEnd:Int = line.Find("~q~q~q", tripleStart + 3)
+				If tripleEnd = -1 Then
+					in_multiline = True
+					' Optionally remove the part after the opening triple quotes:
+					line = line[..tripleStart - 1].Trim()
+					If line = "" Then Continue
+				Else
+					' If both start and end markers are on this line,
+					' remove the content between them.
+					line = (line[..tripleStart - 1] + " " + line[tripleEnd + 3..]).Trim()
+				End If
+			End If
 
 			Local cmopt:String = lline.Trim()
 			If cmopt[..1]="?"
