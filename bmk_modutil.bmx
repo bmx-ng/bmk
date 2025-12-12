@@ -748,13 +748,13 @@ Function SetCompilerValues()
 
 	Local longInt8:Int = True
 	' on windows and 32-bit platforms longint is 4 bytes
-	If opt_platform="win32" Or opt_platform="win64" Or opt_arch="x86" Or opt_arch="ppc" Then
+	If processor.Platform()="win32" Or processor.Platform()="win64" Or processor.CPU()="x86" Or processor.CPU()="ppc" Then
 		longInt8 = False
 	End If
-	compilerOptions.Add("longint8",New TIntType,New TConstExpr.Create( New TIntType, longInt8 ),0 )
-	compilerOptions.Add("longint4",New TIntType,New TConstExpr.Create( New TIntType, Not longInt8 ),0 )
-	compilerOptions.Add("ulongint8",New TIntType,New TConstExpr.Create( New TIntType, longInt8 ),0 )
-	compilerOptions.Add("ulongint4",New TIntType,New TConstExpr.Create( New TIntType, Not longInt8 ),0 )
+	compilerOptions.Add("longint8", longInt8)
+	compilerOptions.Add("longint4", Not longInt8)
+	compilerOptions.Add("ulongint8", longInt8)
+	compilerOptions.Add("ulongint4", Not longInt8)
 	
 	compilerOptions.Add("win32", processor.Platform() = "win32")
 	compilerOptions.Add("win32x86", processor.Platform() = "win32" And processor.CPU()="x86")
