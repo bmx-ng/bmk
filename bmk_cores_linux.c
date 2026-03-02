@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 int bmx_get_core_count() {
     int cores = 0;
