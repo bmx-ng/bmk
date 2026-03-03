@@ -537,34 +537,29 @@ Type TBMK
 			Throw "Cannot find a valid GCC compiler. Please check your paths and environment."
 		End If
 		
-		While True
+		While process.Status() Or Not process.pipe.Eof()
 			Delay 10
-			
-			Local line:String = process.pipe.ReadLine()
 
-			If Not process.Status() And Not line Then
-				line = process.pipe.ReadLine()
-				
-				If Not line
-					Exit
-				EndIf
-			End If
+			While True
+				Local line:String = process.pipe.ReadLine()
+				If Not line Exit
 
-			Local parts:String[] = line.Split(" ")
-			
-			If line.startswith("gcc") or parts[0].EndsWith("gcc") Then
-				compiler = "gcc"
-			Else If line.startswith("Target:") Then
-				_target = line[7..].Trim()
-			Else
-				Local pos:Int = line.Find("clang")
-				If pos >= 0 Then
-					compiler = "clang"
-					_clang = True
+				Local parts:String[] = line.Split(" ")
+
+				If line.StartsWith("gcc") Or (parts.length > 0 And parts[0].EndsWith("gcc")) Then
+					compiler = "gcc"
+				Else If line.StartsWith("Target:") Then
+					_target = line[7..].Trim()
+				Else
+					Local pos:Int = line.Find("clang")
+					If pos >= 0 Then
+						compiler = "clang"
+						_clang = True
+					End If
 				End If
-			End If
-			
+			Wend
 		Wend
+
 		If process Then
 			process.Close()
 		End If
@@ -582,42 +577,37 @@ Type TBMK
 		End If
 		Local s:String
 		
-		While True
+		While process.Status() Or Not process.pipe.Eof() Or Not process.err.Eof()
 			Delay 10
 			
-			Local line:String = process.pipe.ReadLine()
-
-			If Not process.Status() And Not line Then
-				line = process.pipe.ReadLine()
-				
-				If Not line
-					Exit
-				EndIf
-			End If
-			
-			If Not rawVersion and line Then
-				rawVersion = line.Trim()
-
-				Local count:Int = 0
-				Local parts:String[] = rawVersion.split("-")  ' First split by "-"
-				For Local part:String = EachIn parts
-					Local values:String[] = part.split(".")  ' Then split by "."
-					For Local v:String = EachIn values
-						If IsNumeric(v)
-							Local n:String = "0" + v
-							s :+ n[n.length - 2..]
-							count :+ 1
-						EndIf
+			' Drain stdout lines
+			While True
+				Local line:String = process.pipe.ReadLine()
+				If Not line Exit
+				If Not rawVersion Then
+					rawVersion = line.Trim()
+					
+					Local count:Int = 0
+					Local parts:String[] = rawVersion.split("-")  ' First split by "-"
+					For Local part:String = EachIn parts
+						Local values:String[] = part.split(".")  ' Then split by "."
+						For Local v:String = EachIn values
+							If IsNumeric(v)
+								Local n:String = "0" + v
+								s :+ n[n.length - 2..]
+								count :+ 1
+							EndIf
+						Next
 					Next
-				Next
 
-				' Append "00" for each missing segment
-				For Local i:Int = count To 2
-					s:+ "00"
-				Next
+					' Append "00" for each missing segment
+					For Local i:Int = count To 2
+						s:+ "00"
+					Next
 
-			End If
-		
+				EndIf
+			Wend
+
 		Wend
 	
 		If process Then
