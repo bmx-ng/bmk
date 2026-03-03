@@ -17,6 +17,7 @@ Import "waitpid.c"
 
 Import "bmk_config.bmx"
 Import "bmk_ng_utils.bmx"
+Import "bmk_progress.bmx"
 
 
 Global processor:TBMK = New TBMK

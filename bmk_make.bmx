@@ -494,6 +494,8 @@ Type TBuildManager Extends TCallback
 		' the last list of batches requires all previous lists to have
 		' been compiled.
 		Local batches:TList = CalculateBatches(files)
+
+		InitProgressLine()
 		
 		For Local batch:TList = EachIn batches
 			Local s:String
@@ -538,7 +540,8 @@ Type TBuildManager Extends TCallback
 							If m.requiresBuild Or (m.time > m.gen_time Or m.iface_time < m.MaxIfaceTime() Or Not m.MaxIfaceTime()) Then
 
 								If Not opt_quiet Then
-									Print ShowPct(m.pct) + "Processing:" + StripDir(m.path)
+									LogLine(ShowPct(m.pct) + "Processing:" + StripDir(m.path))
+									UpdateProgressLine(m.pct, m.path)
 								End If
 
 								' process pragmas
@@ -565,7 +568,8 @@ Type TBuildManager Extends TCallback
 								m.SetRequiresBuild(True)
 
 								If Not opt_quiet Then
-									Print ShowPct(m.pct) + "Converting:" + StripDir(StripExt(m.obj_path) + ".s")
+									LogLine(ShowPct(m.pct) + "Converting:" + StripDir(StripExt(m.obj_path) + ".s"))
+									UpdateProgressLine(m.pct, StripExt(m.obj_path) + ".s")
 								End If
 								
 								Fasm2As m.path, m.obj_path
@@ -588,7 +592,8 @@ Type TBuildManager Extends TCallback
 									If Not opt_quiet Then
 										Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(csrc_path)
 										If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
-										Print s
+										LogLine(s)
+										UpdateProgressLine(m.pct, csrc_path)
 									End If
 									
 									If opt_standalone And opt_boot Then
@@ -604,7 +609,8 @@ Type TBuildManager Extends TCallback
 									Local obj_path:String = StripExt(m.obj_path) + ".o"
 
 									If Not opt_quiet Then
-										Print ShowPct(m.pct) + "Compiling:" + StripDir(src_path)
+										LogLine(ShowPct(m.pct) + "Compiling:" + StripDir(src_path))
+										UpdateProgressLine(m.pct, src_path)
 									End If
 
 									Assemble src_path, obj_path
@@ -625,7 +631,8 @@ Type TBuildManager Extends TCallback
 								If Not opt_quiet Then
 									Local s:String = ShowPct(m.pct) + "Archiving:" + StripDir(m.arc_path)
 									If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
-									Print s
+									LogLine(s)
+									UpdateProgressLine(m.pct, m.arc_path)
 								End If
 
 								Local at:TArcTask = New TArcTask.Create(m, m.arc_path, objs)
@@ -689,7 +696,8 @@ Type TBuildManager Extends TCallback
 								If Not opt_quiet Then
 									Local s:String = ShowPct(m.pct) + "Linking:" + StripDir(opt_outfile)
 									If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
-									Print s
+									LogLine(s)
+									UpdateProgressLine(m.pct, opt_outfile)
 								End If
 
 								Local links:TList = New TList
@@ -718,7 +726,8 @@ Type TBuildManager Extends TCallback
 									If max_obj_time > m.merge_time And Not m.dontbuild Then
 			
 										If Not opt_quiet Then
-											Print ShowPct(m.pct) + "Merging:" + StripDir(m.merge_path)
+											LogLine(ShowPct(m.pct) + "Merging:" + StripDir(m.merge_path))
+											UpdateProgressLine(m.pct, m.merge_path)
 										End If
 	
 										CreateMergeArc m.merge_path, m.arc_path
@@ -741,7 +750,8 @@ Type TBuildManager Extends TCallback
 						If Not opt_quiet Then
 							Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
 							If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
-							Print s
+							LogLine(s)
+							UpdateProgressLine(m.pct, m.path)
 						End If
 					
 						If processor.BCCVersion() = "BlitzMax" Then
@@ -765,7 +775,8 @@ Type TBuildManager Extends TCallback
 							If Not opt_quiet Then
 								Local s:String = ShowPct(m.pct) + "Compiling:" + StripDir(m.path)
 								If opt_standalone And Not opt_nolog processor.PushEcho(FixPct(s))
-								Print s
+								LogLine(s)
+								UpdateProgressLine(m.pct, m.path)
 							End If
 
 							If m.path.EndsWith(".cpp") Or m.path.EndsWith(".cc") Or m.path.EndsWith(".mm") Or m.path.EndsWith(".cxx") Then
@@ -790,6 +801,8 @@ Type TBuildManager Extends TCallback
 ?
 
 		Next
+
+		ClearProgressLine()
 	
 		If app_build Then
 			' global post process

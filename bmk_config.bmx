@@ -63,6 +63,7 @@ Global opt_gprof:Int
 Global opt_hi:Int
 Global opt_coverage:Int
 Global opt_no_auto_superstrict:Int
+GLobal opt_no_progress:Int
 
 Global opt_dumpbuild
 
@@ -271,6 +272,8 @@ Function ParseConfigArgs$[]( args$[], legacyMax:Int = False )
 			opt_coverage = True
 		Case "nas"
 			opt_no_auto_superstrict = True
+		Case "noprogress"
+			opt_no_progress = True
 		Default
 			CmdError "Invalid option '" + argv + "'"
 		End Select
@@ -417,6 +420,11 @@ Function Usage:String(fullUsage:Int = False)
 		s:+ "~n~n"
 		s:+ "~t-musl~n"
 		s:+ "~t~tEnable musl libc compatibility. (Linux NG only)"
+		s:+ "~n~n"
+		s:+ "~t-noprogress~n"
+		s:+ "~t~tDisable progress bar during build.~n"
+		s:+ "~t~tThe progress bar is only available on so called 'interactive' terminals but can be~n"
+		s:+ "~t~tdisabled entirely with this option.~n"
 		s:+ "~n~n"
 		s:+ "~t-nomanifest~n"
 		s:+ "~t~tDon't add an automatically generated manifest and resources to a Win32 application. (Win32 only)~n"
