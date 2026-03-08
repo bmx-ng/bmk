@@ -36,6 +36,7 @@ globals.SetVar("ld_opts", New TOptionVariable)
 globals.SetVar("c_opts", New TOptionVariable)
 globals.SetVar("cpp_opts", New TOptionVariable)
 'globals.SetVar("gcc_version", String(processor.GCCVersion()))
+processor.GCCVersion(False, False, True) ' reset after loading configs
 
 Function LoadBMK(path:String, required:Int = False)
 	processor.LoadBMK(path, required)
@@ -508,11 +509,17 @@ Type TBMK
 		End If
 	End Method
 	
-	Method GCCVersion:String(getVersionNum:Int = False, getRawVersion:Int = False)
+	Method GCCVersion:String(getVersionNum:Int = False, getRawVersion:Int = False, reset:Int = False)
 '?win32
 		Global compiler:String
 		Global version:String
 		Global rawVersion:String
+
+		If reset Then
+			compiler = Null
+			version = Null
+			rawVersion = Null
+		End If
 		
 		If compiler Then
 			If getVersionNum Then
