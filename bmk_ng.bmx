@@ -537,9 +537,10 @@ Type TBMK
 			Throw "Cannot find a valid GCC compiler. Please check your paths and environment."
 		End If
 		
-		While process.Status() Or Not process.pipe.Eof()
+		While process.Status() Or Not process.pipe.Eof() Or Not process.err.Eof()
 			Delay 10
 
+			' stdout
 			While True
 				Local line:String = process.pipe.ReadLine()
 				If Not line Exit
@@ -558,6 +559,26 @@ Type TBMK
 					End If
 				End If
 			Wend
+
+			    ' stderr
+			While True
+				Local eline:String = process.err.ReadLine()
+				If Not eline Exit
+				
+				Local parts:String[] = eline.Split(" ")
+				If eline.StartsWith("gcc") Or (parts.length > 0 And parts[0].EndsWith("gcc")) Then
+					compiler = "gcc"
+				Else If eline.StartsWith("Target:") Then
+					_target = eline[7..].Trim()
+				Else
+					Local pos:Int = eline.Find("clang")
+					If pos >= 0 Then
+						compiler = "clang"
+						_clang = True
+					End If
+				End If
+			Wend
+
 		Wend
 
 		If process Then
@@ -583,6 +604,34 @@ Type TBMK
 			' Drain stdout lines
 			While True
 				Local line:String = process.pipe.ReadLine()
+				If Not line Exit
+				If Not rawVersion Then
+					rawVersion = line.Trim()
+					
+					Local count:Int = 0
+					Local parts:String[] = rawVersion.split("-")  ' First split by "-"
+					For Local part:String = EachIn parts
+						Local values:String[] = part.split(".")  ' Then split by "."
+						For Local v:String = EachIn values
+							If IsNumeric(v)
+								Local n:String = "0" + v
+								s :+ n[n.length - 2..]
+								count :+ 1
+							EndIf
+						Next
+					Next
+
+					' Append "00" for each missing segment
+					For Local i:Int = count To 2
+						s:+ "00"
+					Next
+
+				EndIf
+			Wend
+
+			' Drain stderr lines
+			While True
+				Local line:String = process.err.ReadLine()
 				If Not line Exit
 				If Not rawVersion Then
 					rawVersion = line.Trim()
