@@ -1,3 +1,9 @@
+## [3.60] - 2026-04-30
+### Fixed
+ - Improved handling of nested includes.
+### Changed
+ - aligned hashing with bcc.
+
 ## [3.59] - 2026-03-03
 ### Added
  - Added LongInt size directives.

@@ -873,7 +873,7 @@ Type TBuildManager Extends TCallback
 		End If
 	End Method
 	
-	Method CalculateDependencies(source:TSourceFile, isMod:Int = False, rebuildImports:Int = False, isInclude:Int = False)
+	Method CalculateDependencies(source:TSourceFile, isMod:Int = False, rebuildImports:Int = False, isInclude:Int = False, parentSource:TSourceFile = Null)
 		If source And Not source.processed Then
 			source.processed = True
 
@@ -1033,23 +1033,27 @@ Type TBuildManager Extends TCallback
 				End If
 			Next
 			
+			If Not parentSource Then
+				parentSource = source
+			End If
+
 			For Local f:String = EachIn source.includes
 				Local path:String = CheckPath(ExtractDir(source.path), f)
 
 				Local s:TSourceFile = GetSourceFile(path, isMod, rebuildImports, True)
 				If s Then
-					s.owner_path = source.path
+					s.owner_path = parentSource.path
 					
 					If s.includePaths.IsEmpty() Then
 						s.CopyIncludePaths(source.includePaths)
 					End If
 				
 					' calculate included file dependencies
-					CalculateDependencies(s, isMod, rebuildImports)
+					CalculateDependencies(s, isMod, rebuildImports,,parentSource)
 
 					' update our time to latest included time
-					If s.time > source.time Then
-						source.time = s.time
+					If s.time > parentSource.obj_time Then
+						parentSource.time = s.time
 					End If
 					
 					If Not source.depsList Then
@@ -1069,8 +1073,9 @@ Type TBuildManager Extends TCallback
 				Local time:Int = FileTime(path)
 				
 				' update our time to the latest incbin time
-				If time > source.time Then
-					source.time = time
+				' comparing with parent object file time, so if the incbin is newer than the generated file, we trigger a rebuild
+				If time > parentSource.obj_time Then
+					parentSource.time = time
 				End If
 				
 				' update ib time to the latest incbin time
@@ -1097,8 +1102,8 @@ Type TBuildManager Extends TCallback
 				End If
 
 				' sync timestamps
-				If ib.time > source.time Then
-					source.time = ib.time
+				If ib.time > parentSource.time Then
+					parentSource.time = ib.time
 				End If
 			End If
 						
