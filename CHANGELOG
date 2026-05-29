@@ -1,3 +1,7 @@
+## [3.61] - 2026-05-29
+### Fixed
+ - Ensure a change to an included file (at any depth) or incbin file correctly marks the top-level parent for rebuild.
+
 ## [3.60] - 2026-04-30
 ### Fixed
  - Improved handling of nested includes.

@@ -1052,8 +1052,12 @@ Type TBuildManager Extends TCallback
 					CalculateDependencies(s, isMod, rebuildImports,,parentSource)
 
 					' update our time to latest included time
-					If s.time > parentSource.obj_time Then
-						parentSource.time = s.time
+					' use gen_time as threshold so changes made between the last code generation and compilation are caught
+					If s.time > parentSource.gen_time Then
+						If s.time > parentSource.time Then
+							parentSource.time = s.time
+						End If
+						parentSource.SetRequiresBuild(True)
 					End If
 					
 					If Not source.depsList Then
@@ -1073,9 +1077,12 @@ Type TBuildManager Extends TCallback
 				Local time:Int = FileTime(path)
 				
 				' update our time to the latest incbin time
-				' comparing with parent object file time, so if the incbin is newer than the generated file, we trigger a rebuild
-				If time > parentSource.obj_time Then
-					parentSource.time = time
+				' use gen_time as threshold so changes between code generation and compilation are caught
+				If time > parentSource.gen_time Then
+					If time > parentSource.time Then
+						parentSource.time = time
+					End If
+					parentSource.SetRequiresBuild(True)
 				End If
 				
 				' update ib time to the latest incbin time
@@ -1098,7 +1105,7 @@ Type TBuildManager Extends TCallback
 				
 				If requiresBuild Then
 					ib.SetRequiresBuild(True)
-					source.SetRequiresBuild(True)
+					parentSource.SetRequiresBuild(True)
 				End If
 
 				' sync timestamps
