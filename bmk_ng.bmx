@@ -36,7 +36,7 @@ globals.SetVar("ld_opts", New TOptionVariable)
 globals.SetVar("c_opts", New TOptionVariable)
 globals.SetVar("cpp_opts", New TOptionVariable)
 'globals.SetVar("gcc_version", String(processor.GCCVersion()))
-processor.GCCVersion(False, False, True) ' reset after loading configs
+'processor.GCCVersion(False, False, True) ' reset after loading configs
 
 Function LoadBMK(path:String, required:Int = False)
 	processor.LoadBMK(path, required)

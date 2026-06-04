@@ -26,7 +26,7 @@ processor.RunCommand("default_cc_opts", Null)
 LoadOptions
 
 ' pre-init gcc version cache
-processor.GCCVersion()
+processor.GCCVersion(False, False, True)
 
 CreateDir BlitzMaxPath()+"/tmp"
 
