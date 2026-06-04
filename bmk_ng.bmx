@@ -844,24 +844,11 @@ Type TBMK
 				Return _minGWPath
 			End If
 
+			' Generic fallback (could be an older installation or multilib)
 			path = BlitzMaxPath() + "/MinGW32/bin"
 			If FileType(path) = FILETYPE_DIR Then
 				' bin dir exists, go with that
 				_minGWPath = BlitzMaxPath() + "/MinGW32"
-				Return _minGWPath
-			End If
-
-			path = BlitzMaxPath() + "/MinGW32x86/bin"
-			If FileType(path) = FILETYPE_DIR Then
-				' bin dir exists, go with that
-				_minGWPath = BlitzMaxPath() + "/MinGW32x86" 
-				Return _minGWPath
-			End If
-
-			path = BlitzMaxPath() + "/MinGW32x64/bin"
-			If FileType(path) = FILETYPE_DIR Then
-				' bin dir exists, go with that
-				_minGWPath = BlitzMaxPath() + "/MinGW32x64" 
 				Return _minGWPath
 			End If
 
