@@ -274,12 +274,7 @@
 
 	# Remove -fno-exceptions if we have provided -fexceptions
 	local cc_opts = %cc_opts%
-
-	if cc_opts:find("-fexceptions") ~= nil then
-		cc_opts = cc_opts:gsub("%-fno%-exceptions", print)
-	end
-
-	if opts:find("-fexceptions") ~= nil then
+	if cc_opts:find("-fexceptions") or opts:find("-fexceptions") then
 		cc_opts = cc_opts:gsub("%-fno%-exceptions", "")
 	end
 
